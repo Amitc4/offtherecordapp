@@ -61,11 +61,11 @@ const HomePage = ({ onLogout }: { onLogout: () => void }) => {
                 onClick={() => setActiveTab(tab.id)}
                 className="relative flex flex-col items-center gap-0.5"
               >
-                <div className="relative">
+                <div className="relative flex flex-col items-center">
                   {isActive && (
                     <motion.div
                       layoutId="activeTab"
-                      className="absolute -top-1 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-primary"
+                      className="absolute bottom-full mb-1 h-0.5 w-5 rounded-full bg-primary"
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
                   )}
