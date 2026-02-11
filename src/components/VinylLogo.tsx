@@ -51,23 +51,23 @@ const VinylLogo = ({ size = 200, spinning = false }: { size?: number; spinning?:
               <stop offset="50%" stopColor="hsl(24, 80%, 50%)" />
               <stop offset="100%" stopColor="hsl(14, 65%, 40%)" />
             </linearGradient>
-            <path id="topArc" d="M 25 100 A 75 75 0 0 1 175 100" />
-            <path id="bottomArc" d="M 170 110 A 70 70 0 0 1 30 110" />
+            <path id="topArc" d="M 33 100 A 67 67 0 0 1 167 100" />
+            <path id="bottomArc" d="M 167 100 A 67 67 0 0 1 33 100" />
           </defs>
 
-          <text fill="hsl(30, 80%, 55%)" fontSize="20" fontFamily="'Playfair Display', serif" fontWeight="700" letterSpacing="4">
+          <text fill="hsl(30, 80%, 55%)" fontSize="18" fontFamily="'Playfair Display', serif" fontWeight="700" letterSpacing="4">
             <textPath href="#topArc" startOffset="50%" textAnchor="middle">
               OFF THE
             </textPath>
           </text>
-          <text fill="hsl(30, 80%, 55%)" fontSize="20" fontFamily="'Playfair Display', serif" fontWeight="700" letterSpacing="4">
+          <text fill="hsl(30, 80%, 55%)" fontSize="18" fontFamily="'Playfair Display', serif" fontWeight="700" letterSpacing="4">
             <textPath href="#bottomArc" startOffset="50%" textAnchor="middle">
               RECORD
             </textPath>
           </text>
 
-          {/* Subtle shine */}
-          <ellipse cx="75" cy="65" rx="40" ry="25" fill="white" opacity="0.04" transform="rotate(-30 75 65)" />
+          {/* Subtle shine - centered symmetrically */}
+          <circle cx="100" cy="100" r="90" fill="white" opacity="0.02" />
         </svg>
       </motion.div>
 
