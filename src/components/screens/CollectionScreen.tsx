@@ -9,20 +9,20 @@ const records = [
 
 const CollectionScreen = () => {
   return (
-    <div className="px-4 pt-6">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="font-display text-2xl font-bold text-foreground">My Collection</h1>
+    <div className="px-4 pt-4 pb-2">
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="font-display text-xl font-bold text-foreground">My Collection</h1>
         <button className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
           <Plus size={18} />
         </button>
       </div>
-      <p className="mb-6 font-body text-sm text-muted-foreground">{records.length} records</p>
+      <p className="mb-4 font-body text-xs text-muted-foreground">{records.length} records</p>
 
       <div className="space-y-3">
         {records.map((record) => (
           <div key={record.id} className="flex items-center gap-4 rounded-xl bg-card p-4 vinyl-shadow">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary">
-              <Disc3 size={24} className="text-primary" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/15">
+              <Disc3 size={24} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
             </div>
             <div className="flex-1">
               <h3 className="font-display text-sm font-semibold text-foreground">{record.title}</h3>

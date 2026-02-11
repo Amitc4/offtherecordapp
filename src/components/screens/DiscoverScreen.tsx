@@ -11,19 +11,19 @@ const featured = [
 
 const DiscoverScreen = () => {
   return (
-    <div className="px-4 pt-6">
-      <h1 className="mb-2 font-display text-2xl font-bold text-foreground">Discover</h1>
-      <p className="mb-6 font-body text-sm text-muted-foreground">Find your next favourite record</p>
+    <div className="px-4 pt-4 pb-2">
+      <h1 className="mb-1 font-display text-xl font-bold text-foreground">Discover</h1>
+      <p className="mb-4 font-body text-xs text-muted-foreground">Find your next favourite record</p>
 
       {/* Categories */}
-      <div className="mb-6 flex gap-2 overflow-x-auto pb-1">
+      <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {["All", "Rock", "Jazz", "Soul", "Electronic", "Hip Hop"].map((cat, i) => (
           <button
             key={cat}
-            className={`shrink-0 rounded-full px-4 py-2 font-body text-xs font-medium transition-colors ${
+            className={`shrink-0 rounded-full px-3 py-1.5 font-body text-[11px] font-medium transition-colors ${
               i === 0
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-secondary-foreground hover:bg-primary/10"
+                ? "bg-primary text-primary-foreground shadow-md"
+                : "bg-primary/10 text-primary hover:bg-primary/20"
             }`}
           >
             {cat}
@@ -32,11 +32,11 @@ const DiscoverScreen = () => {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2.5">
         {featured.map((item) => (
-          <div key={item.id} className="group rounded-xl bg-card p-3 vinyl-shadow transition-transform hover:scale-[1.02]">
-            <div className="mb-3 flex aspect-square items-center justify-center rounded-lg bg-secondary">
-              <Disc3 size={40} className="text-primary/60 transition-transform group-hover:rotate-45" />
+          <div key={item.id} className="group rounded-xl bg-card p-2.5 vinyl-shadow transition-transform hover:scale-[1.02]">
+            <div className="mb-2 flex aspect-square items-center justify-center rounded-lg bg-primary/10">
+              <Disc3 size={36} className="text-primary transition-transform group-hover:rotate-45" />
             </div>
             <h3 className="font-display text-xs font-semibold leading-tight text-foreground">{item.title}</h3>
             <p className="mt-0.5 font-body text-[10px] text-muted-foreground">{item.artist}</p>

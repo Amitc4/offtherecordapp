@@ -8,14 +8,14 @@ const wishlist = [
 
 const WishlistScreen = () => {
   return (
-    <div className="px-4 pt-6">
-      <h1 className="mb-6 font-display text-2xl font-bold text-foreground">Wishlist</h1>
-      <p className="mb-6 font-body text-sm text-muted-foreground">{wishlist.length} records wanted</p>
+    <div className="px-4 pt-4 pb-2">
+      <h1 className="mb-2 font-display text-xl font-bold text-foreground">Wishlist</h1>
+      <p className="mb-4 font-body text-xs text-muted-foreground">{wishlist.length} records wanted</p>
 
       <div className="space-y-3">
         {wishlist.map((item) => (
           <div key={item.id} className="flex items-center gap-4 rounded-xl bg-card p-4 vinyl-shadow">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/15">
               <Heart size={20} className="text-primary" fill="hsl(var(--primary))" />
             </div>
             <div className="flex-1">
