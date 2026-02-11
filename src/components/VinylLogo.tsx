@@ -70,11 +70,6 @@ const VinylLogo = ({ size = 200, spinning = false }: { size?: number; spinning?:
           <circle cx="100" cy="100" r="90" fill="white" opacity="0.02" />
         </svg>
       </motion.div>
-
-      {/* Title text below vinyl */}
-      <h1 className="mt-4 text-center font-display text-4xl font-bold tracking-wider text-foreground uppercase">
-        Off The Record
-      </h1>
     </div>
   );
 };
