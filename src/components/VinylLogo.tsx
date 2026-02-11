@@ -39,7 +39,6 @@ const VinylLogo = ({ size = 200, spinning = false }: { size?: number; spinning?:
           <circle cx="100" cy="100" r="6" fill="hsl(20, 35%, 15%)" />
           <circle cx="100" cy="100" r="4" fill="hsl(20, 20%, 25%)" />
 
-          {/* Text on label */}
           <defs>
             <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="hsl(30, 90%, 55%)" />
@@ -51,25 +50,17 @@ const VinylLogo = ({ size = 200, spinning = false }: { size?: number; spinning?:
               <stop offset="50%" stopColor="hsl(24, 80%, 50%)" />
               <stop offset="100%" stopColor="hsl(14, 65%, 40%)" />
             </linearGradient>
-            <path id="topArc" d="M 68 100 A 32 32 0 0 1 132 100" />
-            <path id="bottomArc" d="M 130 106 A 30 30 0 0 1 70 106" />
           </defs>
-
-          <text fill="hsl(30, 50%, 98%)" fontSize="60" fontFamily="'Playfair Display', serif" fontWeight="700" letterSpacing="1.5">
-            <textPath href="#topArc" startOffset="50%" textAnchor="middle">
-              OFF THE
-            </textPath>
-          </text>
-          <text fill="hsl(30, 50%, 98%)" fontSize="60" fontFamily="'Playfair Display', serif" fontWeight="700" letterSpacing="1.5">
-            <textPath href="#bottomArc" startOffset="50%" textAnchor="middle">
-              RECORD
-            </textPath>
-          </text>
 
           {/* Subtle shine */}
           <ellipse cx="75" cy="65" rx="40" ry="25" fill="white" opacity="0.04" transform="rotate(-30 75 65)" />
         </svg>
       </motion.div>
+
+      {/* Title text below vinyl */}
+      <h1 className="mt-4 text-center font-display text-4xl font-bold tracking-wider text-foreground uppercase">
+        Off The Record
+      </h1>
     </div>
   );
 };
