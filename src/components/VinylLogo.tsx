@@ -55,12 +55,12 @@ const VinylLogo = ({ size = 200, spinning = false }: { size?: number; spinning?:
             <path id="bottomArc" d="M 130 106 A 30 30 0 0 1 70 106" />
           </defs>
 
-          <text fill="hsl(30, 50%, 98%)" fontSize="14" fontFamily="'Playfair Display', serif" fontWeight="700" letterSpacing="1.5">
+          <text fill="hsl(30, 50%, 98%)" fontSize="30" fontFamily="'Playfair Display', serif" fontWeight="700" letterSpacing="1.5">
             <textPath href="#topArc" startOffset="50%" textAnchor="middle">
               OFF THE
             </textPath>
           </text>
-          <text fill="hsl(30, 50%, 98%)" fontSize="14" fontFamily="'Playfair Display', serif" fontWeight="700" letterSpacing="1.5">
+          <text fill="hsl(30, 50%, 98%)" fontSize="30" fontFamily="'Playfair Display', serif" fontWeight="700" letterSpacing="1.5">
             <textPath href="#bottomArc" startOffset="50%" textAnchor="middle">
               RECORD
             </textPath>
