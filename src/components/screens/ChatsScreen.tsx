@@ -7,13 +7,13 @@ const chats = [
 
 const ChatsScreen = () => {
   return (
-    <div className="px-4 pt-6">
-      <h1 className="mb-6 font-display text-2xl font-bold text-foreground">Chats</h1>
+    <div className="px-4 pt-4 pb-2">
+      <h1 className="mb-4 font-display text-xl font-bold text-foreground">Chats</h1>
 
       <div className="space-y-1">
         {chats.map((chat) => (
           <div key={chat.id} className="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-card">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary font-display text-sm font-bold text-secondary-foreground">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
               {chat.name.charAt(0)}
             </div>
             <div className="min-w-0 flex-1">

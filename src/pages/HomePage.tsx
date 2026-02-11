@@ -33,7 +33,7 @@ const HomePage = ({ onLogout }: { onLogout: () => void }) => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="mx-auto flex h-screen max-w-md flex-col bg-background">
       {/* Content area */}
       <main className="flex-1 overflow-y-auto pb-20">
         <AnimatePresence mode="wait">
@@ -50,8 +50,8 @@ const HomePage = ({ onLogout }: { onLogout: () => void }) => {
       </main>
 
       {/* Bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-lg items-center justify-around px-2">
+      <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-md -translate-x-1/2 border-t border-primary/20 bg-card/95 backdrop-blur-md">
+        <div className="flex h-14 items-center justify-around px-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;

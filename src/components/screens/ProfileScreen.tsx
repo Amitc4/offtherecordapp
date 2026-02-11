@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 
 const ProfileScreen = ({ onLogout }: { onLogout: () => void }) => {
   return (
-    <div className="px-4 pt-6">
-      <h1 className="mb-6 font-display text-2xl font-bold text-foreground">Profile</h1>
+    <div className="px-4 pt-4 pb-2">
+      <h1 className="mb-4 font-display text-xl font-bold text-foreground">Profile</h1>
 
       {/* Avatar & info */}
       <div className="mb-8 flex items-center gap-4">
