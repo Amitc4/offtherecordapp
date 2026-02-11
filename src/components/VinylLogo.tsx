@@ -31,15 +31,15 @@ const VinylLogo = ({ size = 200, spinning = false }: { size?: number; spinning?:
             />
           ))}
 
-          {/* Orange label area - enlarged */}
-          <circle cx="100" cy="100" r="55" fill="url(#orangeGradient)" />
-          <circle cx="100" cy="100" r="52" fill="url(#orangeGradientInner)" />
+          {/* Orange label area */}
+          <circle cx="100" cy="100" r="38" fill="url(#orangeGradient)" />
+          <circle cx="100" cy="100" r="36" fill="url(#orangeGradientInner)" />
 
           {/* Label details */}
           <circle cx="100" cy="100" r="6" fill="hsl(20, 35%, 15%)" />
           <circle cx="100" cy="100" r="4" fill="hsl(20, 20%, 25%)" />
 
-          {/* Text on label */}
+          {/* Text on black vinyl area */}
           <defs>
             <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="hsl(30, 90%, 55%)" />
@@ -51,16 +51,16 @@ const VinylLogo = ({ size = 200, spinning = false }: { size?: number; spinning?:
               <stop offset="50%" stopColor="hsl(24, 80%, 50%)" />
               <stop offset="100%" stopColor="hsl(14, 65%, 40%)" />
             </linearGradient>
-            <path id="topArc" d="M 55 100 A 45 45 0 0 1 145 100" />
-            <path id="bottomArc" d="M 143 108 A 43 43 0 0 1 57 108" />
+            <path id="topArc" d="M 25 100 A 75 75 0 0 1 175 100" />
+            <path id="bottomArc" d="M 170 110 A 70 70 0 0 1 30 110" />
           </defs>
 
-          <text fill="hsl(30, 50%, 98%)" fontSize="16" fontFamily="'Playfair Display', serif" fontWeight="700" letterSpacing="3">
+          <text fill="hsl(30, 80%, 55%)" fontSize="20" fontFamily="'Playfair Display', serif" fontWeight="700" letterSpacing="4">
             <textPath href="#topArc" startOffset="50%" textAnchor="middle">
               OFF THE
             </textPath>
           </text>
-          <text fill="hsl(30, 50%, 98%)" fontSize="16" fontFamily="'Playfair Display', serif" fontWeight="700" letterSpacing="3">
+          <text fill="hsl(30, 80%, 55%)" fontSize="20" fontFamily="'Playfair Display', serif" fontWeight="700" letterSpacing="4">
             <textPath href="#bottomArc" startOffset="50%" textAnchor="middle">
               RECORD
             </textPath>
