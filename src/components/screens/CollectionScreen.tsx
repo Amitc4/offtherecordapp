@@ -2,10 +2,10 @@ import { useState } from "react";
 import { Disc3, Plus, Camera, LayoutGrid, List } from "lucide-react";
 
 const records = [
-  { id: 1, title: "Rumours", artist: "Fleetwood Mac", year: 1977, condition: "VG+" },
-  { id: 2, title: "Kind of Blue", artist: "Miles Davis", year: 1959, condition: "NM" },
-  { id: 3, title: "Abbey Road", artist: "The Beatles", year: 1969, condition: "G+" },
-  { id: 4, title: "Blue Train", artist: "John Coltrane", year: 1958, condition: "VG" },
+  { id: 1, title: "Rumours", artist: "Fleetwood Mac", year: 1977, condition: "NM" },
+  { id: 2, title: "Kind of Blue", artist: "Miles Davis", year: 1959, condition: "GEM" },
+  { id: 3, title: "Abbey Road", artist: "The Beatles", year: 1969, condition: "G" },
+  { id: 4, title: "Blue Train", artist: "John Coltrane", year: 1958, condition: "OK" },
 ];
 
 const CollectionScreen = () => {

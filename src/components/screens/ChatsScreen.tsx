@@ -1,8 +1,8 @@
 const chats = [
-  { id: 1, name: "Sarah M.", lastMessage: "Is the Coltrane still available?", time: "2m ago", unread: 2 },
-  { id: 2, name: "Jake R.", lastMessage: "Deal! I'll pick it up tomorrow", time: "1h ago", unread: 1 },
-  { id: 3, name: "Emily K.", lastMessage: "Thanks for the trade!", time: "3h ago", unread: 0 },
-  { id: 4, name: "Marcus T.", lastMessage: "What condition is the sleeve?", time: "1d ago", unread: 0 },
+  { id: 1, name: "Sarah M.", record: "Blue Train", lastMessage: "Is the Coltrane still available?", time: "2m ago", unread: 2 },
+  { id: 2, name: "Jake R.", record: "Rumours", lastMessage: "Deal! I'll pick it up tomorrow", time: "1h ago", unread: 1 },
+  { id: 3, name: "Emily K.", record: "Abbey Road", lastMessage: "Thanks for the trade!", time: "3h ago", unread: 0 },
+  { id: 4, name: "Marcus T.", record: "Kind of Blue", lastMessage: "What condition is the sleeve?", time: "1d ago", unread: 0 },
 ];
 
 const ChatsScreen = () => {
@@ -21,6 +21,7 @@ const ChatsScreen = () => {
                 <h3 className="font-body text-sm font-semibold text-foreground">{chat.name}</h3>
                 <span className="font-body text-[10px] text-muted-foreground">{chat.time}</span>
               </div>
+              <p className="font-body text-[10px] font-medium text-primary">{chat.record}</p>
               <p className="truncate font-body text-xs text-muted-foreground">{chat.lastMessage}</p>
             </div>
             {chat.unread > 0 && (

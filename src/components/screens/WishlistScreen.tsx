@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Heart, LayoutGrid, List } from "lucide-react";
 
 const wishlist = [
-  { id: 1, title: "In Rainbows", artist: "Radiohead", year: 2007 },
-  { id: 2, title: "Blonde", artist: "Frank Ocean", year: 2016 },
-  { id: 3, title: "Vespertine", artist: "Björk", year: 2001 },
+  { id: 1, title: "In Rainbows", artist: "Radiohead", year: 2007, nearby: 3 },
+  { id: 2, title: "Blonde", artist: "Frank Ocean", year: 2016, nearby: 7 },
+  { id: 3, title: "Vespertine", artist: "Björk", year: 2001, nearby: 1 },
 ];
 
 const WishlistScreen = () => {
@@ -34,6 +34,10 @@ const WishlistScreen = () => {
                 <h3 className="font-display text-sm font-semibold text-foreground">{item.title}</h3>
                 <p className="font-body text-xs text-muted-foreground">{item.artist} · {item.year}</p>
               </div>
+              <div className="flex flex-col items-end">
+                <span className="font-body text-sm font-bold text-primary">{item.nearby}</span>
+                <span className="font-body text-[10px] text-muted-foreground">nearby</span>
+              </div>
             </div>
           ))}
         </div>
@@ -46,8 +50,9 @@ const WishlistScreen = () => {
               </div>
               <h3 className="font-display text-xs font-semibold leading-tight text-foreground">{item.title}</h3>
               <p className="mt-0.5 font-body text-[10px] text-muted-foreground">{item.artist}</p>
-              <div className="mt-2">
+              <div className="mt-2 flex items-center justify-between">
                 <span className="font-body text-xs text-muted-foreground">{item.year}</span>
+                <span className="font-body text-[10px] font-bold text-primary">{item.nearby} nearby</span>
               </div>
             </div>
           ))}
