@@ -30,7 +30,7 @@ const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
         className="relative z-10 flex w-full max-w-sm flex-col items-center"
       >
         {/* Logo */}
-        <div className="glow-orange mb-8 rounded-full">
+        <div className="glow-orange mb-8 rounded-full" style={{ width: 180, height: 180 }}>
           <VinylLogo size={180} spinning />
         </div>
 
