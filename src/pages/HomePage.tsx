@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Disc3, Heart, Compass, MessageCircle, User, ShieldCheck } from "lucide-react";
+import { Disc3, Heart, Compass, MessageCircle, User, ShieldCheck, ShieldOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import CollectionScreen from "@/components/screens/CollectionScreen";
 import WishlistScreen from "@/components/screens/WishlistScreen";
 import DiscoverScreen from "@/components/screens/DiscoverScreen";
@@ -25,9 +26,12 @@ const HomePage = () => {
   const [activeTab, setActiveTab] = useState<Tab>("discover");
   const { data: isAdmin } = useIsAdmin();
 
-  const tabs = isAdmin
-    ? [...baseTabs, { id: "admin" as Tab, label: "Admin", icon: ShieldCheck }]
-    : baseTabs;
+  const tabs = [
+    ...baseTabs,
+    ...(isAdmin
+      ? [{ id: "admin" as Tab, label: "Admin", icon: ShieldCheck }]
+      : [{ id: "admin" as Tab, label: "Admin", icon: ShieldOff }]),
+  ];
 
   const renderScreen = () => {
     switch (activeTab) {
@@ -41,6 +45,7 @@ const HomePage = () => {
   };
 
   return (
+    <TooltipProvider>
     <div className="mx-auto flex h-screen max-w-md flex-col bg-background">
       <main className="flex-1 overflow-y-auto pb-20">
         <AnimatePresence mode="wait">
@@ -61,14 +66,17 @@ const HomePage = () => {
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
-            return (
+            const isAdminTab = tab.id === "admin";
+            const adminDisabled = isAdminTab && !isAdmin;
+
+            const buttonContent = (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className="relative flex flex-col items-center gap-0.5"
+                onClick={() => !adminDisabled && setActiveTab(tab.id)}
+                className={`relative flex flex-col items-center gap-0.5 ${adminDisabled ? "cursor-not-allowed opacity-50" : ""}`}
               >
                 <div className="relative flex flex-col items-center">
-                  {isActive && (
+                  {isActive && !adminDisabled && (
                     <motion.div
                       layoutId="activeTab"
                       className="absolute bottom-full mb-1 h-0.5 w-5 rounded-full bg-primary"
@@ -77,7 +85,7 @@ const HomePage = () => {
                   )}
                   <Icon
                     size={22}
-                    className={`transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`}
+                    className={`transition-colors ${adminDisabled ? "text-muted-foreground/50" : isActive ? "text-primary" : "text-muted-foreground"}`}
                     fill={isActive && tab.id === "wishlist" ? "hsl(var(--primary))" : "none"}
                   />
                   {tab.id === "chats" && unreadMessages > 0 && (
@@ -86,16 +94,30 @@ const HomePage = () => {
                     </span>
                   )}
                 </div>
-                <span className={`font-body text-[10px] transition-colors ${isActive ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+                <span className={`font-body text-[10px] transition-colors ${adminDisabled ? "text-muted-foreground/50" : isActive ? "font-semibold text-primary" : "text-muted-foreground"}`}>
                   {tab.label}
                 </span>
               </button>
             );
+
+            if (isAdminTab) {
+              return (
+                <Tooltip key={tab.id}>
+                  <TooltipTrigger asChild>{buttonContent}</TooltipTrigger>
+                  <TooltipContent side="top">
+                    {isAdmin ? "Admin" : "Not an admin"}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            }
+
+            return buttonContent;
           })}
         </div>
         <div className="h-safe-area-inset-bottom bg-card" />
       </nav>
     </div>
+    </TooltipProvider>
   );
 };
 
