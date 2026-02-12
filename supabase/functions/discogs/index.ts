@@ -1,10 +1,18 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.3";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const allowedOrigins = [
+  "https://offtherecordapp.lovable.app",
+  "https://id-preview--cb001185-69e1-4b05-b54d-b8f03a2f28aa.lovable.app",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  return {
+    "Access-Control-Allow-Origin": allowedOrigins.includes(origin) ? origin : allowedOrigins[0],
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 const DISCOGS_CONSUMER_KEY = Deno.env.get("DISCOGS_CONSUMER_KEY")!;
 const DISCOGS_CONSUMER_SECRET = Deno.env.get("DISCOGS_CONSUMER_SECRET")!;
@@ -78,7 +86,6 @@ async function makeOAuthRequest(
     ...oauthParams,
   };
 
-  // Build signature base string
   const sortedParams = Object.keys(params)
     .sort()
     .map((k) => `${percentEncode(k)}=${percentEncode(params[k])}`)
@@ -112,8 +119,10 @@ async function makeAuthenticatedGet(
 }
 
 Deno.serve(async (req) => {
+  const cors = getCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: cors });
   }
 
   const url = new URL(req.url);
@@ -122,6 +131,13 @@ Deno.serve(async (req) => {
   try {
     // ──── REQUEST TOKEN ────
     if (action === "request_token") {
+      const authHeader = getAuthenticatedUser(req);
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...cors, "Content-Type": "application/json" },
+        });
+      }
       const callbackUrl = url.searchParams.get("callback_url") || "";
       const resp = await makeOAuthRequest(
         "GET",
@@ -132,7 +148,7 @@ Deno.serve(async (req) => {
       if (!resp.ok) {
         return new Response(JSON.stringify({ error: text }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
       }
 
@@ -143,7 +159,7 @@ Deno.serve(async (req) => {
           oauth_token_secret: params.get("oauth_token_secret"),
           authorize_url: `https://www.discogs.com/oauth/authorize?oauth_token=${params.get("oauth_token")}`,
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
@@ -153,7 +169,7 @@ Deno.serve(async (req) => {
       if (!authHeader) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
       }
 
@@ -163,7 +179,7 @@ Deno.serve(async (req) => {
       if (claimsError || !claimsData?.claims) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
       }
       const userId = claimsData.claims.sub;
@@ -182,7 +198,7 @@ Deno.serve(async (req) => {
       if (!resp.ok) {
         return new Response(JSON.stringify({ error: text }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
       }
 
@@ -190,7 +206,6 @@ Deno.serve(async (req) => {
       const accessToken = params.get("oauth_token")!;
       const accessSecret = params.get("oauth_token_secret")!;
 
-      // Get Discogs identity
       const identityResp = await makeAuthenticatedGet(
         "https://api.discogs.com/oauth/identity",
         accessToken,
@@ -198,7 +213,6 @@ Deno.serve(async (req) => {
       );
       const identity = await identityResp.json();
 
-      // Store tokens using service role
       const serviceClient = createServiceClient();
       await serviceClient.from("discogs_tokens").upsert({
         user_id: userId,
@@ -214,7 +228,7 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, username: identity.username }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
@@ -224,7 +238,7 @@ Deno.serve(async (req) => {
       if (!authHeader) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
       }
 
@@ -234,7 +248,7 @@ Deno.serve(async (req) => {
       if (claimsError || !claimsData?.claims) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
       }
       const userId = claimsData.claims.sub;
@@ -249,7 +263,7 @@ Deno.serve(async (req) => {
       if (!tokens) {
         return new Response(JSON.stringify({ error: "Discogs not connected" }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
       }
 
@@ -257,7 +271,6 @@ Deno.serve(async (req) => {
       let page = 1;
       const allReleases: any[] = [];
 
-      // Fetch up to 5 pages (250 records)
       while (page <= 5) {
         const resp = await makeAuthenticatedGet(
           `https://api.discogs.com/users/${username}/collection/folders/0/releases?page=${page}&per_page=50`,
@@ -284,7 +297,6 @@ Deno.serve(async (req) => {
         page++;
       }
 
-      // Clear existing and insert fresh
       await serviceClient.from("user_records").delete().eq("user_id", userId);
       if (allReleases.length > 0) {
         await serviceClient.from("user_records").insert(allReleases);
@@ -292,7 +304,7 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, count: allReleases.length }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
@@ -302,7 +314,7 @@ Deno.serve(async (req) => {
       if (!authHeader) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
       }
 
@@ -312,7 +324,7 @@ Deno.serve(async (req) => {
       if (claimsError || !claimsData?.claims) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
       }
       const userId = claimsData.claims.sub;
@@ -327,7 +339,7 @@ Deno.serve(async (req) => {
       if (!tokens) {
         return new Response(JSON.stringify({ error: "Discogs not connected" }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
       }
 
@@ -367,17 +379,17 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, count: allWants.length }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
     // ──── SEARCH ────
     if (action === "search") {
-      const query = url.searchParams.get("q") || "";
-      if (!query) {
-        return new Response(JSON.stringify({ error: "Missing query" }), {
+      const query = (url.searchParams.get("q") || "").trim();
+      if (!query || query.length > 200) {
+        return new Response(JSON.stringify({ error: "Invalid query" }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
       }
 
@@ -395,7 +407,7 @@ Deno.serve(async (req) => {
       }));
 
       return new Response(JSON.stringify({ results }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
@@ -405,7 +417,7 @@ Deno.serve(async (req) => {
       if (!authHeader) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
       }
 
@@ -415,7 +427,7 @@ Deno.serve(async (req) => {
       if (claimsError || !claimsData?.claims) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
       }
       const userId = claimsData.claims.sub;
@@ -429,19 +441,19 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
     return new Response(JSON.stringify({ error: "Unknown action" }), {
       status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("Discogs function error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...cors, "Content-Type": "application/json" } }
     );
   }
 });
