@@ -1,14 +1,24 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const allowedOrigins = [
+  "https://offtherecordapp.lovable.app",
+  "https://id-preview--cb001185-69e1-4b05-b54d-b8f03a2f28aa.lovable.app",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  return {
+    "Access-Control-Allow-Origin": allowedOrigins.includes(origin) ? origin : allowedOrigins[0],
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 Deno.serve(async (req) => {
+  const cors = getCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: cors });
   }
 
   try {
@@ -16,7 +26,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "No authorization header" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
@@ -24,7 +34,6 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify the calling user is an admin using their JWT
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -32,11 +41,10 @@ Deno.serve(async (req) => {
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
-    // Check admin role
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: roleData } = await adminClient
       .from("user_roles")
@@ -48,7 +56,7 @@ Deno.serve(async (req) => {
     if (!roleData) {
       return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), {
         status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
@@ -57,13 +65,11 @@ Deno.serve(async (req) => {
     switch (action) {
       case "list_users": {
         const { search } = params;
-        // List all auth users via admin API
         const { data: { users }, error } = await adminClient.auth.admin.listUsers({
           perPage: 1000,
         });
         if (error) throw error;
 
-        // Get all profiles and roles
         const { data: profiles } = await adminClient.from("profiles").select("*");
         const { data: roles } = await adminClient.from("user_roles").select("*");
 
@@ -94,7 +100,7 @@ Deno.serve(async (req) => {
         }
 
         return new Response(JSON.stringify({ users: result }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
       }
 
@@ -102,7 +108,6 @@ Deno.serve(async (req) => {
         const { target_user_id, email, phone, password, display_name } = params;
         if (!target_user_id) throw new Error("target_user_id required");
 
-        // Update auth fields
         const authUpdates: any = {};
         if (email) authUpdates.email = email;
         if (phone) authUpdates.phone = phone;
@@ -113,7 +118,6 @@ Deno.serve(async (req) => {
           if (error) throw error;
         }
 
-        // Update profile display name
         if (display_name !== undefined) {
           const { error } = await adminClient
             .from("profiles")
@@ -123,7 +127,7 @@ Deno.serve(async (req) => {
         }
 
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
       }
 
@@ -132,7 +136,6 @@ Deno.serve(async (req) => {
         if (!target_user_id || !role) throw new Error("target_user_id and role required");
         if (!["admin", "user"].includes(role)) throw new Error("Invalid role");
 
-        // Upsert role
         const { data: existing } = await adminClient
           .from("user_roles")
           .select("id")
@@ -153,20 +156,20 @@ Deno.serve(async (req) => {
         }
 
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
       }
 
       default:
         return new Response(JSON.stringify({ error: "Unknown action" }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         });
     }
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
     });
   }
 });

@@ -27,11 +27,24 @@ const DiscogsCallback = () => {
         return;
       }
 
-      const oauthSecret = localStorage.getItem("discogs_oauth_secret");
-      if (!oauthSecret) {
+      const oauthSecretRaw = sessionStorage.getItem("discogs_oauth_secret");
+      if (!oauthSecretRaw) {
         toast.error("OAuth session expired. Please try connecting again.");
         navigate("/");
         return;
+      }
+      let oauthSecret: string;
+      try {
+        const parsed = JSON.parse(oauthSecretRaw);
+        if (parsed.expiry && Date.now() > parsed.expiry) {
+          sessionStorage.removeItem("discogs_oauth_secret");
+          toast.error("OAuth session expired. Please try connecting again.");
+          navigate("/");
+          return;
+        }
+        oauthSecret = parsed.secret;
+      } catch {
+        oauthSecret = oauthSecretRaw;
       }
 
       try {
@@ -48,7 +61,7 @@ const DiscogsCallback = () => {
         const data = await resp.json();
         if (data.error) throw new Error(data.error);
 
-        localStorage.removeItem("discogs_oauth_secret");
+        sessionStorage.removeItem("discogs_oauth_secret");
         toast.success(`Connected to Discogs as ${data.username}!`);
       } catch (err: any) {
         toast.error(err.message || "Failed to connect to Discogs");

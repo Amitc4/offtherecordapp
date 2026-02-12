@@ -19,7 +19,10 @@ const ProfileScreen = () => {
     try {
       const callbackUrl = `${window.location.origin}/discogs/callback`;
       const data = await startConnect(callbackUrl);
-      localStorage.setItem("discogs_oauth_secret", data.oauth_token_secret);
+      sessionStorage.setItem("discogs_oauth_secret", JSON.stringify({
+        secret: data.oauth_token_secret,
+        expiry: Date.now() + 600000,
+      }));
       window.location.href = data.authorize_url;
     } catch (err: any) {
       toast.error(err.message || "Failed to start Discogs connection");
