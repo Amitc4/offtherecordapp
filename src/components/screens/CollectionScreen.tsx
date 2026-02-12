@@ -1,16 +1,57 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Disc3, Plus, Camera, LayoutGrid, List, RefreshCw } from "lucide-react";
 import { useUserRecords } from "@/hooks/useDiscogs";
 import { useDiscogsProfile, useDiscogsSync } from "@/hooks/useDiscogs";
+import AddRecordDialog from "@/components/AddRecordDialog";
+import { toast } from "sonner";
 
 const CollectionScreen = () => {
   const [view, setView] = useState<"grid" | "list">("list");
+  const [addOpen, setAddOpen] = useState(false);
   const { data: records = [], isLoading } = useUserRecords();
   const { data: profile } = useDiscogsProfile();
   const { syncCollection } = useDiscogsSync();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCamera = async () => {
+    // Check if we can use the camera via getUserMedia (for preview / permission prompt)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      // Stop immediately — we just wanted to trigger the permission prompt
+      stream.getTracks().forEach((t) => t.stop());
+      // Now open file input with camera capture
+      fileInputRef.current?.click();
+    } catch (err: any) {
+      if (err.name === "NotAllowedError") {
+        toast.error("Camera access denied. Please enable it in your device settings.");
+      } else if (err.name === "NotFoundError") {
+        toast.error("No camera found on this device.");
+      } else {
+        toast.error("Could not access camera. Check your browser/device settings.");
+      }
+    }
+  };
+
+  const handleCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      toast.info("Photo captured! Barcode scanning coming soon.");
+      // Future: process the image for barcode/vinyl recognition
+    }
+  };
 
   return (
     <div className="px-4 pt-4 pb-2">
+      {/* Hidden camera input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleCapture}
+      />
+
       <div className="mb-4 flex items-center justify-between">
         <h1 className="font-display text-xl font-bold text-foreground">My Collection</h1>
         <div className="flex items-center gap-2">
@@ -29,10 +70,16 @@ const CollectionScreen = () => {
               <RefreshCw size={18} className={syncCollection.isPending ? "animate-spin" : ""} />
             </button>
           )}
-          <button className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-primary">
+          <button
+            onClick={handleCamera}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-primary"
+          >
             <Camera size={18} />
           </button>
-          <button className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <button
+            onClick={() => setAddOpen(true)}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground"
+          >
             <Plus size={18} />
           </button>
         </div>
@@ -101,6 +148,8 @@ const CollectionScreen = () => {
           ))}
         </div>
       )}
+
+      <AddRecordDialog open={addOpen} onOpenChange={setAddOpen} target="collection" />
     </div>
   );
 };

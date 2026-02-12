@@ -371,6 +371,34 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ──── SEARCH ────
+    if (action === "search") {
+      const query = url.searchParams.get("q") || "";
+      if (!query) {
+        return new Response(JSON.stringify({ error: "Missing query" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const resp = await fetch(
+        `https://api.discogs.com/database/search?q=${encodeURIComponent(query)}&type=release&per_page=20&key=${DISCOGS_CONSUMER_KEY}&secret=${DISCOGS_CONSUMER_SECRET}`,
+        { headers: { "User-Agent": "OffTheRecordApp/1.0" } }
+      );
+      const data = await resp.json();
+      const results = (data.results || []).map((r: any) => ({
+        id: r.id,
+        title: r.title,
+        year: parseInt(r.year) || null,
+        cover_image: r.cover_image || r.thumb || null,
+        format: r.format?.join(", ") || null,
+      }));
+
+      return new Response(JSON.stringify({ results }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ──── DISCONNECT ────
     if (action === "disconnect") {
       const authHeader = getAuthenticatedUser(req);
