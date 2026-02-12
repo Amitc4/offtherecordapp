@@ -1,18 +1,15 @@
 import { useState } from "react";
-import { Disc3, Heart, Compass, MessageCircle, User, ShieldCheck, ShieldOff } from "lucide-react";
+import { Disc3, Heart, Compass, MessageCircle, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import CollectionScreen from "@/components/screens/CollectionScreen";
 import WishlistScreen from "@/components/screens/WishlistScreen";
 import DiscoverScreen from "@/components/screens/DiscoverScreen";
 import ChatsScreen from "@/components/screens/ChatsScreen";
 import ProfileScreen from "@/components/screens/ProfileScreen";
-import AdminScreen from "@/components/screens/AdminScreen";
-import { useIsAdmin } from "@/hooks/useAdmin";
 
-type Tab = "collection" | "wishlist" | "discover" | "chats" | "profile" | "admin";
+type Tab = "collection" | "wishlist" | "discover" | "chats" | "profile";
 
-const baseTabs: { id: Tab; label: string; icon: typeof Disc3 }[] = [
+const tabs: { id: Tab; label: string; icon: typeof Disc3 }[] = [
   { id: "collection", label: "Collection", icon: Disc3 },
   { id: "wishlist", label: "Wishlist", icon: Heart },
   { id: "discover", label: "Discover", icon: Compass },
@@ -24,14 +21,6 @@ const unreadMessages = 3;
 
 const HomePage = () => {
   const [activeTab, setActiveTab] = useState<Tab>("discover");
-  const { data: isAdmin } = useIsAdmin();
-
-  const tabs = [
-    ...baseTabs,
-    ...(isAdmin
-      ? [{ id: "admin" as Tab, label: "Admin", icon: ShieldCheck }]
-      : [{ id: "admin" as Tab, label: "Admin", icon: ShieldOff }]),
-  ];
 
   const renderScreen = () => {
     switch (activeTab) {
@@ -40,12 +29,10 @@ const HomePage = () => {
       case "discover": return <DiscoverScreen />;
       case "chats": return <ChatsScreen />;
       case "profile": return <ProfileScreen />;
-      case "admin": return <AdminScreen />;
     }
   };
 
   return (
-    <TooltipProvider>
     <div className="mx-auto flex h-screen max-w-md flex-col bg-background">
       <main className="flex-1 overflow-y-auto pb-20">
         <AnimatePresence mode="wait">
@@ -66,17 +53,14 @@ const HomePage = () => {
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
-            const isAdminTab = tab.id === "admin";
-            const adminDisabled = isAdminTab && !isAdmin;
-
-            const buttonContent = (
+            return (
               <button
                 key={tab.id}
-                onClick={() => !adminDisabled && setActiveTab(tab.id)}
-                className={`relative flex flex-col items-center gap-0.5 ${adminDisabled ? "cursor-not-allowed opacity-50" : ""}`}
+                onClick={() => setActiveTab(tab.id)}
+                className="relative flex flex-col items-center gap-0.5"
               >
                 <div className="relative flex flex-col items-center">
-                  {isActive && !adminDisabled && (
+                  {isActive && (
                     <motion.div
                       layoutId="activeTab"
                       className="absolute bottom-full mb-1 h-0.5 w-5 rounded-full bg-primary"
@@ -85,7 +69,7 @@ const HomePage = () => {
                   )}
                   <Icon
                     size={22}
-                    className={`transition-colors ${adminDisabled ? "text-muted-foreground/50" : isActive ? "text-primary" : "text-muted-foreground"}`}
+                    className={`transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`}
                     fill={isActive && tab.id === "wishlist" ? "hsl(var(--primary))" : "none"}
                   />
                   {tab.id === "chats" && unreadMessages > 0 && (
@@ -94,30 +78,16 @@ const HomePage = () => {
                     </span>
                   )}
                 </div>
-                <span className={`font-body text-[10px] transition-colors ${adminDisabled ? "text-muted-foreground/50" : isActive ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+                <span className={`font-body text-[10px] transition-colors ${isActive ? "font-semibold text-primary" : "text-muted-foreground"}`}>
                   {tab.label}
                 </span>
               </button>
             );
-
-            if (isAdminTab) {
-              return (
-                <Tooltip key={tab.id}>
-                  <TooltipTrigger asChild>{buttonContent}</TooltipTrigger>
-                  <TooltipContent side="top">
-                    {isAdmin ? "Admin" : "Not an admin"}
-                  </TooltipContent>
-                </Tooltip>
-              );
-            }
-
-            return buttonContent;
           })}
         </div>
         <div className="h-safe-area-inset-bottom bg-card" />
       </nav>
     </div>
-    </TooltipProvider>
   );
 };
 
