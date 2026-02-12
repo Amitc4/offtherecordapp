@@ -14,7 +14,144 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      discogs_tokens: {
+        Row: {
+          access_secret: string
+          access_token: string
+          created_at: string
+          discogs_username: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          access_secret: string
+          access_token: string
+          created_at?: string
+          discogs_username?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          access_secret?: string
+          access_token?: string
+          created_at?: string
+          discogs_username?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          discogs_connected: boolean
+          discogs_username: string | null
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          discogs_connected?: boolean
+          discogs_username?: string | null
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          discogs_connected?: boolean
+          discogs_username?: string | null
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_records: {
+        Row: {
+          artist: string
+          condition: string | null
+          cover_image: string | null
+          created_at: string
+          discogs_release_id: number | null
+          format: string | null
+          id: string
+          notes: string | null
+          title: string
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          artist: string
+          condition?: string | null
+          cover_image?: string | null
+          created_at?: string
+          discogs_release_id?: number | null
+          format?: string | null
+          id?: string
+          notes?: string | null
+          title: string
+          user_id: string
+          year?: number | null
+        }
+        Update: {
+          artist?: string
+          condition?: string | null
+          cover_image?: string | null
+          created_at?: string
+          discogs_release_id?: number | null
+          format?: string | null
+          id?: string
+          notes?: string | null
+          title?: string
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      user_wishlist: {
+        Row: {
+          artist: string
+          cover_image: string | null
+          created_at: string
+          discogs_release_id: number | null
+          id: string
+          notes: string | null
+          title: string
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          artist: string
+          cover_image?: string | null
+          created_at?: string
+          discogs_release_id?: number | null
+          id?: string
+          notes?: string | null
+          title: string
+          user_id: string
+          year?: number | null
+        }
+        Update: {
+          artist?: string
+          cover_image?: string | null
+          created_at?: string
+          discogs_release_id?: number | null
+          id?: string
+          notes?: string | null
+          title?: string
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

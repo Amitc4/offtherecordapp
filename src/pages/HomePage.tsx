@@ -19,7 +19,7 @@ const tabs: { id: Tab; label: string; icon: typeof Disc3 }[] = [
 
 const unreadMessages = 3;
 
-const HomePage = ({ onLogout }: { onLogout: () => void }) => {
+const HomePage = () => {
   const [activeTab, setActiveTab] = useState<Tab>("discover");
 
   const renderScreen = () => {
@@ -28,13 +28,12 @@ const HomePage = ({ onLogout }: { onLogout: () => void }) => {
       case "wishlist": return <WishlistScreen />;
       case "discover": return <DiscoverScreen />;
       case "chats": return <ChatsScreen />;
-      case "profile": return <ProfileScreen onLogout={onLogout} />;
+      case "profile": return <ProfileScreen />;
     }
   };
 
   return (
     <div className="mx-auto flex h-screen max-w-md flex-col bg-background">
-      {/* Content area */}
       <main className="flex-1 overflow-y-auto pb-20">
         <AnimatePresence mode="wait">
           <motion.div
@@ -49,7 +48,6 @@ const HomePage = ({ onLogout }: { onLogout: () => void }) => {
         </AnimatePresence>
       </main>
 
-      {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-md -translate-x-1/2 border-t border-primary/20 bg-card/95 backdrop-blur-md">
         <div className="flex h-14 items-center justify-around px-2">
           {tabs.map((tab) => {
@@ -87,7 +85,6 @@ const HomePage = ({ onLogout }: { onLogout: () => void }) => {
             );
           })}
         </div>
-        {/* Safe area for phones */}
         <div className="h-safe-area-inset-bottom bg-card" />
       </nav>
     </div>

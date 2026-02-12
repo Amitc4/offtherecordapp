@@ -1,15 +1,23 @@
-import { useState } from "react";
 import LoginPage from "@/pages/LoginPage";
 import HomePage from "@/pages/HomePage";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { user, loading } = useAuth();
 
-  if (!isLoggedIn) {
-    return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
   }
 
-  return <HomePage onLogout={() => setIsLoggedIn(false)} />;
+  if (!user) {
+    return <LoginPage />;
+  }
+
+  return <HomePage />;
 };
 
 export default Index;
