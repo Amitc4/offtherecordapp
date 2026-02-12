@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Shield, Pencil, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -180,15 +180,22 @@ const AdminScreen = () => {
           <p className="text-sm text-muted-foreground">
             Changing role for <strong>{roleUser?.display_name || roleUser?.email}</strong>
           </p>
-          <Select value={newRole} onValueChange={setNewRole}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="user">User</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-            </SelectContent>
-          </Select>
+          <RadioGroup value={newRole} onValueChange={setNewRole} className="space-y-2 py-4">
+            <div className="flex items-center space-x-3 rounded-lg border border-border p-4 cursor-pointer hover:bg-secondary/50" onClick={() => setNewRole("admin")}>
+              <RadioGroupItem value="admin" id="role-admin" />
+              <Label htmlFor="role-admin" className="cursor-pointer flex-1 m-0">
+                <p className="font-medium text-foreground">Admin</p>
+                <p className="text-xs text-muted-foreground">Full access to user management</p>
+              </Label>
+            </div>
+            <div className="flex items-center space-x-3 rounded-lg border border-border p-4 cursor-pointer hover:bg-secondary/50" onClick={() => setNewRole("user")}>
+              <RadioGroupItem value="user" id="role-user" />
+              <Label htmlFor="role-user" className="cursor-pointer flex-1 m-0">
+                <p className="font-medium text-foreground">User</p>
+                <p className="text-xs text-muted-foreground">Regular access to app features</p>
+              </Label>
+            </div>
+          </RadioGroup>
           <DialogFooter>
             <Button variant="secondary" onClick={() => setRoleUser(null)}>Cancel</Button>
             <Button
