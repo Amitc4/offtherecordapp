@@ -2,12 +2,12 @@ import { useState } from "react";
 import { Disc3, LayoutGrid, List } from "lucide-react";
 
 const featured = [
-  { id: 1, title: "The Dark Side of the Moon", artist: "Pink Floyd", price: "$35", condition: "GEM" },
-  { id: 2, title: "Thriller", artist: "Michael Jackson", price: "$28", condition: "NM" },
-  { id: 3, title: "Back to Black", artist: "Amy Winehouse", price: "$22", condition: "OK" },
-  { id: 4, title: "OK Computer", artist: "Radiohead", price: "$40", condition: "M" },
-  { id: 5, title: "Purple Rain", artist: "Prince", price: "$30", condition: "G" },
-  { id: 6, title: "Tapestry", artist: "Carole King", price: "$18", condition: "NM" },
+  { id: 1, title: "The Dark Side of the Moon", artist: "Pink Floyd", price: "₪130", condition: "GEM" },
+  { id: 2, title: "Thriller", artist: "Michael Jackson", price: "₪105", condition: "NM" },
+  { id: 3, title: "Back to Black", artist: "Amy Winehouse", price: "₪80", condition: "OK" },
+  { id: 4, title: "OK Computer", artist: "Radiohead", price: "₪150", condition: "M" },
+  { id: 5, title: "Purple Rain", artist: "Prince", price: "₪110", condition: "G" },
+  { id: 6, title: "Tapestry", artist: "Carole King", price: "₪65", condition: "NM" },
 ];
 
 const DiscoverScreen = () => {

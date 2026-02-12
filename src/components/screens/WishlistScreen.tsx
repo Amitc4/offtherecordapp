@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Heart, LayoutGrid, List, RefreshCw } from "lucide-react";
+import { Heart, Plus, LayoutGrid, List, RefreshCw } from "lucide-react";
 import { useUserWishlist, useDiscogsProfile, useDiscogsSync } from "@/hooks/useDiscogs";
+import AddRecordDialog from "@/components/AddRecordDialog";
 
 const WishlistScreen = () => {
   const [view, setView] = useState<"grid" | "list">("list");
+  const [addOpen, setAddOpen] = useState(false);
   const { data: wishlist = [], isLoading } = useUserWishlist();
   const { data: profile } = useDiscogsProfile();
   const { syncWishlist } = useDiscogsSync();
@@ -28,6 +30,12 @@ const WishlistScreen = () => {
               <RefreshCw size={18} className={syncWishlist.isPending ? "animate-spin" : ""} />
             </button>
           )}
+          <button
+            onClick={() => setAddOpen(true)}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground"
+          >
+            <Plus size={18} />
+          </button>
         </div>
       </div>
       <p className="mb-4 font-body text-xs text-muted-foreground">{wishlist.length} records wanted</p>
@@ -84,6 +92,8 @@ const WishlistScreen = () => {
           ))}
         </div>
       )}
+
+      <AddRecordDialog open={addOpen} onOpenChange={setAddOpen} target="wishlist" />
     </div>
   );
 };
