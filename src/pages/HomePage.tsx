@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { Disc3, Heart, Compass, MessageCircle, User } from "lucide-react";
+import { Disc3, Heart, Compass, MessageCircle, User, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CollectionScreen from "@/components/screens/CollectionScreen";
 import WishlistScreen from "@/components/screens/WishlistScreen";
 import DiscoverScreen from "@/components/screens/DiscoverScreen";
 import ChatsScreen from "@/components/screens/ChatsScreen";
 import ProfileScreen from "@/components/screens/ProfileScreen";
+import AdminScreen from "@/components/screens/AdminScreen";
+import { useIsAdmin } from "@/hooks/useAdmin";
 
-type Tab = "collection" | "wishlist" | "discover" | "chats" | "profile";
+type Tab = "collection" | "wishlist" | "discover" | "chats" | "profile" | "admin";
 
-const tabs: { id: Tab; label: string; icon: typeof Disc3 }[] = [
+const baseTabs: { id: Tab; label: string; icon: typeof Disc3 }[] = [
   { id: "collection", label: "Collection", icon: Disc3 },
   { id: "wishlist", label: "Wishlist", icon: Heart },
   { id: "discover", label: "Discover", icon: Compass },
@@ -21,6 +23,11 @@ const unreadMessages = 3;
 
 const HomePage = () => {
   const [activeTab, setActiveTab] = useState<Tab>("discover");
+  const { data: isAdmin } = useIsAdmin();
+
+  const tabs = isAdmin
+    ? [...baseTabs, { id: "admin" as Tab, label: "Admin", icon: ShieldCheck }]
+    : baseTabs;
 
   const renderScreen = () => {
     switch (activeTab) {
@@ -29,6 +36,7 @@ const HomePage = () => {
       case "discover": return <DiscoverScreen />;
       case "chats": return <ChatsScreen />;
       case "profile": return <ProfileScreen />;
+      case "admin": return <AdminScreen />;
     }
   };
 
