@@ -107,6 +107,20 @@ const ChatsScreen = () => {
 
   if (activeChat && activeChatData) {
     const chatMessages = messages[activeChat] || [];
+
+    // Interleave messages and offers by time (offers use created_at, messages use id as timestamp)
+    type TimelineItem = { type: "message"; data: ChatMessage } | { type: "offer"; data: TradeOffer };
+    const timeline: TimelineItem[] = [
+      ...chatMessages.map((m) => ({ type: "message" as const, data: m })),
+      ...offers.map((o) => ({ type: "offer" as const, data: o })),
+    ];
+    // Sort: messages by id (timestamp-ish), offers by created_at. Put offers after messages for mock data.
+    timeline.sort((a, b) => {
+      const timeA = a.type === "offer" ? new Date(a.data.created_at).getTime() : a.data.id;
+      const timeB = b.type === "offer" ? new Date(b.data.created_at).getTime() : b.data.id;
+      return timeA - timeB;
+    });
+
     return (
       <div className="flex h-full flex-col">
         {/* Header */}
@@ -130,35 +144,41 @@ const ChatsScreen = () => {
           </button>
         </div>
 
-        {/* Messages + Offers */}
+        {/* Messages + Offers interleaved */}
         <div className="flex-1 overflow-y-auto px-4 py-3 pb-20 space-y-3">
-          {chatMessages.map((msg) => (
-            <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
-              <div
-                className={`max-w-[75%] rounded-2xl px-3.5 py-2 font-body text-sm ${
-                  msg.sender === "me"
-                    ? "bg-primary text-primary-foreground rounded-br-sm"
-                    : "bg-card text-foreground rounded-bl-sm vinyl-shadow"
-                }`}
-              >
-                <p>{msg.text}</p>
-                <p className={`mt-1 text-[9px] ${msg.sender === "me" ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                  {msg.time}
-                </p>
-              </div>
-            </div>
-          ))}
-
-          {/* Offers in chat */}
-          {offers.map((offer) => (
-            <OfferCard
-              key={offer.id}
-              offer={offer}
-              senderName={offer.sender_id === user?.id ? "You" : activeChatData.name}
-              receiverName={offer.receiver_id === user?.id ? "You" : activeChatData.name}
-              onUpdate={fetchOffers}
-            />
-          ))}
+          {timeline.map((item, idx) => {
+            if (item.type === "message") {
+              const msg = item.data;
+              return (
+                <div key={`msg-${msg.id}`} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
+                  <div
+                    className={`max-w-[75%] rounded-2xl px-3.5 py-2 font-body text-sm ${
+                      msg.sender === "me"
+                        ? "bg-primary text-primary-foreground rounded-br-sm"
+                        : "bg-card text-foreground rounded-bl-sm vinyl-shadow"
+                    }`}
+                  >
+                    <p>{msg.text}</p>
+                    <p className={`mt-1 text-[9px] ${msg.sender === "me" ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                      {msg.time}
+                    </p>
+                  </div>
+                </div>
+              );
+            } else {
+              const offer = item.data;
+              return (
+                <OfferCard
+                  key={`offer-${offer.id}`}
+                  offer={offer}
+                  senderName={offer.sender_id === user?.id ? "You" : activeChatData.name}
+                  receiverName={offer.receiver_id === user?.id ? "You" : activeChatData.name}
+                  onUpdate={fetchOffers}
+                  onCounterOffer={() => setShowOfferDialog(true)}
+                />
+              );
+            }
+          })}
         </div>
 
         {/* Fixed input bar */}

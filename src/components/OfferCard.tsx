@@ -29,9 +29,10 @@ interface OfferCardProps {
   senderName: string;
   receiverName: string;
   onUpdate: () => void;
+  onCounterOffer?: () => void;
 }
 
-const OfferCard = ({ offer, senderName, receiverName, onUpdate }: OfferCardProps) => {
+const OfferCard = ({ offer, senderName, receiverName, onUpdate, onCounterOffer }: OfferCardProps) => {
   const { user } = useAuth();
   const [items, setItems] = useState<OfferItem[]>([]);
   const [showReview, setShowReview] = useState(false);
@@ -175,18 +176,32 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate }: OfferCardProps
 
       {/* Actions */}
       {offer.status === "pending" && isReceiver && (
-        <div className="flex gap-2 mt-2">
-          <Button size="sm" onClick={handleAccept} className="flex-1 gap-1 font-body text-xs">
-            <Check size={14} /> Accept
-          </Button>
-          <Button size="sm" variant="outline" onClick={handleDecline} className="flex-1 gap-1 font-body text-xs">
-            <X size={14} /> Decline
-          </Button>
+        <div className="space-y-2 mt-2">
+          <div className="flex gap-2">
+            <Button size="sm" onClick={handleAccept} className="flex-1 gap-1 font-body text-xs">
+              <Check size={14} /> Accept
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleDecline} className="flex-1 gap-1 font-body text-xs">
+              <X size={14} /> Decline
+            </Button>
+          </div>
+          {onCounterOffer && (
+            <Button size="sm" variant="secondary" onClick={onCounterOffer} className="w-full gap-1 font-body text-xs">
+              <ArrowRightLeft size={14} /> Counter Offer
+            </Button>
+          )}
         </div>
       )}
 
       {offer.status === "pending" && isSender && (
-        <p className="mt-2 text-center font-body text-[10px] text-muted-foreground">Waiting for response...</p>
+        <div className="space-y-2 mt-2">
+          <p className="text-center font-body text-[10px] text-muted-foreground">Waiting for response...</p>
+          {onCounterOffer && (
+            <Button size="sm" variant="secondary" onClick={onCounterOffer} className="w-full gap-1 font-body text-xs">
+              <ArrowRightLeft size={14} /> Change Offer
+            </Button>
+          )}
+        </div>
       )}
 
       {offer.status === "accepted" && !myConfirmed && (
