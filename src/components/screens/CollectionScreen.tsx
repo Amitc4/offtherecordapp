@@ -57,7 +57,7 @@ const CollectionScreen = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setView(view === "grid" ? "list" : "grid")}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-primary"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
           >
             {view === "grid" ? <List size={18} /> : <LayoutGrid size={18} />}
           </button>
@@ -65,20 +65,20 @@ const CollectionScreen = () => {
             <button
               onClick={() => syncCollection.mutate()}
               disabled={syncCollection.isPending}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-primary"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
             >
               <RefreshCw size={18} className={syncCollection.isPending ? "animate-spin" : ""} />
             </button>
           )}
           <button
             onClick={handleCamera}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-primary"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
           >
             <Camera size={18} />
           </button>
           <button
             onClick={() => setAddOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-95"
           >
             <Plus size={18} />
           </button>

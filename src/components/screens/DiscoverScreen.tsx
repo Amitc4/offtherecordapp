@@ -19,7 +19,7 @@ const DiscoverScreen = () => {
         <h1 className="font-display text-xl font-bold text-foreground">Discover</h1>
         <button
           onClick={() => setView(view === "grid" ? "list" : "grid")}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-primary"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
         >
           {view === "grid" ? <List size={18} /> : <LayoutGrid size={18} />}
         </button>
@@ -31,7 +31,7 @@ const DiscoverScreen = () => {
         {["All", "Rock", "Jazz", "Soul", "Electronic", "Hip Hop"].map((cat, i) => (
           <button
             key={cat}
-            className={`shrink-0 rounded-full px-3 py-1.5 font-body text-[11px] font-medium transition-colors ${
+            className={`shrink-0 rounded-full px-4 py-2 font-body text-xs font-medium transition-colors ${
               i === 0
                 ? "bg-primary text-primary-foreground shadow-md"
                 : "bg-primary/10 text-primary hover:bg-primary/20"
@@ -67,8 +67,8 @@ const DiscoverScreen = () => {
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/15">
                 <Disc3 size={24} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
               </div>
-              <div className="flex-1">
-                <h3 className="font-display text-sm font-semibold text-foreground">{item.title}</h3>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-display text-sm font-semibold text-foreground truncate">{item.title}</h3>
                 <p className="font-body text-xs text-muted-foreground">{item.artist}</p>
               </div>
               <div className="flex flex-col items-end gap-1">

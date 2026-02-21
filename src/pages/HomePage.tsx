@@ -54,7 +54,7 @@ const HomePage = () => {
   };
 
   return (
-    <div className="mx-auto flex h-screen max-w-md flex-col bg-background">
+    <div className="mx-auto flex h-screen max-w-md flex-col overflow-x-hidden bg-background">
       <main className="flex-1 overflow-y-auto pb-20">
         <AnimatePresence mode="wait">
           <motion.div

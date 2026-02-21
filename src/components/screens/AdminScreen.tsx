@@ -88,10 +88,10 @@ const AdminScreen = () => {
   };
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4 overflow-x-hidden">
       <div className="flex items-center gap-2">
-        <Users size={24} className="text-primary" />
-        <h1 className="font-display text-2xl font-bold text-foreground">User Management</h1>
+        <Users size={24} className="shrink-0 text-primary" />
+        <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground truncate">User Management</h1>
       </div>
 
       <div className="relative">
@@ -100,7 +100,7 @@ const AdminScreen = () => {
           placeholder="Search by name, email, or phone..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
+          className="pl-10 h-11"
         />
       </div>
 
@@ -113,7 +113,7 @@ const AdminScreen = () => {
       ) : (
         <div className="space-y-2">
           {users.map((u) => (
-            <div key={u.id} className="flex items-center gap-3 rounded-lg bg-card p-3 border border-border">
+            <div key={u.id} className="flex items-center gap-2 sm:gap-3 rounded-lg bg-card p-3 border border-border">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary font-display text-sm font-bold text-secondary-foreground">
                 {(u.display_name || u.email)?.[0]?.toUpperCase() || "?"}
               </div>
@@ -122,17 +122,18 @@ const AdminScreen = () => {
                   {u.display_name || "No name"}
                 </p>
                 <p className="truncate font-body text-xs text-muted-foreground">{u.email}</p>
-                {u.phone && <p className="truncate font-body text-xs text-muted-foreground">{u.phone}</p>}
               </div>
-              <Badge variant={u.role === "admin" ? "default" : "secondary"} className="shrink-0 text-xs">
-                {u.role}
-              </Badge>
-              <Button variant="ghost" size="icon" onClick={() => openRole(u)} title="Change role">
-                <Shield size={16} />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => openEdit(u)} title="Edit user">
-                <Pencil size={16} />
-              </Button>
+              <div className="flex shrink-0 items-center gap-1">
+                <Badge variant={u.role === "admin" ? "default" : "secondary"} className="text-[10px] px-1.5">
+                  {u.role}
+                </Badge>
+                <Button variant="ghost" size="icon" onClick={() => openRole(u)} title="Change role" className="h-9 w-9">
+                  <Shield size={16} />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => openEdit(u)} title="Edit user" className="h-9 w-9">
+                  <Pencil size={16} />
+                </Button>
+              </div>
             </div>
           ))}
         </div>

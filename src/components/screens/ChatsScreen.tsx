@@ -66,7 +66,7 @@ const ChatsScreen = () => {
       <div className="flex h-full flex-col">
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-          <button onClick={() => setActiveChat(null)} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-card">
+          <button onClick={() => setActiveChat(null)} className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-card active:bg-card/80">
             <ArrowLeft size={20} className="text-foreground" />
           </button>
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
@@ -101,17 +101,17 @@ const ChatsScreen = () => {
         {/* Input */}
         <div className="border-t border-border px-4 py-3">
           <div className="flex items-center gap-2">
-            <Input
+             <Input
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
               placeholder="Type a message..."
-              className="flex-1 font-body text-sm"
+              className="flex-1 h-11 font-body text-sm"
             />
             <button
               onClick={handleSend}
               disabled={!inputText.trim()}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-95 disabled:opacity-40"
             >
               <Send size={16} />
             </button>
