@@ -105,7 +105,7 @@ const HomePage = () => {
             );
           })}
         </div>
-        <div className="h-6 bg-card" />
+        <div className="h-3 bg-card" />
       </nav>
     </div>
   );
