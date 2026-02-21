@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Disc3, Plus, Camera, LayoutGrid, List, RefreshCw, CheckSquare, X, Tag, Star } from "lucide-react";
+import { Disc3, Plus, Camera, LayoutGrid, List, RefreshCw, CheckSquare, X, Tag } from "lucide-react";
 import { useUserRecords } from "@/hooks/useDiscogs";
 import { useDiscogsProfile, useDiscogsSync } from "@/hooks/useDiscogs";
 import AddRecordDialog from "@/components/AddRecordDialog";
 import RecordDetailSheet from "@/components/RecordDetailSheet";
 import ScanRecordDialog from "@/components/ScanRecordDialog";
-import GradeVinylDialog from "@/components/GradeVinylDialog";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -15,7 +15,7 @@ const CollectionScreen = () => {
   const [view, setView] = useState<"grid" | "list">("list");
   const [addOpen, setAddOpen] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
-  const [gradeOpen, setGradeOpen] = useState(false);
+  
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [menuOpen, setMenuOpen] = useState(false);
@@ -96,13 +96,6 @@ const CollectionScreen = () => {
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
               >
                 <Camera size={18} />
-              </button>
-              <button
-                onClick={() => setGradeOpen(true)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
-                title="Grade Vinyl Condition"
-              >
-                <Star size={18} />
               </button>
               <button
                 onClick={() => setAddOpen(true)}
@@ -309,7 +302,7 @@ const CollectionScreen = () => {
         onOpenChange={(open) => !open && setDetailRecord(null)}
       />
       <ScanRecordDialog open={scanOpen} onOpenChange={setScanOpen} />
-      <GradeVinylDialog open={gradeOpen} onOpenChange={setGradeOpen} />
+      
     </div>
   );
 };

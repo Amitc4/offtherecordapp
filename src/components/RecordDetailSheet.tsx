@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Disc3, Camera, Calendar, Tag, Package } from "lucide-react";
+import { Disc3, Camera, Calendar, Tag, Package, Star } from "lucide-react";
+import GradeVinylDialog from "@/components/GradeVinylDialog";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +33,7 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const [localForSale, setLocalForSale] = useState(false);
   const [price, setPrice] = useState("");
   const [savingPrice, setSavingPrice] = useState(false);
+  const [gradeOpen, setGradeOpen] = useState(false);
 
   // Sync local state when record changes
   useEffect(() => {
@@ -162,19 +164,22 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
             </div>
           )}
 
-          {/* Camera button for grading */}
+          {/* AI Grade button */}
           <button
-            onClick={handleCameraPress}
+            onClick={() => setGradeOpen(true)}
             className="flex w-full items-center gap-3 rounded-xl bg-primary/10 p-4 transition-colors active:bg-primary/20"
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <div className="relative flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
               <Camera size={20} />
+              <Star size={10} className="absolute -top-0.5 -right-0.5 text-primary fill-primary" />
             </div>
             <div className="text-left">
               <p className="font-body text-sm font-semibold text-foreground">Grade this record</p>
               <p className="font-body text-xs text-muted-foreground">Take a photo to get an AI condition grade</p>
             </div>
           </button>
+
+          <GradeVinylDialog open={gradeOpen} onOpenChange={setGradeOpen} />
 
           {/* Status toggle */}
           <div className="flex items-center justify-between rounded-xl bg-background p-4">
