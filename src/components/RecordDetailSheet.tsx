@@ -1,10 +1,12 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Disc3, Camera, Calendar, Music, Tag, Package } from "lucide-react";
+import { Disc3, Camera, Calendar, Tag, Package } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface RecordDetailSheetProps {
   record: {
@@ -17,6 +19,7 @@ interface RecordDetailSheetProps {
     format: string | null;
     notes: string | null;
     status?: string;
+    price?: number | null;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -26,12 +29,22 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [updating, setUpdating] = useState(false);
+  const [localForSale, setLocalForSale] = useState(false);
+  const [price, setPrice] = useState("");
+  const [savingPrice, setSavingPrice] = useState(false);
+
+  // Sync local state when record changes
+  useEffect(() => {
+    if (record) {
+      setLocalForSale((record as any).status === "for_sale");
+      setPrice((record as any).price != null ? String((record as any).price) : "");
+    }
+  }, [record?.id, (record as any)?.status, (record as any)?.price]);
 
   if (!record) return null;
 
-  const isForSale = (record as any).status === "for_sale";
-
   const handleStatusToggle = async (checked: boolean) => {
+    setLocalForSale(checked); // instant UI update
     setUpdating(true);
     const newStatus = checked ? "for_sale" : "personal";
     const { error } = await supabase
@@ -39,12 +52,33 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
       .update({ status: newStatus } as any)
       .eq("id", record.id);
     if (error) {
+      setLocalForSale(!checked); // revert on error
       toast.error("Failed to update status");
     } else {
       toast.success(checked ? "Marked as For Sale / Trade" : "Marked as Personal Collection");
       queryClient.invalidateQueries({ queryKey: ["user_records"] });
     }
     setUpdating(false);
+  };
+
+  const handlePriceSave = async () => {
+    const numPrice = price.trim() ? parseFloat(price) : null;
+    if (price.trim() && (isNaN(numPrice!) || numPrice! < 0)) {
+      toast.error("Please enter a valid price");
+      return;
+    }
+    setSavingPrice(true);
+    const { error } = await supabase
+      .from("user_records")
+      .update({ price: numPrice } as any)
+      .eq("id", record.id);
+    if (error) {
+      toast.error("Failed to save price");
+    } else {
+      toast.success(numPrice != null ? `Price set to ₪${numPrice}` : "Price removed");
+      queryClient.invalidateQueries({ queryKey: ["user_records"] });
+    }
+    setSavingPrice(false);
   };
 
   const handleCameraPress = async () => {
@@ -77,7 +111,6 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
           <SheetTitle className="font-display text-lg text-foreground">Record Details</SheetTitle>
         </SheetHeader>
 
-        {/* Hidden camera input */}
         <input
           ref={fileInputRef}
           type="file"
@@ -122,7 +155,6 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
             </div>
           </div>
 
-          {/* Notes */}
           {record.notes && (
             <div>
               <p className="mb-1 font-body text-xs font-medium text-muted-foreground">Notes</p>
@@ -147,26 +179,66 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
           {/* Status toggle */}
           <div className="flex items-center justify-between rounded-xl bg-background p-4">
             <div className="flex items-center gap-3">
-              {isForSale ? (
+              {localForSale ? (
                 <Tag size={18} className="text-primary" />
               ) : (
                 <Package size={18} className="text-muted-foreground" />
               )}
               <div>
                 <p className="font-body text-sm font-medium text-foreground">
-                  {isForSale ? "For Sale / Trade" : "Personal Collection"}
+                  {localForSale ? "For Sale / Trade" : "Personal Collection"}
                 </p>
                 <p className="font-body text-[11px] text-muted-foreground">
-                  {isForSale ? "Visible to other users" : "Private to you"}
+                  {localForSale ? "Visible to other users" : "Private to you"}
                 </p>
               </div>
             </div>
             <Switch
-              checked={isForSale}
+              checked={localForSale}
               onCheckedChange={handleStatusToggle}
               disabled={updating}
             />
           </div>
+
+          {/* Price input — shown when for sale */}
+          <AnimatePresence>
+            {localForSale && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="rounded-xl bg-background p-4">
+                  <p className="mb-2 font-body text-xs font-medium text-muted-foreground">Listing Price</p>
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 font-body text-sm font-semibold text-muted-foreground">₪</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        onBlur={handlePriceSave}
+                        onKeyDown={(e) => e.key === "Enter" && handlePriceSave()}
+                        className="h-11 pl-8 font-body text-sm"
+                      />
+                    </div>
+                    <button
+                      onClick={handlePriceSave}
+                      disabled={savingPrice}
+                      className="h-11 shrink-0 rounded-lg bg-primary px-4 font-body text-sm font-semibold text-primary-foreground active:scale-95 disabled:opacity-50"
+                    >
+                      {savingPrice ? "..." : "Save"}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </SheetContent>
     </Sheet>
