@@ -3,6 +3,7 @@ import { Disc3, Plus, Camera, LayoutGrid, List, RefreshCw, CheckSquare, X, Tag }
 import { useUserRecords } from "@/hooks/useDiscogs";
 import { useDiscogsProfile, useDiscogsSync } from "@/hooks/useDiscogs";
 import AddRecordDialog from "@/components/AddRecordDialog";
+import RecordDetailSheet from "@/components/RecordDetailSheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -15,6 +16,7 @@ const CollectionScreen = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [menuOpen, setMenuOpen] = useState(false);
   const [marking, setMarking] = useState(false);
+  const [detailRecord, setDetailRecord] = useState<any>(null);
   const { data: records = [], isLoading } = useUserRecords();
   const { data: profile } = useDiscogsProfile();
   const { syncCollection } = useDiscogsSync();
@@ -172,10 +174,8 @@ const CollectionScreen = () => {
             return (
               <div
                 key={record.id}
-                onClick={() => selectMode && toggleSelect(record.id)}
-                className={`flex items-center gap-4 rounded-xl p-4 vinyl-shadow transition-all ${
-                  selectMode ? "cursor-pointer" : ""
-                } ${isSelected ? "bg-primary/10 ring-2 ring-primary/40" : "bg-card"}`}
+                onClick={() => selectMode ? toggleSelect(record.id) : setDetailRecord(record)}
+                className={`flex items-center gap-4 rounded-xl p-4 vinyl-shadow transition-all cursor-pointer ${isSelected ? "bg-primary/10 ring-2 ring-primary/40" : "bg-card"}`}
               >
                 {selectMode && (
                   <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
@@ -219,9 +219,9 @@ const CollectionScreen = () => {
             return (
               <div
                 key={record.id}
-                onClick={() => selectMode && toggleSelect(record.id)}
-                className={`group rounded-xl p-2.5 vinyl-shadow transition-all ${
-                  selectMode ? "cursor-pointer" : "hover:scale-[1.02]"
+                onClick={() => selectMode ? toggleSelect(record.id) : setDetailRecord(record)}
+                className={`group rounded-xl p-2.5 vinyl-shadow transition-all cursor-pointer ${
+                  selectMode ? "" : "hover:scale-[1.02]"
                 } ${isSelected ? "bg-primary/10 ring-2 ring-primary/40" : "bg-card"}`}
               >
                 <div className="relative mb-2 flex aspect-square items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
@@ -314,6 +314,11 @@ const CollectionScreen = () => {
       </AnimatePresence>
 
       <AddRecordDialog open={addOpen} onOpenChange={setAddOpen} target="collection" />
+      <RecordDetailSheet
+        record={detailRecord}
+        open={!!detailRecord}
+        onOpenChange={(open) => !open && setDetailRecord(null)}
+      />
     </div>
   );
 };
