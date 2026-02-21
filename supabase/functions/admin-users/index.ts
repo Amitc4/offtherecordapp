@@ -62,6 +62,10 @@ Deno.serve(async (req) => {
 
     const { action, ...params } = await req.json();
 
+    // Validation helpers
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     switch (action) {
       case "list_users": {
         const { search } = params;
@@ -106,7 +110,13 @@ Deno.serve(async (req) => {
 
       case "update_user": {
         const { target_user_id, email, phone, password, display_name } = params;
-        if (!target_user_id) throw new Error("target_user_id required");
+        if (!target_user_id || !UUID_RE.test(target_user_id)) throw new Error("Valid target_user_id required");
+        if (email && !EMAIL_RE.test(email)) throw new Error("Invalid email format");
+        if (email && email.length > 255) throw new Error("Email too long");
+        if (phone && (typeof phone !== "string" || phone.length > 20)) throw new Error("Invalid phone");
+        if (password && (typeof password !== "string" || password.length < 8)) throw new Error("Password must be at least 8 characters");
+        if (password && password.length > 128) throw new Error("Password too long");
+        if (display_name !== undefined && typeof display_name === "string" && display_name.length > 100) throw new Error("Display name too long");
 
         const authUpdates: any = {};
         if (email) authUpdates.email = email;
@@ -133,7 +143,8 @@ Deno.serve(async (req) => {
 
       case "set_role": {
         const { target_user_id, role } = params;
-        if (!target_user_id || !role) throw new Error("target_user_id and role required");
+        if (!target_user_id || !UUID_RE.test(target_user_id)) throw new Error("Valid target_user_id required");
+        if (!role || !["admin", "user"].includes(role)) throw new Error("Invalid role");
         if (!["admin", "user"].includes(role)) throw new Error("Invalid role");
 
         const { data: existing } = await adminClient
