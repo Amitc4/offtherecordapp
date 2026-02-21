@@ -46,19 +46,25 @@ Deno.serve(async (req) => {
     }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
-    const { data: roleData } = await adminClient
+
+    // Check if user is admin or main_admin
+    const { data: userRoles } = await adminClient
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .eq("role", "admin")
-      .maybeSingle();
+      .in("role", ["admin", "main_admin"]);
 
-    if (!roleData) {
+    const userRole = userRoles?.find((r: any) => r.role === "main_admin")?.role
+      || userRoles?.find((r: any) => r.role === "admin")?.role;
+
+    if (!userRole) {
       return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), {
         status: 403,
         headers: { ...cors, "Content-Type": "application/json" },
       });
     }
+
+    const isMainAdmin = userRole === "main_admin";
 
     const { action, ...params } = await req.json();
 
@@ -145,7 +151,20 @@ Deno.serve(async (req) => {
         const { target_user_id, role } = params;
         if (!target_user_id || !UUID_RE.test(target_user_id)) throw new Error("Valid target_user_id required");
         if (!role || !["admin", "user"].includes(role)) throw new Error("Invalid role");
-        if (!["admin", "user"].includes(role)) throw new Error("Invalid role");
+
+        // Only main_admin can directly set admin role; regular admins must submit a request
+        if (role === "admin" && !isMainAdmin) {
+          throw new Error("Only main admin can directly promote users. Use request_admin instead.");
+        }
+
+        // Prevent changing main_admin's role
+        const { data: targetRoles } = await adminClient
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", target_user_id);
+        if (targetRoles?.some((r: any) => r.role === "main_admin")) {
+          throw new Error("Cannot change main admin's role");
+        }
 
         const { data: existing } = await adminClient
           .from("user_roles")
@@ -167,6 +186,98 @@ Deno.serve(async (req) => {
         }
 
         return new Response(JSON.stringify({ success: true }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+        });
+      }
+
+      case "request_admin": {
+        const { target_user_id, target_email, target_display_name } = params;
+        if (!target_user_id || !UUID_RE.test(target_user_id)) throw new Error("Valid target_user_id required");
+
+        // Check if there's already a pending request
+        const { data: existingReq } = await adminClient
+          .from("admin_requests")
+          .select("id")
+          .eq("target_user_id", target_user_id)
+          .eq("status", "pending")
+          .maybeSingle();
+
+        if (existingReq) throw new Error("A pending request already exists for this user");
+
+        const { error } = await adminClient.from("admin_requests").insert({
+          requester_id: user.id,
+          target_user_id,
+          target_email: target_email || "",
+          target_display_name: target_display_name || "",
+          requested_role: "admin",
+        });
+        if (error) throw error;
+
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+        });
+      }
+
+      case "list_requests": {
+        if (!isMainAdmin) throw new Error("Only main admin can view requests");
+
+        const { data: requests, error } = await adminClient
+          .from("admin_requests")
+          .select("*")
+          .eq("status", "pending")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+
+        return new Response(JSON.stringify({ requests: requests || [] }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+        });
+      }
+
+      case "review_request": {
+        if (!isMainAdmin) throw new Error("Only main admin can review requests");
+
+        const { request_id, decision } = params;
+        if (!request_id || !UUID_RE.test(request_id)) throw new Error("Valid request_id required");
+        if (!["approved", "rejected"].includes(decision)) throw new Error("Invalid decision");
+
+        const { data: request, error: fetchErr } = await adminClient
+          .from("admin_requests")
+          .select("*")
+          .eq("id", request_id)
+          .eq("status", "pending")
+          .maybeSingle();
+        if (fetchErr) throw fetchErr;
+        if (!request) throw new Error("Request not found or already reviewed");
+
+        // Update request status
+        const { error: updateErr } = await adminClient
+          .from("admin_requests")
+          .update({ status: decision, reviewed_by: user.id, reviewed_at: new Date().toISOString() })
+          .eq("id", request_id);
+        if (updateErr) throw updateErr;
+
+        // If approved, set the user's role to admin
+        if (decision === "approved") {
+          const { data: existing } = await adminClient
+            .from("user_roles")
+            .select("id")
+            .eq("user_id", request.target_user_id)
+            .maybeSingle();
+
+          if (existing) {
+            await adminClient.from("user_roles").update({ role: "admin" }).eq("user_id", request.target_user_id);
+          } else {
+            await adminClient.from("user_roles").insert({ user_id: request.target_user_id, role: "admin" });
+          }
+        }
+
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+        });
+      }
+
+      case "get_my_role": {
+        return new Response(JSON.stringify({ role: userRole, is_main_admin: isMainAdmin }), {
           headers: { ...cors, "Content-Type": "application/json" },
         });
       }
