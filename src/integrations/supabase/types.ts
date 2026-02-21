@@ -181,39 +181,39 @@ export type Database = {
       }
       trade_offers: {
         Row: {
-          cash_amount: number | null
-          cash_direction: string | null
           chat_id: number
           created_at: string
           id: string
+          receiver_cash: number
           receiver_confirmed: boolean
           receiver_id: string
+          sender_cash: number | null
           sender_confirmed: boolean
           sender_id: string
           status: string
           updated_at: string
         }
         Insert: {
-          cash_amount?: number | null
-          cash_direction?: string | null
           chat_id: number
           created_at?: string
           id?: string
+          receiver_cash?: number
           receiver_confirmed?: boolean
           receiver_id: string
+          sender_cash?: number | null
           sender_confirmed?: boolean
           sender_id: string
           status?: string
           updated_at?: string
         }
         Update: {
-          cash_amount?: number | null
-          cash_direction?: string | null
           chat_id?: number
           created_at?: string
           id?: string
+          receiver_cash?: number
           receiver_confirmed?: boolean
           receiver_id?: string
+          sender_cash?: number | null
           sender_confirmed?: boolean
           sender_id?: string
           status?: string

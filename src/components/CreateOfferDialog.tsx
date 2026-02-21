@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Plus, Minus, DollarSign, ArrowRight } from "lucide-react";
+import { Plus, ArrowRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,19 +36,17 @@ const CreateOfferDialog = ({
   const [theirRecords, setTheirRecords] = useState<Record[]>([]);
   const [selectedMine, setSelectedMine] = useState<Set<string>>(new Set());
   const [selectedTheirs, setSelectedTheirs] = useState<Set<string>>(new Set());
-  const [cashAmount, setCashAmount] = useState("");
-  const [cashDirection, setCashDirection] = useState<"none" | "sender_pays" | "receiver_pays">("none");
+  const [senderCash, setSenderCash] = useState("");
+  const [receiverCash, setReceiverCash] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!open || !user) return;
-    // Fetch my records
     supabase
       .from("user_records")
       .select("id, title, artist, cover_image")
       .eq("user_id", user.id)
       .then(({ data }) => setMyRecords(data || []));
-    // Fetch their records (allowed by friends RLS)
     supabase
       .from("user_records")
       .select("id, title, artist, cover_image")
@@ -63,9 +61,14 @@ const CreateOfferDialog = ({
     setFn(next);
   };
 
+  const hasContent =
+    selectedMine.size > 0 ||
+    selectedTheirs.size > 0 ||
+    (senderCash && parseFloat(senderCash) > 0) ||
+    (receiverCash && parseFloat(receiverCash) > 0);
+
   const handleSubmit = async () => {
-    if (!user) return;
-    if (selectedMine.size === 0 && selectedTheirs.size === 0 && !cashAmount) return;
+    if (!user || !hasContent) return;
     setSubmitting(true);
 
     const { data: offer, error } = await supabase
@@ -74,8 +77,8 @@ const CreateOfferDialog = ({
         chat_id: chatId,
         sender_id: user.id,
         receiver_id: otherUserId,
-        cash_amount: cashAmount ? parseFloat(cashAmount) : 0,
-        cash_direction: cashAmount ? cashDirection : "none",
+        sender_cash: senderCash ? parseFloat(senderCash) : 0,
+        receiver_cash: receiverCash ? parseFloat(receiverCash) : 0,
       })
       .select("id")
       .single();
@@ -97,8 +100,8 @@ const CreateOfferDialog = ({
     setSubmitting(false);
     setSelectedMine(new Set());
     setSelectedTheirs(new Set());
-    setCashAmount("");
-    setCashDirection("none");
+    setSenderCash("");
+    setReceiverCash("");
     onOpenChange(false);
     onOfferCreated();
   };
@@ -107,50 +110,61 @@ const CreateOfferDialog = ({
     records,
     selected,
     onToggle,
-    label,
   }: {
     records: Record[];
     selected: Set<string>;
     onToggle: (id: string) => void;
-    label: string;
   }) => (
-    <div>
-      <p className="mb-2 font-body text-xs font-semibold text-muted-foreground uppercase tracking-wide">{label}</p>
-      {records.length === 0 ? (
-        <p className="font-body text-xs text-muted-foreground">No records found</p>
-      ) : (
-        <div className="grid grid-cols-3 gap-2">
-          {records.map((r) => {
-            const isSelected = selected.has(r.id);
-            return (
-              <button
-                key={r.id}
-                onClick={() => onToggle(r.id)}
-                className={`relative flex flex-col items-center rounded-lg border-2 p-1.5 transition-all ${
-                  isSelected
-                    ? "border-primary bg-primary/10"
-                    : "border-transparent bg-card hover:border-border"
-                }`}
-              >
-                <div className="mb-1 h-16 w-16 overflow-hidden rounded-md bg-muted">
-                  {r.cover_image ? (
-                    <img src={r.cover_image} alt={r.title} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center font-display text-lg text-muted-foreground">♪</div>
-                  )}
-                </div>
-                <p className="w-full truncate text-center font-body text-[10px] font-semibold text-foreground">{r.title}</p>
-                <p className="w-full truncate text-center font-body text-[9px] text-muted-foreground">{r.artist}</p>
-                {isSelected && (
-                  <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
-                    <Plus size={12} className="rotate-45 text-primary-foreground" />
-                  </div>
+    records.length === 0 ? (
+      <p className="font-body text-xs text-muted-foreground">No records found</p>
+    ) : (
+      <div className="grid grid-cols-3 gap-2">
+        {records.map((r) => {
+          const isSelected = selected.has(r.id);
+          return (
+            <button
+              key={r.id}
+              onClick={() => onToggle(r.id)}
+              className={`relative flex flex-col items-center rounded-lg border-2 p-1.5 transition-all ${
+                isSelected
+                  ? "border-primary bg-primary/10"
+                  : "border-transparent bg-card hover:border-border"
+              }`}
+            >
+              <div className="mb-1 h-16 w-16 overflow-hidden rounded-md bg-muted">
+                {r.cover_image ? (
+                  <img src={r.cover_image} alt={r.title} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center font-display text-lg text-muted-foreground">♪</div>
                 )}
-              </button>
-            );
-          })}
-        </div>
-      )}
+              </div>
+              <p className="w-full truncate text-center font-body text-[10px] font-semibold text-foreground">{r.title}</p>
+              <p className="w-full truncate text-center font-body text-[9px] text-muted-foreground">{r.artist}</p>
+              {isSelected && (
+                <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                  <Plus size={12} className="rotate-45 text-primary-foreground" />
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    )
+  );
+
+  const CashField = ({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) => (
+    <div className="mt-2">
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-body text-xs font-semibold text-muted-foreground">₪</span>
+        <Input
+          type="number"
+          min="0"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={`${label} adds cash`}
+          className="pl-7 h-9 font-body text-sm"
+        />
+      </div>
     </div>
   );
 
@@ -163,12 +177,16 @@ const CreateOfferDialog = ({
 
         <ScrollArea className="flex-1 px-4">
           <div className="space-y-4 pb-4">
-            <RecordGrid
-              records={myRecords}
-              selected={selectedMine}
-              onToggle={(id) => toggleRecord(id, selectedMine, setSelectedMine)}
-              label="Your Records"
-            />
+            {/* Your side */}
+            <div>
+              <p className="mb-2 font-body text-xs font-semibold text-muted-foreground uppercase tracking-wide">You offer</p>
+              <RecordGrid
+                records={myRecords}
+                selected={selectedMine}
+                onToggle={(id) => toggleRecord(id, selectedMine, setSelectedMine)}
+              />
+              <CashField value={senderCash} onChange={setSenderCash} label="You" />
+            </div>
 
             <div className="flex items-center justify-center gap-2">
               <div className="h-px flex-1 bg-border" />
@@ -176,55 +194,15 @@ const CreateOfferDialog = ({
               <div className="h-px flex-1 bg-border" />
             </div>
 
-            <RecordGrid
-              records={theirRecords}
-              selected={selectedTheirs}
-              onToggle={(id) => toggleRecord(id, selectedTheirs, setSelectedTheirs)}
-              label={`${otherUserName}'s Records`}
-            />
-
-            <div className="space-y-2">
-              <p className="font-body text-xs font-semibold text-muted-foreground uppercase tracking-wide">Cash Amount</p>
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="number"
-                    min="0"
-                    value={cashAmount}
-                    onChange={(e) => {
-                      setCashAmount(e.target.value);
-                      if (e.target.value && cashDirection === "none") setCashDirection("sender_pays");
-                    }}
-                    placeholder="0"
-                    className="pl-8 font-body text-sm"
-                  />
-                </div>
-              </div>
-              {cashAmount && parseFloat(cashAmount) > 0 && (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setCashDirection("sender_pays")}
-                    className={`flex-1 rounded-lg px-3 py-2 font-body text-xs font-medium transition-colors ${
-                      cashDirection === "sender_pays"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-card text-foreground"
-                    }`}
-                  >
-                    You pay
-                  </button>
-                  <button
-                    onClick={() => setCashDirection("receiver_pays")}
-                    className={`flex-1 rounded-lg px-3 py-2 font-body text-xs font-medium transition-colors ${
-                      cashDirection === "receiver_pays"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-card text-foreground"
-                    }`}
-                  >
-                    {otherUserName} pays
-                  </button>
-                </div>
-              )}
+            {/* Their side */}
+            <div>
+              <p className="mb-2 font-body text-xs font-semibold text-muted-foreground uppercase tracking-wide">{otherUserName} offers</p>
+              <RecordGrid
+                records={theirRecords}
+                selected={selectedTheirs}
+                onToggle={(id) => toggleRecord(id, selectedTheirs, setSelectedTheirs)}
+              />
+              <CashField value={receiverCash} onChange={setReceiverCash} label={otherUserName} />
             </div>
           </div>
         </ScrollArea>
@@ -232,7 +210,7 @@ const CreateOfferDialog = ({
         <div className="border-t border-border px-4 py-3">
           <Button
             onClick={handleSubmit}
-            disabled={submitting || (selectedMine.size === 0 && selectedTheirs.size === 0 && !cashAmount)}
+            disabled={submitting || !hasContent}
             className="w-full font-body font-semibold"
           >
             {submitting ? "Sending..." : "Send Offer"}
