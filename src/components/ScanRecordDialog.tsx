@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Camera, Disc3, Plus, Loader2, ScanLine } from "lucide-react";
+import { Camera, Disc3, Plus, Loader2, ScanLine, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
@@ -27,6 +27,7 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
   const { user, session } = useAuth();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const [stage, setStage] = useState<Stage>("capture");
   const [preview, setPreview] = useState<string | null>(null);
   const [identification, setIdentification] = useState<{ title: string; artist: string } | null>(null);
@@ -48,9 +49,8 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
     onOpenChange(o);
   };
 
-  const triggerCamera = () => {
-    fileInputRef.current?.click();
-  };
+  const triggerCamera = () => fileInputRef.current?.click();
+  const triggerGallery = () => galleryInputRef.current?.click();
 
   const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -152,6 +152,14 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
           className="hidden"
           onChange={handleCapture}
         />
+        {/* Hidden gallery input (no capture attribute) */}
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleCapture}
+        />
 
         <div className="flex-1 overflow-hidden flex flex-col">
           <AnimatePresence mode="wait">
@@ -177,10 +185,16 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
                 <p className="text-center font-body text-sm text-muted-foreground px-4">
                   Take a photo of the record's cover art to identify it
                 </p>
-                <Button onClick={triggerCamera} className="gap-2">
-                  <Camera size={18} />
-                  {preview ? "Try Again" : "Open Camera"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={triggerCamera} className="gap-2">
+                    <Camera size={18} />
+                    {preview ? "Retake" : "Camera"}
+                  </Button>
+                  <Button onClick={triggerGallery} variant="outline" className="gap-2">
+                    <ImageIcon size={18} />
+                    Photo Library
+                  </Button>
+                </div>
               </motion.div>
             )}
 
