@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_requests: {
+        Row: {
+          created_at: string
+          id: string
+          requested_role: string
+          requester_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          target_display_name: string
+          target_email: string
+          target_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          requested_role: string
+          requester_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          target_display_name: string
+          target_email: string
+          target_user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          requested_role?: string
+          requester_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          target_display_name?: string
+          target_email?: string
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       discogs_tokens: {
         Row: {
           access_secret: string
