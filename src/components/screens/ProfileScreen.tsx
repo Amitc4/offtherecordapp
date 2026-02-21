@@ -1,9 +1,26 @@
-import { useState } from "react";
-import { User, Settings, LogOut, ChevronRight, Disc3, Heart, Package, Star, RefreshCw, Unlink, Clock, Bell, HelpCircle, Pencil } from "lucide-react";
+import { useState, useEffect } from "react";
+import { User, Settings, LogOut, ChevronRight, Disc3, Heart, Package, Star, RefreshCw, Unlink, Clock, Bell, HelpCircle, Pencil, Users, UserPlus, Search, Check, X, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useDiscogsProfile, useDiscogsConnect, useDiscogsSync, useUserRecords, useUserWishlist } from "@/hooks/useDiscogs";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+interface FriendRow {
+  id: string;
+  user_id: string;
+  friend_id: string;
+  status: string;
+  created_at: string;
+}
+
+interface ProfileRow {
+  user_id: string;
+  display_name: string | null;
+  short_id: string | null;
+  avatar_url: string | null;
+}
 
 const ProfileScreen = () => {
   const { user, signOut } = useAuth();
@@ -13,6 +30,110 @@ const ProfileScreen = () => {
   const { data: records = [] } = useUserRecords();
   const { data: wishlist = [] } = useUserWishlist();
   const [connecting, setConnecting] = useState(false);
+
+  // Friends state
+  const [showFriends, setShowFriends] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<ProfileRow[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [friends, setFriends] = useState<(FriendRow & { profile?: ProfileRow })[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<(FriendRow & { profile?: ProfileRow })[]>([]);
+  const [myShortId, setMyShortId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    // Fetch my short_id
+    supabase.from("profiles").select("short_id").eq("user_id", user.id).single()
+      .then(({ data }) => setMyShortId(data?.short_id || null));
+    loadFriends();
+  }, [user]);
+
+  const loadFriends = async () => {
+    if (!user) return;
+    const { data: friendRows } = await supabase
+      .from("friends")
+      .select("*")
+      .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`);
+
+    if (!friendRows) return;
+
+    const otherIds = friendRows.map(f => f.user_id === user.id ? f.friend_id : f.user_id);
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, display_name, short_id, avatar_url")
+      .in("user_id", otherIds.length ? otherIds : ["none"]);
+
+    const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+
+    const accepted = friendRows
+      .filter(f => f.status === "accepted")
+      .map(f => ({ ...f, profile: profileMap.get(f.user_id === user.id ? f.friend_id : f.user_id) }));
+
+    const pending = friendRows
+      .filter(f => f.status === "pending" && f.friend_id === user.id)
+      .map(f => ({ ...f, profile: profileMap.get(f.user_id) }));
+
+    setFriends(accepted);
+    setPendingRequests(pending);
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim() || !user) return;
+    setSearching(true);
+    try {
+      const q = searchQuery.trim();
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, short_id, avatar_url")
+        .neq("user_id", user.id)
+        .or(`display_name.ilike.%${q}%,short_id.ilike.%${q}%`)
+        .limit(10);
+      setSearchResults(data || []);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const sendFriendRequest = async (targetUserId: string) => {
+    if (!user) return;
+    const { error } = await supabase.from("friends").insert({
+      user_id: user.id,
+      friend_id: targetUserId,
+    });
+    if (error) {
+      if (error.code === "23505") toast.info("Friend request already sent");
+      else toast.error("Failed to send request");
+    } else {
+      toast.success("Friend request sent!");
+      setSearchResults(prev => prev.filter(p => p.user_id !== targetUserId));
+      loadFriends();
+    }
+  };
+
+  const acceptRequest = async (requestId: string) => {
+    const { error } = await supabase.from("friends").update({ status: "accepted" }).eq("id", requestId);
+    if (error) toast.error("Failed to accept");
+    else { toast.success("Friend added!"); loadFriends(); }
+  };
+
+  const rejectRequest = async (requestId: string) => {
+    const { error } = await supabase.from("friends").delete().eq("id", requestId);
+    if (error) toast.error("Failed to reject");
+    else { toast.success("Request removed"); loadFriends(); }
+  };
+
+  const removeFriend = async (friendshipId: string) => {
+    const { error } = await supabase.from("friends").delete().eq("id", friendshipId);
+    if (error) toast.error("Failed to remove friend");
+    else { toast.success("Friend removed"); loadFriends(); }
+  };
+
+  const copyId = () => {
+    if (myShortId) {
+      navigator.clipboard.writeText(myShortId);
+      toast.success("ID copied!");
+    }
+  };
 
   const handleConnectDiscogs = async () => {
     setConnecting(true);
@@ -60,6 +181,12 @@ const ProfileScreen = () => {
         <div>
           <h2 className="font-display text-lg font-bold text-foreground">{displayName}</h2>
           <p className="font-body text-sm text-muted-foreground">{user?.email}</p>
+          {myShortId && (
+            <button onClick={copyId} className="mt-1 flex items-center gap-1 font-body text-xs text-primary hover:underline">
+              <Copy size={12} />
+              ID: {myShortId}
+            </button>
+          )}
         </div>
       </div>
 
@@ -75,6 +202,111 @@ const ProfileScreen = () => {
             </div>
           );
         })}
+      </div>
+
+      {/* Friends Section */}
+      <div className="mb-6 rounded-xl bg-card p-4 vinyl-shadow">
+        <button onClick={() => setShowFriends(!showFriends)} className="flex w-full items-center gap-2">
+          <Users size={18} className="text-primary" />
+          <h3 className="flex-1 text-left font-display text-sm font-semibold text-foreground">
+            Friends ({friends.length})
+          </h3>
+          {pendingRequests.length > 0 && (
+            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 font-body text-[10px] font-bold text-primary-foreground">
+              {pendingRequests.length}
+            </span>
+          )}
+          <ChevronRight size={16} className={`text-muted-foreground transition-transform ${showFriends ? "rotate-90" : ""}`} />
+        </button>
+
+        {showFriends && (
+          <div className="mt-4 space-y-4">
+            {/* Search */}
+            <div className="flex gap-2">
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                placeholder="Search by name or ID..."
+                className="flex-1 h-10 font-body text-sm"
+              />
+              <button
+                onClick={handleSearch}
+                disabled={searching || !searchQuery.trim()}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground disabled:opacity-40"
+              >
+                <Search size={16} />
+              </button>
+            </div>
+
+            {/* Search Results */}
+            {searchResults.length > 0 && (
+              <div className="space-y-2">
+                <p className="font-body text-xs font-medium text-muted-foreground">Results</p>
+                {searchResults.map((result) => (
+                  <div key={result.user_id} className="flex items-center gap-3 rounded-lg bg-background p-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
+                      {(result.display_name || "?").charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-body text-sm font-medium text-foreground">{result.display_name || "Unknown"}</p>
+                      <p className="font-body text-[10px] text-muted-foreground">ID: {result.short_id}</p>
+                    </div>
+                    <button onClick={() => sendFriendRequest(result.user_id)} className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <UserPlus size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Pending Requests */}
+            {pendingRequests.length > 0 && (
+              <div className="space-y-2">
+                <p className="font-body text-xs font-medium text-muted-foreground">Pending Requests</p>
+                {pendingRequests.map((req) => (
+                  <div key={req.id} className="flex items-center gap-3 rounded-lg bg-background p-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
+                      {(req.profile?.display_name || "?").charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-body text-sm font-medium text-foreground">{req.profile?.display_name || "Unknown"}</p>
+                    </div>
+                    <button onClick={() => acceptRequest(req.id)} className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <Check size={14} />
+                    </button>
+                    <button onClick={() => rejectRequest(req.id)} className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Friends List */}
+            {friends.length > 0 ? (
+              <div className="space-y-2">
+                <p className="font-body text-xs font-medium text-muted-foreground">Your Friends</p>
+                {friends.map((f) => (
+                  <div key={f.id} className="flex items-center gap-3 rounded-lg bg-background p-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
+                      {(f.profile?.display_name || "?").charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-body text-sm font-medium text-foreground">{f.profile?.display_name || "Unknown"}</p>
+                      <p className="font-body text-[10px] text-muted-foreground">ID: {f.profile?.short_id}</p>
+                    </div>
+                    <button onClick={() => removeFriend(f.id)} className="font-body text-[10px] text-muted-foreground hover:text-destructive">
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center font-body text-xs text-muted-foreground py-2">No friends yet. Search to add some!</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Discogs Connection */}
