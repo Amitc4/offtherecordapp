@@ -80,6 +80,30 @@ export type Database = {
         }
         Relationships: []
       }
+      friends: {
+        Row: {
+          created_at: string
+          friend_id: string
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          friend_id: string
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          friend_id?: string
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -88,6 +112,7 @@ export type Database = {
           discogs_username: string | null
           display_name: string | null
           id: string
+          short_id: string | null
           updated_at: string
           user_id: string
         }
@@ -98,6 +123,7 @@ export type Database = {
           discogs_username?: string | null
           display_name?: string | null
           id?: string
+          short_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -108,6 +134,7 @@ export type Database = {
           discogs_username?: string | null
           display_name?: string | null
           id?: string
+          short_id?: string | null
           updated_at?: string
           user_id?: string
         }
