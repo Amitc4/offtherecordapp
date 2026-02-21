@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.identify-record]
 verify_jwt = false
+
+[functions.grade-vinyl]
+verify_jwt = false
