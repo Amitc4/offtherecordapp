@@ -78,8 +78,8 @@ const ChatsScreen = () => {
           </div>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+        {/* Messages - extra bottom padding for fixed input bar */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 pb-20 space-y-3">
           {chatMessages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
               <div
@@ -98,10 +98,10 @@ const ChatsScreen = () => {
           ))}
         </div>
 
-        {/* Input */}
-        <div className="border-t border-border px-4 py-3">
+        {/* Fixed input bar - sits directly above the nav bar */}
+        <div className="fixed bottom-[calc(3.5rem+0.75rem)] left-1/2 z-50 w-full max-w-md -translate-x-1/2 border-t border-border bg-background px-4 py-2">
           <div className="flex items-center gap-2">
-             <Input
+            <Input
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
