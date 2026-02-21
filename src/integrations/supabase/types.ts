@@ -140,6 +140,87 @@ export type Database = {
         }
         Relationships: []
       }
+      trade_offer_items: {
+        Row: {
+          created_at: string
+          id: string
+          offer_id: string
+          owner_id: string
+          record_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          offer_id: string
+          owner_id: string
+          record_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          offer_id?: string
+          owner_id?: string
+          record_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_offer_items_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "trade_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trade_offer_items_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "user_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trade_offers: {
+        Row: {
+          cash_amount: number | null
+          cash_direction: string | null
+          chat_id: number
+          created_at: string
+          id: string
+          receiver_confirmed: boolean
+          receiver_id: string
+          sender_confirmed: boolean
+          sender_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cash_amount?: number | null
+          cash_direction?: string | null
+          chat_id: number
+          created_at?: string
+          id?: string
+          receiver_confirmed?: boolean
+          receiver_id: string
+          sender_confirmed?: boolean
+          sender_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cash_amount?: number | null
+          cash_direction?: string | null
+          chat_id?: number
+          created_at?: string
+          id?: string
+          receiver_confirmed?: boolean
+          receiver_id?: string
+          sender_confirmed?: boolean
+          sender_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_records: {
         Row: {
           artist: string
@@ -187,6 +268,44 @@ export type Database = {
           year?: number | null
         }
         Relationships: []
+      }
+      user_reviews: {
+        Row: {
+          created_at: string
+          id: string
+          offer_id: string
+          rating: number
+          review_text: string | null
+          reviewed_id: string
+          reviewer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          offer_id: string
+          rating: number
+          review_text?: string | null
+          reviewed_id: string
+          reviewer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          offer_id?: string
+          rating?: number
+          review_text?: string | null
+          reviewed_id?: string
+          reviewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reviews_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "trade_offers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

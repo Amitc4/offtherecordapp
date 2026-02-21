@@ -1,12 +1,16 @@
-import { useState } from "react";
-import { ArrowLeft, Send } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { ArrowLeft, Send, HandshakeIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import CreateOfferDialog from "@/components/CreateOfferDialog";
+import OfferCard from "@/components/OfferCard";
 
 const chats = [
-  { id: 1, name: "Sarah M.", record: "Blue Train", lastMessage: "Is the Coltrane still available?", time: "2m ago", unread: 2 },
-  { id: 2, name: "Jake R.", record: "Rumours", lastMessage: "Deal! I'll pick it up tomorrow", time: "1h ago", unread: 1 },
-  { id: 3, name: "Emily K.", record: "Abbey Road", lastMessage: "Thanks for the trade!", time: "3h ago", unread: 0 },
-  { id: 4, name: "Marcus T.", record: "Kind of Blue", lastMessage: "What condition is the sleeve?", time: "1d ago", unread: 0 },
+  { id: 1, name: "Sarah M.", record: "Blue Train", lastMessage: "Is the Coltrane still available?", time: "2m ago", unread: 2, otherUserId: "" },
+  { id: 2, name: "Jake R.", record: "Rumours", lastMessage: "Deal! I'll pick it up tomorrow", time: "1h ago", unread: 1, otherUserId: "" },
+  { id: 3, name: "Emily K.", record: "Abbey Road", lastMessage: "Thanks for the trade!", time: "3h ago", unread: 0, otherUserId: "" },
+  { id: 4, name: "Marcus T.", record: "Kind of Blue", lastMessage: "What condition is the sleeve?", time: "1d ago", unread: 0, otherUserId: "" },
 ];
 
 interface ChatMessage {
@@ -38,12 +42,53 @@ const mockMessages: Record<number, ChatMessage[]> = {
   ],
 };
 
+interface TradeOffer {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  cash_amount: number;
+  cash_direction: string;
+  status: string;
+  sender_confirmed: boolean;
+  receiver_confirmed: boolean;
+  created_at: string;
+}
+
 const ChatsScreen = () => {
+  const { user } = useAuth();
   const [activeChat, setActiveChat] = useState<number | null>(null);
   const [messages, setMessages] = useState<Record<number, ChatMessage[]>>(mockMessages);
   const [inputText, setInputText] = useState("");
+  const [showOfferDialog, setShowOfferDialog] = useState(false);
+  const [offers, setOffers] = useState<TradeOffer[]>([]);
 
   const activeChatData = chats.find((c) => c.id === activeChat);
+
+  const fetchOffers = useCallback(async () => {
+    if (!activeChat || !user) return;
+    const { data } = await supabase
+      .from("trade_offers")
+      .select("*")
+      .eq("chat_id", activeChat)
+      .order("created_at", { ascending: true });
+    setOffers((data as TradeOffer[]) || []);
+  }, [activeChat, user]);
+
+  useEffect(() => {
+    fetchOffers();
+  }, [fetchOffers]);
+
+  // Realtime subscription for offers
+  useEffect(() => {
+    if (!activeChat) return;
+    const channel = supabase
+      .channel(`offers-${activeChat}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "trade_offers", filter: `chat_id=eq.${activeChat}` }, () => {
+        fetchOffers();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [activeChat, fetchOffers]);
 
   const handleSend = () => {
     if (!inputText.trim() || !activeChat) return;
@@ -76,9 +121,16 @@ const ChatsScreen = () => {
             <h3 className="font-body text-sm font-semibold text-foreground">{activeChatData.name}</h3>
             <p className="font-body text-[10px] font-medium text-primary">{activeChatData.record}</p>
           </div>
+          <button
+            onClick={() => setShowOfferDialog(true)}
+            className="flex h-9 items-center gap-1.5 rounded-full bg-primary/15 px-3 font-body text-xs font-semibold text-primary transition-colors hover:bg-primary/25 active:scale-95"
+          >
+            <HandshakeIcon size={14} />
+            <span>Offer</span>
+          </button>
         </div>
 
-        {/* Messages - extra bottom padding for fixed input bar */}
+        {/* Messages + Offers */}
         <div className="flex-1 overflow-y-auto px-4 py-3 pb-20 space-y-3">
           {chatMessages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
@@ -96,9 +148,20 @@ const ChatsScreen = () => {
               </div>
             </div>
           ))}
+
+          {/* Offers in chat */}
+          {offers.map((offer) => (
+            <OfferCard
+              key={offer.id}
+              offer={offer}
+              senderName={offer.sender_id === user?.id ? "You" : activeChatData.name}
+              receiverName={offer.receiver_id === user?.id ? "You" : activeChatData.name}
+              onUpdate={fetchOffers}
+            />
+          ))}
         </div>
 
-        {/* Fixed input bar - sits directly above the nav bar */}
+        {/* Fixed input bar */}
         <div className="fixed bottom-[calc(3.5rem+0.75rem)] left-1/2 z-50 w-full max-w-md -translate-x-1/2 border-t border-border bg-background px-4 py-2">
           <div className="flex items-center gap-2">
             <Input
@@ -117,6 +180,16 @@ const ChatsScreen = () => {
             </button>
           </div>
         </div>
+
+        {/* Create Offer Dialog */}
+        <CreateOfferDialog
+          open={showOfferDialog}
+          onOpenChange={setShowOfferDialog}
+          chatId={activeChat}
+          otherUserId={activeChatData.otherUserId}
+          otherUserName={activeChatData.name}
+          onOfferCreated={fetchOffers}
+        />
       </div>
     );
   }
