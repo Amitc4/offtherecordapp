@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a vinyl record identification expert. Given a photo of a vinyl record (cover art, label, or sleeve), identify the album title and artist name. Respond ONLY with valid JSON in this exact format: {"title": "Album Title", "artist": "Artist Name"}. If you cannot identify the record, respond with: {"title": "", "artist": "", "error": "Could not identify the record"}. Do not include any other text.`,
+            content: `You are a vinyl record identification expert. Your primary method is VISUAL recognition of the cover artwork itself — match the imagery, colors, design, and artistic style to known album covers before resorting to reading any text on the cover or label. First, try to recognize the album by its iconic cover art. Only if you cannot identify it visually, then read any visible text (album title, artist name, label info) to make your identification. Respond ONLY with valid JSON in this exact format: {"title": "Album Title", "artist": "Artist Name"}. If you cannot identify the record, respond with: {"title": "", "artist": "", "error": "Could not identify the record"}. Do not include any other text.`,
           },
           {
             role: "user",
