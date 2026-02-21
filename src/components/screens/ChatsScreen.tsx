@@ -46,8 +46,8 @@ interface TradeOffer {
   id: string;
   sender_id: string;
   receiver_id: string;
-  cash_amount: number;
-  cash_direction: string;
+  sender_cash: number;
+  receiver_cash: number;
   status: string;
   sender_confirmed: boolean;
   receiver_confirmed: boolean;

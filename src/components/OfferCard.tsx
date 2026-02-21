@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Check, X, Star, DollarSign, ArrowRightLeft } from "lucide-react";
+import { Check, X, Star, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,8 +16,8 @@ interface Offer {
   id: string;
   sender_id: string;
   receiver_id: string;
-  cash_amount: number;
-  cash_direction: string;
+  sender_cash: number;
+  receiver_cash: number;
   status: string;
   sender_confirmed: boolean;
   receiver_confirmed: boolean;
@@ -51,7 +51,6 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate }: OfferCardProps
       .eq("offer_id", offer.id)
       .then(async ({ data }) => {
         if (!data) return;
-        // Fetch record details for each item
         const enriched = await Promise.all(
           data.map(async (item) => {
             const { data: rec } = await supabase
@@ -65,7 +64,6 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate }: OfferCardProps
         setItems(enriched);
       });
 
-    // Check if already reviewed
     if (user && offer.status === "completed") {
       supabase
         .from("user_reviews")
@@ -91,7 +89,6 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate }: OfferCardProps
     if (isSender) updates.sender_confirmed = true;
     if (isReceiver) updates.receiver_confirmed = true;
 
-    // Check if both will be confirmed
     const bothConfirmed =
       (isSender && offer.receiver_confirmed) || (isReceiver && offer.sender_confirmed);
 
@@ -139,6 +136,22 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate }: OfferCardProps
     </div>
   );
 
+  const SideSection = ({ label, sideItems, cash }: { label: string; sideItems: OfferItem[]; cash: number }) => (
+    (sideItems.length > 0 || cash > 0) ? (
+      <div className="mb-2">
+        <p className="mb-1 font-body text-[9px] font-semibold text-muted-foreground uppercase">{label}</p>
+        <div className="space-y-1">
+          {sideItems.map((item) => <RecordPill key={item.id} item={item} />)}
+          {cash > 0 && (
+            <div className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1.5">
+              <span className="font-body text-xs font-semibold text-primary">₪{cash}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    ) : null
+  );
+
   return (
     <div className="rounded-xl border border-border bg-card p-3 vinyl-shadow">
       <div className="mb-2 flex items-center gap-1.5">
@@ -148,40 +161,17 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate }: OfferCardProps
         </span>
       </div>
 
-      {/* Sender's items */}
-      {senderItems.length > 0 && (
-        <div className="mb-2">
-          <p className="mb-1 font-body text-[9px] font-semibold text-muted-foreground uppercase">{isSender ? "You offer" : `${senderName} offers`}</p>
-          <div className="space-y-1">
-            {senderItems.map((item) => <RecordPill key={item.id} item={item} />)}
-          </div>
-        </div>
-      )}
+      <SideSection
+        label={isSender ? "You offer" : `${senderName} offers`}
+        sideItems={senderItems}
+        cash={offer.sender_cash}
+      />
 
-      {/* Receiver's items */}
-      {receiverItems.length > 0 && (
-        <div className="mb-2">
-          <p className="mb-1 font-body text-[9px] font-semibold text-muted-foreground uppercase">{isReceiver ? "You offer" : `${receiverName} offers`}</p>
-          <div className="space-y-1">
-            {receiverItems.map((item) => <RecordPill key={item.id} item={item} />)}
-          </div>
-        </div>
-      )}
-
-      {/* Cash */}
-      {offer.cash_amount > 0 && (
-        <div className="mb-2 flex items-center gap-1 rounded-lg bg-muted px-2 py-1.5">
-          <DollarSign size={12} className="text-primary" />
-          <span className="font-body text-xs font-semibold text-foreground">
-            ₪{offer.cash_amount}
-          </span>
-          <span className="font-body text-[10px] text-muted-foreground">
-            {offer.cash_direction === "sender_pays"
-              ? `(${isSender ? "you" : senderName} pays)`
-              : `(${isReceiver ? "you" : receiverName} pays)`}
-          </span>
-        </div>
-      )}
+      <SideSection
+        label={isReceiver ? "You offer" : `${receiverName} offers`}
+        sideItems={receiverItems}
+        cash={offer.receiver_cash}
+      />
 
       {/* Actions */}
       {offer.status === "pending" && isReceiver && (
