@@ -49,13 +49,29 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { image_url } = await req.json();
-    if (!image_url || typeof image_url !== "string") {
-      return new Response(JSON.stringify({ error: "image_url required" }), {
+    const { file_path } = await req.json();
+    if (!file_path || typeof file_path !== "string") {
+      return new Response(JSON.stringify({ error: "file_path required" }), {
         status: 400,
         headers: { ...cors, "Content-Type": "application/json" },
       });
     }
+
+    // Generate a short-lived signed URL for the uploaded file
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const adminClient = createClient(SUPABASE_URL, serviceRoleKey);
+    const { data: signedData, error: signedError } = await adminClient.storage
+      .from("record-photos")
+      .createSignedUrl(file_path, 300); // 5 minute expiry
+
+    if (signedError || !signedData?.signedUrl) {
+      return new Response(JSON.stringify({ error: "Failed to access uploaded photo" }), {
+        status: 500,
+        headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
+
+    const image_url = signedData.signedUrl;
 
     // Step 1: Ask AI to identify the vinyl record from the photo
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

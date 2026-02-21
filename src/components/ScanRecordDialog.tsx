@@ -74,16 +74,11 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
       return;
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from("record-photos")
-      .getPublicUrl(uploadData.path);
-
-    // Identify via AI
+    // Identify via AI using file path (bucket is private, signed URL generated server-side)
     setStage("identifying");
     try {
       const resp = await supabase.functions.invoke("identify-record", {
-        body: { image_url: urlData.publicUrl },
+        body: { file_path: uploadData.path },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
