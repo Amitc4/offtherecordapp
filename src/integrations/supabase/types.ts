@@ -84,6 +84,7 @@ export type Database = {
           format: string | null
           id: string
           notes: string | null
+          price: number | null
           status: string
           title: string
           user_id: string
@@ -98,6 +99,7 @@ export type Database = {
           format?: string | null
           id?: string
           notes?: string | null
+          price?: number | null
           status?: string
           title: string
           user_id: string
@@ -112,6 +114,7 @@ export type Database = {
           format?: string | null
           id?: string
           notes?: string | null
+          price?: number | null
           status?: string
           title?: string
           user_id?: string
