@@ -171,6 +171,7 @@ const CollectionScreen = () => {
           {records.map((record) => {
             const isSelected = selected.has(record.id);
             const recordStatus = (record as any).status as string | undefined;
+            const recordPrice = (record as any).price as number | null | undefined;
             return (
               <div
                 key={record.id}
@@ -195,17 +196,22 @@ const CollectionScreen = () => {
                   <h3 className="font-display text-sm font-semibold text-foreground truncate">{record.title}</h3>
                   <p className="font-body text-xs text-muted-foreground truncate">{record.artist}{record.year ? ` · ${record.year}` : ""}</p>
                 </div>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  {recordStatus === "for_sale" && (
-                    <span className="rounded-md bg-primary/15 px-1.5 py-0.5 font-body text-[9px] font-semibold text-primary">
-                      For Sale
-                    </span>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  {recordStatus === "for_sale" && recordPrice != null && (
+                    <span className="font-body text-sm font-bold text-primary">₪{recordPrice}</span>
                   )}
-                  {record.condition && (
-                    <span className="rounded-md bg-secondary px-2 py-1 font-body text-[10px] font-semibold text-secondary-foreground">
-                      {record.condition}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {recordStatus === "for_sale" && (
+                      <span className="rounded-md bg-primary/15 px-1.5 py-0.5 font-body text-[9px] font-semibold text-primary">
+                        For Sale
+                      </span>
+                    )}
+                    {record.condition && (
+                      <span className="rounded-md bg-secondary px-2 py-1 font-body text-[10px] font-semibold text-secondary-foreground">
+                        {record.condition}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -216,6 +222,7 @@ const CollectionScreen = () => {
           {records.map((record) => {
             const isSelected = selected.has(record.id);
             const recordStatus = (record as any).status as string | undefined;
+            const recordPrice = (record as any).price as number | null | undefined;
             return (
               <div
                 key={record.id}
@@ -241,7 +248,11 @@ const CollectionScreen = () => {
                 <h3 className="font-display text-xs font-semibold leading-tight text-foreground truncate">{record.title}</h3>
                 <p className="mt-0.5 font-body text-[10px] text-muted-foreground truncate">{record.artist}</p>
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="font-body text-xs text-muted-foreground">{record.year || "—"}</span>
+                  {recordStatus === "for_sale" && recordPrice != null ? (
+                    <span className="font-body text-xs font-bold text-primary">₪{recordPrice}</span>
+                  ) : (
+                    <span className="font-body text-xs text-muted-foreground">{record.year || "—"}</span>
+                  )}
                   <div className="flex items-center gap-1">
                     {recordStatus === "for_sale" && (
                       <span className="rounded bg-primary/15 px-1 py-0.5 font-body text-[8px] font-semibold text-primary">
