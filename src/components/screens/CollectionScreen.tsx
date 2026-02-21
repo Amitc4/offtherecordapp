@@ -1,9 +1,10 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Disc3, Plus, Camera, LayoutGrid, List, RefreshCw, CheckSquare, X, Tag } from "lucide-react";
 import { useUserRecords } from "@/hooks/useDiscogs";
 import { useDiscogsProfile, useDiscogsSync } from "@/hooks/useDiscogs";
 import AddRecordDialog from "@/components/AddRecordDialog";
 import RecordDetailSheet from "@/components/RecordDetailSheet";
+import ScanRecordDialog from "@/components/ScanRecordDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -12,6 +13,7 @@ import { AnimatePresence, motion } from "framer-motion";
 const CollectionScreen = () => {
   const [view, setView] = useState<"grid" | "list">("list");
   const [addOpen, setAddOpen] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [menuOpen, setMenuOpen] = useState(false);
@@ -21,7 +23,6 @@ const CollectionScreen = () => {
   const { data: profile } = useDiscogsProfile();
   const { syncCollection } = useDiscogsSync();
   const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
@@ -57,40 +58,8 @@ const CollectionScreen = () => {
     exitSelectMode();
   };
 
-  const handleCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      stream.getTracks().forEach((t) => t.stop());
-      fileInputRef.current?.click();
-    } catch (err: any) {
-      if (err.name === "NotAllowedError") {
-        toast.error("Camera access denied. Please enable it in your device settings.");
-      } else if (err.name === "NotFoundError") {
-        toast.error("No camera found on this device.");
-      } else {
-        toast.error("Could not access camera. Check your browser/device settings.");
-      }
-    }
-  };
-
-  const handleCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      toast.info("Photo captured! Barcode scanning coming soon.");
-    }
-  };
-
   return (
     <div className="px-4 pt-4 pb-2">
-      {/* Hidden camera input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleCapture}
-      />
 
       <div className="mb-4 flex items-center justify-between">
         <h1 className="font-display text-xl font-bold text-foreground">My Collection</h1>
@@ -121,7 +90,7 @@ const CollectionScreen = () => {
                 </button>
               )}
               <button
-                onClick={handleCamera}
+                onClick={() => setScanOpen(true)}
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
               >
                 <Camera size={18} />
@@ -330,6 +299,7 @@ const CollectionScreen = () => {
         open={!!detailRecord}
         onOpenChange={(open) => !open && setDetailRecord(null)}
       />
+      <ScanRecordDialog open={scanOpen} onOpenChange={setScanOpen} />
     </div>
   );
 };
