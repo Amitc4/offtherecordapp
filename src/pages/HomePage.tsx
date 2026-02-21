@@ -69,7 +69,7 @@ const HomePage = () => {
         </AnimatePresence>
       </main>
 
-      <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-md -translate-x-1/2 border-t border-primary/20 bg-card/95 backdrop-blur-md">
+      <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-md -translate-x-1/2 border-t border-primary/20 bg-card/95 backdrop-blur-md md:hidden">
         <div className="flex h-14 items-center justify-around px-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
