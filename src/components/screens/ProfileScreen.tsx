@@ -33,6 +33,7 @@ const ProfileScreen = () => {
 
   // Friends state
   const [showFriends, setShowFriends] = useState(false);
+  const [showPendingRequests, setShowPendingRequests] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ProfileRow[]>([]);
   const [searching, setSearching] = useState(false);
@@ -203,6 +204,45 @@ const ProfileScreen = () => {
           );
         })}
       </div>
+
+      {/* Pending Friend Requests */}
+      {pendingRequests.length > 0 && (
+        <div className="mb-4">
+          <button
+            onClick={() => setShowPendingRequests(!showPendingRequests)}
+            className="flex w-full items-center gap-3 rounded-xl bg-primary/10 p-4 transition-colors hover:bg-primary/15"
+          >
+            <UserPlus size={18} className="text-primary" />
+            <span className="flex-1 text-left font-body text-sm font-semibold text-foreground">Pending Friend Requests</span>
+            <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-primary px-2 font-body text-xs font-bold text-primary-foreground">
+              {pendingRequests.length}
+            </span>
+            <ChevronRight size={16} className={`text-muted-foreground transition-transform ${showPendingRequests ? "rotate-90" : ""}`} />
+          </button>
+
+          {showPendingRequests && (
+            <div className="mt-2 space-y-2 rounded-xl bg-card p-3 vinyl-shadow">
+              {pendingRequests.map((req) => (
+                <div key={req.id} className="flex items-center gap-3 rounded-lg bg-background p-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
+                    {(req.profile?.display_name || "?").charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-body text-sm font-medium text-foreground">{req.profile?.display_name || "Unknown"}</p>
+                    <p className="font-body text-[10px] text-muted-foreground">ID: {req.profile?.short_id}</p>
+                  </div>
+                  <button onClick={() => acceptRequest(req.id)} className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <Check size={14} />
+                  </button>
+                  <button onClick={() => rejectRequest(req.id)} className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Friends Section */}
       <div className="mb-6 rounded-xl bg-card p-4 vinyl-shadow">
