@@ -7,12 +7,75 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-interface Record {
+interface RecordItem {
   id: string;
   title: string;
   artist: string;
   cover_image: string | null;
 }
+
+// Extracted outside to prevent remounting on parent state changes
+const RecordGrid = ({
+  records,
+  selected,
+  onToggle,
+}: {
+  records: RecordItem[];
+  selected: Set<string>;
+  onToggle: (id: string) => void;
+}) => (
+  records.length === 0 ? (
+    <p className="font-body text-xs text-muted-foreground">No records found</p>
+  ) : (
+    <div className="grid grid-cols-3 gap-2">
+      {records.map((r) => {
+        const isSelected = selected.has(r.id);
+        return (
+          <button
+            key={r.id}
+            onClick={() => onToggle(r.id)}
+            className={`relative flex flex-col items-center rounded-lg border-2 p-1.5 transition-all ${
+              isSelected
+                ? "border-primary bg-primary/10"
+                : "border-transparent bg-card hover:border-border"
+            }`}
+          >
+            <div className="mb-1 h-16 w-16 overflow-hidden rounded-md bg-muted">
+              {r.cover_image ? (
+                <img src={r.cover_image} alt={r.title} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center font-display text-lg text-muted-foreground">♪</div>
+              )}
+            </div>
+            <p className="w-full truncate text-center font-body text-[10px] font-semibold text-foreground">{r.title}</p>
+            <p className="w-full truncate text-center font-body text-[9px] text-muted-foreground">{r.artist}</p>
+            {isSelected && (
+              <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                <Plus size={12} className="rotate-45 text-primary-foreground" />
+              </div>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  )
+);
+
+const CashField = ({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) => (
+  <div className="mt-2">
+    <div className="relative">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 font-body text-xs font-semibold text-muted-foreground">₪</span>
+      <Input
+        type="number"
+        min="0"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={`${label} adds cash`}
+        className="pl-7 h-9 font-body text-sm"
+      />
+    </div>
+  </div>
+);
 
 interface CreateOfferDialogProps {
   open: boolean;
@@ -32,8 +95,8 @@ const CreateOfferDialog = ({
   onOfferCreated,
 }: CreateOfferDialogProps) => {
   const { user } = useAuth();
-  const [myRecords, setMyRecords] = useState<Record[]>([]);
-  const [theirRecords, setTheirRecords] = useState<Record[]>([]);
+  const [myRecords, setMyRecords] = useState<RecordItem[]>([]);
+  const [theirRecords, setTheirRecords] = useState<RecordItem[]>([]);
   const [selectedMine, setSelectedMine] = useState<Set<string>>(new Set());
   const [selectedTheirs, setSelectedTheirs] = useState<Set<string>>(new Set());
   const [senderCash, setSenderCash] = useState("");
@@ -105,68 +168,6 @@ const CreateOfferDialog = ({
     onOpenChange(false);
     onOfferCreated();
   };
-
-  const RecordGrid = ({
-    records,
-    selected,
-    onToggle,
-  }: {
-    records: Record[];
-    selected: Set<string>;
-    onToggle: (id: string) => void;
-  }) => (
-    records.length === 0 ? (
-      <p className="font-body text-xs text-muted-foreground">No records found</p>
-    ) : (
-      <div className="grid grid-cols-3 gap-2">
-        {records.map((r) => {
-          const isSelected = selected.has(r.id);
-          return (
-            <button
-              key={r.id}
-              onClick={() => onToggle(r.id)}
-              className={`relative flex flex-col items-center rounded-lg border-2 p-1.5 transition-all ${
-                isSelected
-                  ? "border-primary bg-primary/10"
-                  : "border-transparent bg-card hover:border-border"
-              }`}
-            >
-              <div className="mb-1 h-16 w-16 overflow-hidden rounded-md bg-muted">
-                {r.cover_image ? (
-                  <img src={r.cover_image} alt={r.title} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center font-display text-lg text-muted-foreground">♪</div>
-                )}
-              </div>
-              <p className="w-full truncate text-center font-body text-[10px] font-semibold text-foreground">{r.title}</p>
-              <p className="w-full truncate text-center font-body text-[9px] text-muted-foreground">{r.artist}</p>
-              {isSelected && (
-                <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
-                  <Plus size={12} className="rotate-45 text-primary-foreground" />
-                </div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    )
-  );
-
-  const CashField = ({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) => (
-    <div className="mt-2">
-      <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-body text-xs font-semibold text-muted-foreground">₪</span>
-        <Input
-          type="number"
-          min="0"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={`${label} adds cash`}
-          className="pl-7 h-9 font-body text-sm"
-        />
-      </div>
-    </div>
-  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
