@@ -33,9 +33,8 @@ const HomePage = () => {
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .eq("role", "admin")
-      .maybeSingle()
-      .then(({ data }) => setIsAdmin(!!data));
+      .in("role", ["admin", "main_admin"])
+      .then(({ data }) => setIsAdmin(!!(data && data.length > 0)));
   }, [user]);
 
   const tabs = isAdmin
