@@ -12,13 +12,27 @@ const DISCOGS_CONSUMER_SECRET = Deno.env.get("DISCOGS_CONSUMER_SECRET")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
+async function searchDiscogs(query: string, perPage = 10): Promise<any[]> {
+  const resp = await fetch(
+    `https://api.discogs.com/database/search?q=${encodeURIComponent(query)}&type=release&per_page=${perPage}&key=${DISCOGS_CONSUMER_KEY}&secret=${DISCOGS_CONSUMER_SECRET}`,
+    { headers: { "User-Agent": "OffTheRecordApp/1.0" } }
+  );
+  const data = await resp.json();
+  return (data.results || []).map((r: any) => ({
+    id: r.id,
+    title: r.title,
+    year: parseInt(r.year) || null,
+    cover_image: r.cover_image || r.thumb || null,
+    format: r.format?.join(", ") || null,
+  }));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Require auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -40,21 +54,17 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
 
-    // Support both base64 image data and legacy file_path
     let imageContent: { type: string; image_url: { url: string } };
 
     if (body.image_base64 && body.mime_type) {
-      // New approach: base64 data URL sent directly
       const dataUrl = `data:${body.mime_type};base64,${body.image_base64}`;
       imageContent = { type: "image_url", image_url: { url: dataUrl } };
     } else if (body.file_path) {
-      // Legacy: signed URL from storage
       const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const adminClient = createClient(SUPABASE_URL, serviceRoleKey);
       const { data: signedData, error: signedError } = await adminClient.storage
         .from("record-photos")
         .createSignedUrl(body.file_path, 300);
-
       if (signedError || !signedData?.signedUrl) {
         return new Response(JSON.stringify({ error: "Failed to access uploaded photo" }), {
           status: 500,
@@ -69,7 +79,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Step 1: Ask AI to identify the vinyl record from the photo
+    // Step 1: AI identification — ask for multiple guesses ranked by visual confidence
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -81,20 +91,31 @@ Deno.serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a vinyl record identification expert. Your primary method is VISUAL recognition of the cover artwork itself — match the imagery, colors, design, and artistic style to known album covers before resorting to reading any text on the cover or label. First, try to recognize the album by its iconic cover art. Only if you cannot identify it visually, then read any visible text (album title, artist name, label info) to make your identification. Respond ONLY with valid JSON in this exact format: {"title": "Album Title", "artist": "Artist Name"}. If you cannot identify the record, respond with: {"title": "", "artist": "", "error": "Could not identify the record"}. Do not include any other text.`,
+            content: `You are a vinyl record identification expert. Your PRIMARY method is VISUAL recognition of the cover artwork — match the imagery, colors, design, layout, and artistic style to known album covers. Only if you cannot identify it visually, read any visible text (album title, artist name, label).
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "guesses": [
+    {"title": "Album Title", "artist": "Artist Name", "confidence": "high"},
+    {"title": "Second Guess", "artist": "Artist Name", "confidence": "medium"}
+  ]
+}
+
+Rules:
+- Return 1-3 guesses, ordered by visual confidence (high, medium, low).
+- The first guess should be your best match based on cover art recognition.
+- If you cannot identify the record at all, return: {"guesses": [], "error": "Could not identify the record"}
+- Do not include any text outside the JSON.`,
           },
           {
             role: "user",
             content: [
-              {
-                type: "text",
-                text: "Identify this vinyl record. What is the album title and artist?",
-              },
+              { type: "text", text: "Identify this vinyl record. What is the album title and artist? Prioritize visual cover art matching." },
               imageContent,
             ],
           },
         ],
-        max_tokens: 200,
+        max_tokens: 400,
         temperature: 0.1,
       }),
     });
@@ -111,30 +132,29 @@ Deno.serve(async (req) => {
     const aiData = await aiResponse.json();
     const aiContent = aiData.choices?.[0]?.message?.content || "";
 
-    // Parse AI response - handle markdown code blocks
     let cleanContent = aiContent.trim();
     if (cleanContent.startsWith("```")) {
       cleanContent = cleanContent.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
     }
 
-    let identification: { title: string; artist: string; error?: string };
+    let parsed: { guesses?: { title: string; artist: string; confidence: string }[]; error?: string };
     try {
-      identification = JSON.parse(cleanContent);
+      parsed = JSON.parse(cleanContent);
     } catch {
       console.error("Failed to parse AI response:", aiContent);
       return new Response(JSON.stringify({
         error: "Could not identify the record from this photo. Try a clearer photo of the cover art.",
-        ai_raw: aiContent,
       }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (identification.error || (!identification.title && !identification.artist)) {
+    const guesses = parsed.guesses || [];
+    if (guesses.length === 0) {
       return new Response(JSON.stringify({
-        error: identification.error || "Could not identify the record",
-        identification,
+        error: parsed.error || "Could not identify the record",
+        identification: null,
         results: [],
       }), {
         status: 200,
@@ -142,24 +162,39 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Step 2: Search Discogs with the identified info
-    const searchQuery = `${identification.artist} ${identification.title}`.trim();
-    const discogsResp = await fetch(
-      `https://api.discogs.com/database/search?q=${encodeURIComponent(searchQuery)}&type=release&per_page=10&key=${DISCOGS_CONSUMER_KEY}&secret=${DISCOGS_CONSUMER_SECRET}`,
-      { headers: { "User-Agent": "OffTheRecordApp/1.0" } }
-    );
-    const discogsData = await discogsResp.json();
-    const results = (discogsData.results || []).map((r: any) => ({
-      id: r.id,
-      title: r.title,
-      year: parseInt(r.year) || null,
-      cover_image: r.cover_image || r.thumb || null,
-      format: r.format?.join(", ") || null,
-    }));
+    // Step 2: Search Discogs for each guess, prioritizing the highest confidence guess.
+    // Deduplicate by Discogs release ID, keeping order (best guesses first).
+    const seenIds = new Set<number>();
+    const allResults: any[] = [];
+
+    for (const guess of guesses) {
+      // Search with artist + title for precision
+      const precise = await searchDiscogs(`${guess.artist} ${guess.title}`, 8);
+      for (const r of precise) {
+        if (!seenIds.has(r.id)) {
+          seenIds.add(r.id);
+          allResults.push(r);
+        }
+      }
+
+      // If the precise search returned few results, broaden to just title
+      if (precise.length < 3) {
+        const broader = await searchDiscogs(guess.title, 5);
+        for (const r of broader) {
+          if (!seenIds.has(r.id)) {
+            seenIds.add(r.id);
+            allResults.push(r);
+          }
+        }
+      }
+    }
+
+    // Use the top guess as the primary identification shown to the user
+    const topGuess = guesses[0];
 
     return new Response(JSON.stringify({
-      identification,
-      results,
+      identification: { title: topGuess.title, artist: topGuess.artist },
+      results: allResults.slice(0, 15),
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
