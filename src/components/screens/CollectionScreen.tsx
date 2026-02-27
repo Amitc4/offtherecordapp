@@ -64,7 +64,7 @@ const CollectionScreen = () => {
     <div className="px-4 pt-4 pb-2">
 
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="font-display text-2xl font-bold text-foreground">My Collection</h1>
+        <h1 className="font-display text-3xl font-bold text-foreground">My Collection</h1>
         <div className="flex items-center gap-2">
           {!selectMode ? (
             <>
