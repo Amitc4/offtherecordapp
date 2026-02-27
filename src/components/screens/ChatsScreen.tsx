@@ -39,10 +39,11 @@ interface TradeOffer {
 
 interface ChatsScreenProps {
   initialChatId?: number | null;
+  initialDraft?: string;
   onChatOpened?: () => void;
 }
 
-const ChatsScreen = ({ initialChatId, onChatOpened }: ChatsScreenProps) => {
+const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [activeChat, setActiveChat] = useState<number | null>(null);
@@ -56,9 +57,12 @@ const ChatsScreen = ({ initialChatId, onChatOpened }: ChatsScreenProps) => {
   useEffect(() => {
     if (initialChatId) {
       setActiveChat(initialChatId);
+      if (initialDraft) {
+        setInputText(initialDraft);
+      }
       onChatOpened?.();
     }
-  }, [initialChatId, onChatOpened]);
+  }, [initialChatId, initialDraft, onChatOpened]);
 
   // Fetch all chats
   const { data: chats = [] } = useQuery({
