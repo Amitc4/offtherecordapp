@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Camera, Disc3, Plus, Loader2, ScanLine, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,12 +21,29 @@ interface DiscogsResult {
   format: string | null;
 }
 
-type Stage = "capture" | "uploading" | "identifying" | "results";
+type Stage = "capture" | "identifying" | "results";
+
+/**
+ * Convert a File to a base64 string (without the data URL prefix).
+ */
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Strip "data:image/jpeg;base64," prefix
+      const base64 = result.split(",")[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
-  const { user, session } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [stage, setStage] = useState<Stage>("capture");
   const [preview, setPreview] = useState<string | null>(null);
@@ -49,52 +66,28 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
     onOpenChange(o);
   };
 
-  const triggerCamera = () => fileInputRef.current?.click();
-  const triggerGallery = () => galleryInputRef.current?.click();
-
   const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) {
-      console.error("handleCapture: missing file or user", { file: !!file, user: !!user });
-      return;
-    }
+    if (!file || !user) return;
 
-    // Reset input so the same file can be re-selected
+    // Allow re-selecting the same file
     e.target.value = "";
 
     // Show preview
     const objectUrl = URL.createObjectURL(file);
     setPreview(objectUrl);
     setError(null);
-
-    // Upload to storage
-    setStage("uploading");
-    const fileName = `${user.id}/${Date.now()}-${file.name}`;
-    let uploadPath: string;
-    try {
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("record-photos")
-        .upload(fileName, file, { contentType: file.type, upsert: true });
-
-      if (uploadError || !uploadData?.path) {
-        console.error("Upload error:", uploadError?.message, uploadError?.statusCode, JSON.stringify(uploadError));
-        setError(`Failed to upload photo: ${uploadError?.message || "Unknown error"}. Please try again.`);
-        setStage("capture");
-        return;
-      }
-      uploadPath = uploadData.path;
-    } catch (err) {
-      console.error("Upload exception:", err);
-      setError("Failed to upload photo. Please try again.");
-      setStage("capture");
-      return;
-    }
-
-    // Identify via AI — prioritizes cover art visual matching, then text on the cover
     setStage("identifying");
+
     try {
+      // Convert to base64 and send directly to the edge function
+      const base64 = await fileToBase64(file);
+
       const resp = await supabase.functions.invoke("identify-record", {
-        body: { file_path: uploadPath },
+        body: {
+          image_base64: base64,
+          mime_type: file.type || "image/jpeg",
+        },
       });
 
       const data = resp.data;
@@ -119,9 +112,6 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
       setError("Something went wrong. Please try again.");
       setStage("capture");
     }
-
-    // Clean up uploaded photo
-    await supabase.storage.from("record-photos").remove([uploadPath]);
   };
 
   const addToCollection = async (item: DiscogsResult) => {
@@ -158,18 +148,20 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
             <ScanLine size={20} className="text-primary" />
             Scan Record
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Take a photo or choose one from your library to identify a vinyl record
+          </DialogDescription>
         </DialogHeader>
 
-        {/* Hidden camera input */}
+        {/* Hidden file inputs */}
         <input
-          ref={fileInputRef}
+          ref={cameraInputRef}
           type="file"
           accept="image/*"
           capture="environment"
           className="hidden"
           onChange={handleCapture}
         />
-        {/* Hidden gallery input (no capture attribute) */}
         <input
           ref={galleryInputRef}
           type="file"
@@ -203,11 +195,11 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
                   Take a photo of the record's cover art to identify it
                 </p>
                 <div className="flex gap-2">
-                  <Button onClick={triggerCamera} className="gap-2">
+                  <Button onClick={() => cameraInputRef.current?.click()} className="gap-2">
                     <Camera size={18} />
                     {preview ? "Retake" : "Camera"}
                   </Button>
-                  <Button onClick={triggerGallery} variant="outline" className="gap-2">
+                  <Button onClick={() => galleryInputRef.current?.click()} variant="outline" className="gap-2">
                     <ImageIcon size={18} />
                     Photo Library
                   </Button>
@@ -215,8 +207,8 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
               </motion.div>
             )}
 
-            {/* Uploading / Identifying stages */}
-            {(stage === "uploading" || stage === "identifying") && (
+            {/* Identifying stage */}
+            {stage === "identifying" && (
               <motion.div
                 key="loading"
                 initial={{ opacity: 0 }}
@@ -230,7 +222,7 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 size={28} className="animate-spin text-primary" />
                   <p className="font-body text-sm font-medium text-foreground">
-                    {stage === "uploading" ? "Uploading photo..." : "AI is identifying your record..."}
+                    AI is identifying your record...
                   </p>
                   <p className="font-body text-xs text-muted-foreground">This may take a few seconds</p>
                 </div>
