@@ -282,6 +282,10 @@ Deno.serve(async (req) => {
 
         for (const r of data.releases) {
           const info = r.basic_information;
+          const genres = [
+            ...(info.genres || []),
+            ...(info.styles || []),
+          ];
           allReleases.push({
             user_id: userId,
             discogs_release_id: info.id,
@@ -290,6 +294,7 @@ Deno.serve(async (req) => {
             year: info.year || null,
             cover_image: info.cover_image || null,
             format: info.formats?.map((f: any) => f.name).join(", ") || null,
+            genre: genres.length > 0 ? genres.slice(0, 3).join(", ") : null,
           });
         }
 
@@ -404,6 +409,7 @@ Deno.serve(async (req) => {
         year: parseInt(r.year) || null,
         cover_image: r.cover_image || r.thumb || null,
         format: r.format?.join(", ") || null,
+        genre: [...(r.genre || []), ...(r.style || [])].slice(0, 3).join(", ") || null,
       }));
 
       return new Response(JSON.stringify({ results }), {

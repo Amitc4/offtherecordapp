@@ -22,6 +22,7 @@ interface DiscogsResult {
   year: number | null;
   cover_image: string | null;
   format: string | null;
+  genre: string | null;
 }
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/discogs`;
@@ -84,6 +85,7 @@ const AddRecordDialog = ({ open, onOpenChange, target }: AddRecordDialogProps) =
       year: item.year,
       cover_image: item.cover_image,
       discogs_release_id: item.id,
+      genre: item.genre,
     };
     if (target === "collection") {
       record.format = item.format;
