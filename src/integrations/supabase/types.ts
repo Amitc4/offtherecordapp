@@ -229,6 +229,7 @@ export type Database = {
           created_at: string
           discogs_release_id: number | null
           format: string | null
+          genre: string | null
           id: string
           notes: string | null
           price: number | null
@@ -244,6 +245,7 @@ export type Database = {
           created_at?: string
           discogs_release_id?: number | null
           format?: string | null
+          genre?: string | null
           id?: string
           notes?: string | null
           price?: number | null
@@ -259,6 +261,7 @@ export type Database = {
           created_at?: string
           discogs_release_id?: number | null
           format?: string | null
+          genre?: string | null
           id?: string
           notes?: string | null
           price?: number | null
