@@ -98,7 +98,7 @@ const HomePage = () => {
                     </span>
                   )}
                 </div>
-                <span className={`font-body text-[10px] transition-colors ${isActive ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+                <span className={`font-body text-xs transition-colors ${isActive ? "font-semibold text-primary" : "text-muted-foreground"}`}>
                   {tab.label}
                 </span>
               </button>
