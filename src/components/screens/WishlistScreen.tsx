@@ -13,7 +13,7 @@ const WishlistScreen = () => {
   return (
     <div className="px-4 pt-4 pb-2">
       <div className="mb-2 flex items-center justify-between">
-        <h1 className="font-display text-xl font-bold text-foreground">Wishlist</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground">Wishlist</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setView(view === "grid" ? "list" : "grid")}
@@ -38,7 +38,7 @@ const WishlistScreen = () => {
           </button>
         </div>
       </div>
-      <p className="mb-4 font-body text-xs text-muted-foreground">{wishlist.length} records wanted</p>
+      <p className="mb-4 font-body text-sm text-muted-foreground">{wishlist.length} records wanted</p>
 
       {isLoading ? (
         <div className="flex justify-center py-12">
@@ -66,8 +66,8 @@ const WishlistScreen = () => {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h3 className="font-display text-sm font-semibold text-foreground truncate">{item.title}</h3>
-                <p className="font-body text-xs text-muted-foreground truncate">{item.artist}{item.year ? ` · ${item.year}` : ""}</p>
+                <h3 className="font-display text-base font-semibold text-foreground truncate">{item.title}</h3>
+                <p className="font-body text-sm text-muted-foreground truncate">{item.artist}{item.year ? ` · ${item.year}` : ""}</p>
               </div>
             </div>
           ))}
@@ -83,8 +83,8 @@ const WishlistScreen = () => {
                   <Heart size={36} className="text-primary transition-transform group-hover:scale-110" fill="hsl(var(--primary))" />
                 )}
               </div>
-              <h3 className="font-display text-xs font-semibold leading-tight text-foreground truncate">{item.title}</h3>
-              <p className="mt-0.5 font-body text-[10px] text-muted-foreground truncate">{item.artist}</p>
+              <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{item.title}</h3>
+              <p className="mt-0.5 font-body text-xs text-muted-foreground truncate">{item.artist}</p>
               <div className="mt-2">
                 <span className="font-body text-xs text-muted-foreground">{item.year || "—"}</span>
               </div>

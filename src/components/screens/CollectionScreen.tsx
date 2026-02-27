@@ -64,7 +64,7 @@ const CollectionScreen = () => {
     <div className="px-4 pt-4 pb-2">
 
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="font-display text-xl font-bold text-foreground">My Collection</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground">My Collection</h1>
         <div className="flex items-center gap-2">
           {!selectMode ? (
             <>
@@ -120,7 +120,7 @@ const CollectionScreen = () => {
           {selected.size} selected · tap records to select
         </p>
       ) : (
-        <p className="mb-4 font-body text-xs text-muted-foreground">{records.length} records</p>
+        <p className="mb-4 font-body text-sm text-muted-foreground">{records.length} records</p>
       )}
 
       {isLoading ? (
@@ -164,8 +164,8 @@ const CollectionScreen = () => {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-display text-sm font-semibold text-foreground truncate">{record.title}</h3>
-                  <p className="font-body text-xs text-muted-foreground truncate">{record.artist}{record.year ? ` · ${record.year}` : ""}</p>
+                  <h3 className="font-display text-base font-semibold text-foreground truncate">{record.title}</h3>
+                  <p className="font-body text-sm text-muted-foreground truncate">{record.artist}{record.year ? ` · ${record.year}` : ""}</p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
                   {recordStatus === "for_sale" && recordPrice != null && (
@@ -216,8 +216,8 @@ const CollectionScreen = () => {
                     <Disc3 size={36} className="text-primary transition-transform group-hover:rotate-45" />
                   )}
                 </div>
-                <h3 className="font-display text-xs font-semibold leading-tight text-foreground truncate">{record.title}</h3>
-                <p className="mt-0.5 font-body text-[10px] text-muted-foreground truncate">{record.artist}</p>
+                <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{record.title}</h3>
+                <p className="mt-0.5 font-body text-xs text-muted-foreground truncate">{record.artist}</p>
                 <div className="mt-2 flex items-center justify-between">
                   {recordStatus === "for_sale" && recordPrice != null ? (
                     <span className="font-body text-xs font-bold text-primary">₪{recordPrice}</span>
