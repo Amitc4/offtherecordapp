@@ -53,6 +53,76 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          chat_id: number
+          created_at: string
+          id: string
+          sender_id: string
+          text: string
+        }
+        Insert: {
+          chat_id: number
+          created_at?: string
+          id?: string
+          sender_id: string
+          text: string
+        }
+        Update: {
+          chat_id?: number
+          created_at?: string
+          id?: string
+          sender_id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chats: {
+        Row: {
+          created_at: string
+          id: number
+          participant_1: string
+          participant_2: string
+          record_id: string | null
+          record_title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          participant_1: string
+          participant_2: string
+          record_id?: string | null
+          record_title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          participant_1?: string
+          participant_2?: string
+          record_id?: string | null
+          record_title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chats_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "user_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discogs_tokens: {
         Row: {
           access_secret: string

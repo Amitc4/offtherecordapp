@@ -112,9 +112,6 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
             </div>
             <div className="min-w-0 flex-1">
               <p className="font-body text-sm font-semibold text-foreground">{sellerName}</p>
-              {sellerProfile?.short_id && (
-                <p className="font-body text-xs text-muted-foreground">ID: {sellerProfile.short_id}</p>
-              )}
             </div>
           </div>
 

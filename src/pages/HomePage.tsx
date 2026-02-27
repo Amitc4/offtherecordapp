@@ -20,11 +20,10 @@ const baseTabs: { id: Tab; label: string; icon: typeof Disc3 }[] = [
   { id: "profile", label: "Profile", icon: User },
 ];
 
-const unreadMessages = 3;
-
 const HomePage = () => {
   const [activeTab, setActiveTab] = useState<Tab>("discover");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [openChatId, setOpenChatId] = useState<number | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -41,12 +40,17 @@ const HomePage = () => {
     ? [...baseTabs, { id: "admin" as Tab, label: "Admin", icon: ShieldCheck }]
     : baseTabs;
 
+  const handleNavigateToChat = (chatId: number) => {
+    setOpenChatId(chatId);
+    setActiveTab("chats");
+  };
+
   const renderScreen = () => {
     switch (activeTab) {
       case "collection": return <CollectionScreen />;
       case "wishlist": return <WishlistScreen />;
-      case "discover": return <DiscoverScreen />;
-      case "chats": return <ChatsScreen />;
+      case "discover": return <DiscoverScreen onNavigateToChat={handleNavigateToChat} />;
+      case "chats": return <ChatsScreen initialChatId={openChatId} onChatOpened={() => setOpenChatId(null)} />;
       case "profile": return <ProfileScreen />;
       case "admin": return <AdminScreen />;
     }
@@ -92,11 +96,6 @@ const HomePage = () => {
                     className={`transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`}
                     fill={isActive && tab.id === "wishlist" ? "hsl(var(--primary))" : "none"}
                   />
-                  {tab.id === "chats" && unreadMessages > 0 && (
-                    <span className="absolute -right-2 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 font-body text-[10px] font-bold text-primary-foreground">
-                      {unreadMessages}
-                    </span>
-                  )}
                 </div>
                 <span className={`font-body text-xs transition-colors ${isActive ? "font-semibold text-primary" : "text-muted-foreground"}`}>
                   {tab.label}
