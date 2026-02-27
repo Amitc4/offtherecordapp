@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ArrowLeft, Send, HandshakeIcon, MessageCircle } from "lucide-react";
+import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive } from "lucide-react";
+import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,7 @@ interface ChatRow {
   record_title: string | null;
   created_at: string;
   updated_at: string;
+  archived_by: string[];
 }
 
 interface ChatMessage {
@@ -65,7 +67,7 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
   }, [initialChatId, initialDraft, onChatOpened]);
 
   // Fetch all chats
-  const { data: chats = [] } = useQuery({
+  const { data: chats = [], refetch: refetchChats } = useQuery({
     queryKey: ["chats"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -73,7 +75,8 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
         .select("*")
         .order("updated_at", { ascending: false });
       if (error) throw error;
-      return data as ChatRow[];
+      // Filter out archived chats client-side (archived_by contains current user id)
+      return (data as ChatRow[]).filter((c) => !c.archived_by?.includes(user!.id));
     },
     enabled: !!user,
   });
@@ -190,6 +193,16 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
       sender_id: user.id,
       text,
     });
+  };
+
+  const handleArchiveChat = async (chatId: number) => {
+    if (!user) return;
+    const chat = chats.find((c) => c.id === chatId);
+    if (!chat) return;
+    const newArchivedBy = [...(chat.archived_by || []), user.id];
+    await supabase.from("chats").update({ archived_by: newArchivedBy } as any).eq("id", chatId);
+    refetchChats();
+    toast.success("Chat archived");
   };
 
   const activeChatData = chats.find((c) => c.id === activeChat);
@@ -329,29 +342,47 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
             const otherName = getOtherName(chat);
             const last = lastMessages[chat.id];
             return (
-              <div
-                key={chat.id}
-                onClick={() => setActiveChat(chat.id)}
-                className="flex cursor-pointer items-center gap-3 rounded-xl p-3 transition-colors hover:bg-card"
-              >
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
-                  {otherName.charAt(0)}
+              <div key={chat.id} className="relative overflow-hidden rounded-xl">
+                {/* Archive button behind */}
+                <div className="absolute right-0 top-0 bottom-0 flex items-center">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleArchiveChat(chat.id); }}
+                    className="flex h-full w-16 items-center justify-center bg-destructive text-destructive-foreground"
+                  >
+                    <Archive size={18} />
+                  </button>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-body text-sm font-semibold text-foreground">{otherName}</h3>
+                {/* Chat row */}
+                <div
+                  onClick={() => setActiveChat(chat.id)}
+                  className="relative flex cursor-pointer items-center gap-3 bg-background p-3 transition-colors hover:bg-card"
+                >
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
+                    {otherName.charAt(0)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-body text-sm font-semibold text-foreground">{otherName}</h3>
+                      {last && (
+                        <span className="font-body text-[10px] text-muted-foreground">
+                          {new Date(last.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      )}
+                    </div>
+                    {chat.record_title && (
+                      <p className="font-body text-[10px] font-medium text-primary">{chat.record_title}</p>
+                    )}
                     {last && (
-                      <span className="font-body text-[10px] text-muted-foreground">
-                        {new Date(last.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </span>
+                      <p className="truncate font-body text-xs text-muted-foreground">{last.text}</p>
                     )}
                   </div>
-                  {chat.record_title && (
-                    <p className="font-body text-[10px] font-medium text-primary">{chat.record_title}</p>
-                  )}
-                  {last && (
-                    <p className="truncate font-body text-xs text-muted-foreground">{last.text}</p>
-                  )}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleArchiveChat(chat.id); }}
+                    className="ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    title="Archive chat"
+                  >
+                    <Archive size={14} />
+                  </button>
                 </div>
               </div>
             );
