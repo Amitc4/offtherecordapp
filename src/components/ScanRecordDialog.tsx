@@ -56,6 +56,9 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
     const file = e.target.files?.[0];
     if (!file || !user || !session) return;
 
+    // Reset input so the same file can be re-selected
+    e.target.value = "";
+
     // Show preview
     const objectUrl = URL.createObjectURL(file);
     setPreview(objectUrl);
@@ -64,31 +67,41 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
     // Upload to storage
     setStage("uploading");
     const fileName = `${user.id}/${Date.now()}-${file.name}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from("record-photos")
-      .upload(fileName, file, { contentType: file.type, upsert: true });
+    let uploadPath: string;
+    try {
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("record-photos")
+        .upload(fileName, file, { contentType: file.type, upsert: true });
 
-    if (uploadError) {
+      if (uploadError || !uploadData?.path) {
+        console.error("Upload error:", uploadError);
+        setError("Failed to upload photo. Please try again.");
+        setStage("capture");
+        return;
+      }
+      uploadPath = uploadData.path;
+    } catch (err) {
+      console.error("Upload exception:", err);
       setError("Failed to upload photo. Please try again.");
       setStage("capture");
       return;
     }
 
-    // Identify via AI using file path (bucket is private, signed URL generated server-side)
+    // Identify via AI — prioritizes cover art visual matching, then text on the cover
     setStage("identifying");
     try {
       const resp = await supabase.functions.invoke("identify-record", {
-        body: { file_path: uploadData.path },
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { file_path: uploadPath },
       });
 
-      if (resp.error) {
+      const data = resp.data;
+      if (!data || resp.error) {
+        console.error("Identify error:", resp.error);
         setError("Failed to identify record. Try a clearer photo.");
         setStage("capture");
         return;
       }
 
-      const data = resp.data;
       if (data.error && (!data.results || data.results.length === 0)) {
         setError(data.error);
         setStage("capture");
@@ -98,13 +111,14 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
       setIdentification(data.identification || null);
       setResults(data.results || []);
       setStage("results");
-    } catch {
+    } catch (err) {
+      console.error("Identify exception:", err);
       setError("Something went wrong. Please try again.");
       setStage("capture");
     }
 
     // Clean up uploaded photo
-    await supabase.storage.from("record-photos").remove([fileName]);
+    await supabase.storage.from("record-photos").remove([uploadPath]);
   };
 
   const addToCollection = async (item: DiscogsResult) => {
