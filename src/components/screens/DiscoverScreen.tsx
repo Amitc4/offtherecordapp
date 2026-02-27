@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
+import DiscoverRecordSheet from "@/components/DiscoverRecordSheet";
+import { toast } from "sonner";
 
 const GENRES = ["All", "Rock", "Jazz", "Soul", "Electronic", "Hip Hop", "Pop", "Classical", "Funk", "R&B"];
 
@@ -12,6 +14,7 @@ const DiscoverScreen = () => {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [searchText, setSearchText] = useState("");
   const [activeGenre, setActiveGenre] = useState("All");
+  const [selectedRecord, setSelectedRecord] = useState<any>(null);
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["discover_records"],
@@ -27,7 +30,6 @@ const DiscoverScreen = () => {
     enabled: !!user,
   });
 
-  // Filter out current user's records, then apply search + genre filters
   const filtered = useMemo(() => {
     let items = records.filter((r) => r.user_id !== user?.id);
 
@@ -49,6 +51,11 @@ const DiscoverScreen = () => {
 
     return items;
   }, [records, user?.id, activeGenre, searchText]);
+
+  const handleContactSeller = (record: any, sellerName: string) => {
+    toast.info(`Messaging ${sellerName} about "${record.title}" — coming soon!`);
+    setSelectedRecord(null);
+  };
 
   return (
     <div className="px-4 pt-4 pb-2">
@@ -107,7 +114,11 @@ const DiscoverScreen = () => {
           {filtered.map((item) => {
             const price = (item as any).price as number | null;
             return (
-              <div key={item.id} className="group rounded-xl bg-card p-2.5 vinyl-shadow transition-transform hover:scale-[1.02]">
+              <div
+                key={item.id}
+                onClick={() => setSelectedRecord(item)}
+                className="group cursor-pointer rounded-xl bg-card p-2.5 vinyl-shadow transition-transform hover:scale-[1.02]"
+              >
                 <div className="mb-2 flex aspect-square items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
                   {item.cover_image ? (
                     <img src={item.cover_image} alt={item.title} className="h-full w-full object-cover" />
@@ -138,7 +149,11 @@ const DiscoverScreen = () => {
           {filtered.map((item) => {
             const price = (item as any).price as number | null;
             return (
-              <div key={item.id} className="flex items-center gap-4 rounded-xl bg-card p-4 vinyl-shadow">
+              <div
+                key={item.id}
+                onClick={() => setSelectedRecord(item)}
+                className="flex cursor-pointer items-center gap-4 rounded-xl bg-card p-4 vinyl-shadow"
+              >
                 {item.cover_image ? (
                   <img src={item.cover_image} alt={item.title} className="h-12 w-12 rounded-lg object-cover" />
                 ) : (
@@ -165,6 +180,13 @@ const DiscoverScreen = () => {
           })}
         </div>
       )}
+
+      <DiscoverRecordSheet
+        record={selectedRecord}
+        open={!!selectedRecord}
+        onOpenChange={(open) => !open && setSelectedRecord(null)}
+        onContactSeller={handleContactSeller}
+      />
     </div>
   );
 };

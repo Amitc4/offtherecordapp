@@ -19,6 +19,7 @@ interface DiscogsResult {
   year: number | null;
   cover_image: string | null;
   format: string | null;
+  genre: string | null;
 }
 
 type Stage = "capture" | "identifying" | "results";
@@ -129,7 +130,8 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
       cover_image: item.cover_image,
       discogs_release_id: item.id,
       format: item.format,
-    });
+      genre: item.genre,
+    } as any);
 
     if (error) {
       toast.error("Failed to add record");

@@ -24,6 +24,7 @@ async function searchDiscogs(query: string, perPage = 10): Promise<any[]> {
     year: parseInt(r.year) || null,
     cover_image: r.cover_image || r.thumb || null,
     format: r.format?.join(", ") || null,
+    genre: [...(r.genre || []), ...(r.style || [])].slice(0, 3).join(", ") || null,
   }));
 }
 
