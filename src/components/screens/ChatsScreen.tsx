@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ArrowLeft, Send, HandshakeIcon, MessageCircle } from "lucide-react";
-import { Input } from "@/components/ui/input";
+
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -274,13 +274,21 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
 
         {/* Fixed input bar */}
         <div className="fixed bottom-[calc(3.5rem+0.75rem)] left-1/2 z-50 w-full max-w-md -translate-x-1/2 border-t border-border bg-background px-4 py-2">
-          <div className="flex items-center gap-2">
-            <Input
+          <div className="flex items-end gap-2">
+            <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
               placeholder="Type a message..."
-              className="flex-1 h-11 font-body text-sm"
+              rows={1}
+              className="flex-1 min-h-[2.75rem] max-h-[4.5rem] resize-none overflow-y-auto rounded-md border border-input bg-background px-3 py-2.5 font-body text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              style={{ height: "auto" }}
+              ref={(el) => {
+                if (el) {
+                  el.style.height = "auto";
+                  el.style.height = Math.min(el.scrollHeight, 72) + "px";
+                }
+              }}
             />
             <button
               onClick={handleSend}
