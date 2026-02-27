@@ -1,17 +1,54 @@
-import { useState } from "react";
-import { Disc3, LayoutGrid, List } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Disc3, LayoutGrid, List, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
 
-const featured = [
-  { id: 1, title: "The Dark Side of the Moon", artist: "Pink Floyd", price: "₪130", condition: "GEM" },
-  { id: 2, title: "Thriller", artist: "Michael Jackson", price: "₪105", condition: "NM" },
-  { id: 3, title: "Back to Black", artist: "Amy Winehouse", price: "₪80", condition: "OK" },
-  { id: 4, title: "OK Computer", artist: "Radiohead", price: "₪150", condition: "M" },
-  { id: 5, title: "Purple Rain", artist: "Prince", price: "₪110", condition: "G" },
-  { id: 6, title: "Tapestry", artist: "Carole King", price: "₪65", condition: "NM" },
-];
+const GENRES = ["All", "Rock", "Jazz", "Soul", "Electronic", "Hip Hop", "Pop", "Classical", "Funk", "R&B"];
 
 const DiscoverScreen = () => {
+  const { user } = useAuth();
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [searchText, setSearchText] = useState("");
+  const [activeGenre, setActiveGenre] = useState("All");
+
+  const { data: records = [], isLoading } = useQuery({
+    queryKey: ["discover_records"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_records")
+        .select("*")
+        .eq("status", "for_sale")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Filter out current user's records, then apply search + genre filters
+  const filtered = useMemo(() => {
+    let items = records.filter((r) => r.user_id !== user?.id);
+
+    if (activeGenre !== "All") {
+      items = items.filter((r) => {
+        const genre = ((r as any).genre || "").toLowerCase();
+        return genre.includes(activeGenre.toLowerCase());
+      });
+    }
+
+    if (searchText.trim()) {
+      const q = searchText.trim().toLowerCase();
+      items = items.filter(
+        (r) =>
+          r.title.toLowerCase().includes(q) ||
+          r.artist.toLowerCase().includes(q)
+      );
+    }
+
+    return items;
+  }, [records, user?.id, activeGenre, searchText]);
 
   return (
     <div className="px-4 pt-4 pb-2">
@@ -24,61 +61,108 @@ const DiscoverScreen = () => {
           {view === "grid" ? <List size={18} /> : <LayoutGrid size={18} />}
         </button>
       </div>
-      <p className="mb-4 font-body text-sm text-muted-foreground">Find your next favourite record</p>
+      <p className="mb-3 font-body text-sm text-muted-foreground">Find your next favourite record</p>
 
-      {/* Categories */}
+      {/* Search bar */}
+      <div className="relative mb-3">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          placeholder="Search by title or artist..."
+          className="h-10 pl-9 font-body text-sm"
+        />
+      </div>
+
+      {/* Genre filters */}
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {["All", "Rock", "Jazz", "Soul", "Electronic", "Hip Hop"].map((cat, i) => (
+        {GENRES.map((genre) => (
           <button
-            key={cat}
+            key={genre}
+            onClick={() => setActiveGenre(genre)}
             className={`shrink-0 rounded-full px-4 py-2 font-body text-xs font-medium transition-colors ${
-              i === 0
+              activeGenre === genre
                 ? "bg-primary text-primary-foreground shadow-md"
                 : "bg-primary/10 text-primary hover:bg-primary/20"
             }`}
           >
-            {cat}
+            {genre}
           </button>
         ))}
       </div>
 
-      {view === "grid" ? (
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center py-16 text-center">
+          <Search size={48} className="mb-4 text-muted-foreground/40" />
+          <p className="font-display text-base font-semibold text-muted-foreground">
+            No available records that match your search
+          </p>
+        </div>
+      ) : view === "grid" ? (
         <div className="grid grid-cols-2 gap-2.5">
-          {featured.map((item) => (
-            <div key={item.id} className="group rounded-xl bg-card p-2.5 vinyl-shadow transition-transform hover:scale-[1.02]">
-              <div className="mb-2 flex aspect-square items-center justify-center rounded-lg bg-primary/10">
-                <Disc3 size={36} className="text-primary transition-transform group-hover:rotate-45" />
+          {filtered.map((item) => {
+            const price = (item as any).price as number | null;
+            return (
+              <div key={item.id} className="group rounded-xl bg-card p-2.5 vinyl-shadow transition-transform hover:scale-[1.02]">
+                <div className="mb-2 flex aspect-square items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
+                  {item.cover_image ? (
+                    <img src={item.cover_image} alt={item.title} className="h-full w-full object-cover" />
+                  ) : (
+                    <Disc3 size={36} className="text-primary transition-transform group-hover:rotate-45" />
+                  )}
+                </div>
+                <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{item.title}</h3>
+                <p className="mt-0.5 font-display text-xs text-muted-foreground truncate">{item.artist}</p>
+                <div className="mt-2 flex items-center justify-between">
+                  {price != null ? (
+                    <span className="font-body text-sm font-bold text-primary">₪{price}</span>
+                  ) : (
+                    <span className="font-body text-xs text-muted-foreground">{item.year || "—"}</span>
+                  )}
+                  {item.condition && (
+                    <span className="rounded bg-secondary px-1.5 py-0.5 font-body text-[9px] font-semibold text-secondary-foreground">
+                      {item.condition}
+                    </span>
+                  )}
+                </div>
               </div>
-              <h3 className="font-display text-sm font-semibold leading-tight text-foreground">{item.title}</h3>
-              <p className="mt-0.5 font-display text-xs text-muted-foreground">{item.artist}</p>
-              <div className="mt-2 flex items-center justify-between">
-                <span className="font-body text-sm font-bold text-primary">{item.price}</span>
-                <span className="rounded bg-secondary px-1.5 py-0.5 font-body text-[9px] font-semibold text-secondary-foreground">
-                  {item.condition}
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="space-y-3">
-          {featured.map((item) => (
-            <div key={item.id} className="flex items-center gap-4 rounded-xl bg-card p-4 vinyl-shadow">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/15">
-                <Disc3 size={24} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
+          {filtered.map((item) => {
+            const price = (item as any).price as number | null;
+            return (
+              <div key={item.id} className="flex items-center gap-4 rounded-xl bg-card p-4 vinyl-shadow">
+                {item.cover_image ? (
+                  <img src={item.cover_image} alt={item.title} className="h-12 w-12 rounded-lg object-cover" />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/15">
+                    <Disc3 size={24} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-display text-base font-semibold text-foreground truncate">{item.title}</h3>
+                  <p className="font-display text-sm text-muted-foreground">{item.artist}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  {price != null && (
+                    <span className="font-body text-sm font-bold text-primary">₪{price}</span>
+                  )}
+                  {item.condition && (
+                    <span className="rounded bg-secondary px-1.5 py-0.5 font-body text-[9px] font-semibold text-secondary-foreground">
+                      {item.condition}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-display text-base font-semibold text-foreground truncate">{item.title}</h3>
-                <p className="font-display text-sm text-muted-foreground">{item.artist}</p>
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className="font-body text-sm font-bold text-primary">{item.price}</span>
-                <span className="rounded bg-secondary px-1.5 py-0.5 font-body text-[9px] font-semibold text-secondary-foreground">
-                  {item.condition}
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
