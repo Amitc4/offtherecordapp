@@ -87,6 +87,7 @@ export type Database = {
       }
       chats: {
         Row: {
+          archived_by: string[]
           created_at: string
           id: number
           participant_1: string
@@ -96,6 +97,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_by?: string[]
           created_at?: string
           id?: number
           participant_1: string
@@ -105,6 +107,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_by?: string[]
           created_at?: string
           id?: number
           participant_1?: string

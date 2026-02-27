@@ -1,0 +1,1 @@
+ALTER TABLE public.chats ADD COLUMN archived_by uuid[] NOT NULL DEFAULT '{}';
