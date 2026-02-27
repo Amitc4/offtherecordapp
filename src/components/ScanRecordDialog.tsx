@@ -54,7 +54,10 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
 
   const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user || !session) return;
+    if (!file || !user) {
+      console.error("handleCapture: missing file or user", { file: !!file, user: !!user });
+      return;
+    }
 
     // Reset input so the same file can be re-selected
     e.target.value = "";
@@ -74,8 +77,8 @@ const ScanRecordDialog = ({ open, onOpenChange }: ScanRecordDialogProps) => {
         .upload(fileName, file, { contentType: file.type, upsert: true });
 
       if (uploadError || !uploadData?.path) {
-        console.error("Upload error:", uploadError);
-        setError("Failed to upload photo. Please try again.");
+        console.error("Upload error:", uploadError?.message, uploadError?.statusCode, JSON.stringify(uploadError));
+        setError(`Failed to upload photo: ${uploadError?.message || "Unknown error"}. Please try again.`);
         setStage("capture");
         return;
       }
