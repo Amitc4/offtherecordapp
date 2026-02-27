@@ -1,46 +1,29 @@
-import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Send, HandshakeIcon } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { ArrowLeft, Send, HandshakeIcon, MessageCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import CreateOfferDialog from "@/components/CreateOfferDialog";
 import OfferCard from "@/components/OfferCard";
 
-const chats = [
-  { id: 1, name: "Sarah M.", record: "Blue Train", lastMessage: "Is the Coltrane still available?", time: "2m ago", unread: 2, otherUserId: "" },
-  { id: 2, name: "Jake R.", record: "Rumours", lastMessage: "Deal! I'll pick it up tomorrow", time: "1h ago", unread: 1, otherUserId: "" },
-  { id: 3, name: "Emily K.", record: "Abbey Road", lastMessage: "Thanks for the trade!", time: "3h ago", unread: 0, otherUserId: "" },
-  { id: 4, name: "Marcus T.", record: "Kind of Blue", lastMessage: "What condition is the sleeve?", time: "1d ago", unread: 0, otherUserId: "" },
-];
-
-interface ChatMessage {
+interface ChatRow {
   id: number;
-  text: string;
-  sender: "me" | "them";
-  time: string;
+  participant_1: string;
+  participant_2: string;
+  record_id: string | null;
+  record_title: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
-const mockMessages: Record<number, ChatMessage[]> = {
-  1: [
-    { id: 1, text: "Hey, I saw you have Blue Train listed", sender: "them", time: "10m ago" },
-    { id: 2, text: "Yes! It's the 2010 reissue", sender: "me", time: "8m ago" },
-    { id: 3, text: "Is the Coltrane still available?", sender: "them", time: "2m ago" },
-  ],
-  2: [
-    { id: 1, text: "Would you take ₪90 for Rumours?", sender: "them", time: "2h ago" },
-    { id: 2, text: "How about ₪100?", sender: "me", time: "1.5h ago" },
-    { id: 3, text: "Deal! I'll pick it up tomorrow", sender: "them", time: "1h ago" },
-  ],
-  3: [
-    { id: 1, text: "Abbey Road arrived safely!", sender: "them", time: "4h ago" },
-    { id: 2, text: "Glad to hear it!", sender: "me", time: "3.5h ago" },
-    { id: 3, text: "Thanks for the trade!", sender: "them", time: "3h ago" },
-  ],
-  4: [
-    { id: 1, text: "I'm interested in Kind of Blue", sender: "them", time: "1d ago" },
-    { id: 2, text: "What condition is the sleeve?", sender: "them", time: "1d ago" },
-  ],
-};
+interface ChatMessage {
+  id: string;
+  chat_id: number;
+  sender_id: string;
+  text: string;
+  created_at: string;
+}
 
 interface TradeOffer {
   id: string;
@@ -54,16 +37,122 @@ interface TradeOffer {
   created_at: string;
 }
 
-const ChatsScreen = () => {
+interface ChatsScreenProps {
+  initialChatId?: number | null;
+  onChatOpened?: () => void;
+}
+
+const ChatsScreen = ({ initialChatId, onChatOpened }: ChatsScreenProps) => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [activeChat, setActiveChat] = useState<number | null>(null);
-  const [messages, setMessages] = useState<Record<number, ChatMessage[]>>(mockMessages);
   const [inputText, setInputText] = useState("");
   const [showOfferDialog, setShowOfferDialog] = useState(false);
   const [offers, setOffers] = useState<TradeOffer[]>([]);
+  const [participantNames, setParticipantNames] = useState<Record<string, string>>({});
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const activeChatData = chats.find((c) => c.id === activeChat);
+  // Handle initial chat navigation from Discover
+  useEffect(() => {
+    if (initialChatId) {
+      setActiveChat(initialChatId);
+      onChatOpened?.();
+    }
+  }, [initialChatId, onChatOpened]);
 
+  // Fetch all chats
+  const { data: chats = [] } = useQuery({
+    queryKey: ["chats"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("chats")
+        .select("*")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data as ChatRow[];
+    },
+    enabled: !!user,
+  });
+
+  // Fetch participant display names
+  useEffect(() => {
+    if (!chats.length || !user) return;
+    const otherIds = [...new Set(chats.map((c) => (c.participant_1 === user.id ? c.participant_2 : c.participant_1)))];
+    if (!otherIds.length) return;
+
+    supabase
+      .from("profiles")
+      .select("user_id, display_name")
+      .in("user_id", otherIds)
+      .then(({ data }) => {
+        if (data) {
+          const map: Record<string, string> = {};
+          data.forEach((p) => { map[p.user_id] = p.display_name || "User"; });
+          setParticipantNames(map);
+        }
+      });
+  }, [chats, user]);
+
+  // Fetch messages for active chat
+  const { data: messages = [] } = useQuery({
+    queryKey: ["chat_messages", activeChat],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("chat_messages")
+        .select("*")
+        .eq("chat_id", activeChat!)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as ChatMessage[];
+    },
+    enabled: !!activeChat,
+  });
+
+  // Fetch last message per chat for preview
+  const { data: lastMessages = {} } = useQuery({
+    queryKey: ["last_messages", chats.map((c) => c.id).join(",")],
+    queryFn: async () => {
+      const map: Record<number, ChatMessage> = {};
+      // Fetch last message for each chat
+      for (const chat of chats) {
+        const { data } = await supabase
+          .from("chat_messages")
+          .select("*")
+          .eq("chat_id", chat.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (data && data.length > 0) {
+          map[chat.id] = data[0] as ChatMessage;
+        }
+      }
+      return map;
+    },
+    enabled: chats.length > 0,
+  });
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Realtime subscription for messages
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel("chat-messages-realtime")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, (payload) => {
+        const msg = payload.new as ChatMessage;
+        if (msg.chat_id === activeChat) {
+          queryClient.invalidateQueries({ queryKey: ["chat_messages", activeChat] });
+        }
+        queryClient.invalidateQueries({ queryKey: ["last_messages"] });
+        queryClient.invalidateQueries({ queryKey: ["chats"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [activeChat, user, queryClient]);
+
+  // Fetch offers for active chat
   const fetchOffers = useCallback(async () => {
     if (!activeChat || !user) return;
     const { data } = await supabase
@@ -74,11 +163,8 @@ const ChatsScreen = () => {
     setOffers((data as TradeOffer[]) || []);
   }, [activeChat, user]);
 
-  useEffect(() => {
-    fetchOffers();
-  }, [fetchOffers]);
+  useEffect(() => { fetchOffers(); }, [fetchOffers]);
 
-  // Realtime subscription for offers
   useEffect(() => {
     if (!activeChat) return;
     const channel = supabase
@@ -90,36 +176,33 @@ const ChatsScreen = () => {
     return () => { supabase.removeChannel(channel); };
   }, [activeChat, fetchOffers]);
 
-  const handleSend = () => {
-    if (!inputText.trim() || !activeChat) return;
-    const newMsg: ChatMessage = {
-      id: Date.now(),
-      text: inputText.trim(),
-      sender: "me",
-      time: "now",
-    };
-    setMessages((prev) => ({
-      ...prev,
-      [activeChat]: [...(prev[activeChat] || []), newMsg],
-    }));
+  const handleSend = async () => {
+    if (!inputText.trim() || !activeChat || !user) return;
+    const text = inputText.trim();
     setInputText("");
+
+    await supabase.from("chat_messages").insert({
+      chat_id: activeChat,
+      sender_id: user.id,
+      text,
+    });
   };
 
-  if (activeChat && activeChatData) {
-    const chatMessages = messages[activeChat] || [];
+  const activeChatData = chats.find((c) => c.id === activeChat);
+  const getOtherUserId = (chat: ChatRow) => chat.participant_1 === user?.id ? chat.participant_2 : chat.participant_1;
+  const getOtherName = (chat: ChatRow) => participantNames[getOtherUserId(chat)] || "User";
 
-    // Interleave messages and offers by time (offers use created_at, messages use id as timestamp)
+  // Active chat view
+  if (activeChat && activeChatData) {
+    const otherName = getOtherName(activeChatData);
+    const otherUserId = getOtherUserId(activeChatData);
+
     type TimelineItem = { type: "message"; data: ChatMessage } | { type: "offer"; data: TradeOffer };
     const timeline: TimelineItem[] = [
-      ...chatMessages.map((m) => ({ type: "message" as const, data: m })),
+      ...messages.map((m) => ({ type: "message" as const, data: m })),
       ...offers.map((o) => ({ type: "offer" as const, data: o })),
     ];
-    // Sort: messages by id (timestamp-ish), offers by created_at. Put offers after messages for mock data.
-    timeline.sort((a, b) => {
-      const timeA = a.type === "offer" ? new Date(a.data.created_at).getTime() : a.data.id;
-      const timeB = b.type === "offer" ? new Date(b.data.created_at).getTime() : b.data.id;
-      return timeA - timeB;
-    });
+    timeline.sort((a, b) => new Date(a.data.created_at).getTime() - new Date(b.data.created_at).getTime());
 
     return (
       <div className="flex h-full flex-col">
@@ -129,11 +212,13 @@ const ChatsScreen = () => {
             <ArrowLeft size={20} className="text-foreground" />
           </button>
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
-            {activeChatData.name.charAt(0)}
+            {otherName.charAt(0)}
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="font-body text-sm font-semibold text-foreground">{activeChatData.name}</h3>
-            <p className="font-body text-[10px] font-medium text-primary">{activeChatData.record}</p>
+            <h3 className="font-body text-sm font-semibold text-foreground">{otherName}</h3>
+            {activeChatData.record_title && (
+              <p className="font-body text-[10px] font-medium text-primary">{activeChatData.record_title}</p>
+            )}
           </div>
           <button
             onClick={() => setShowOfferDialog(true)}
@@ -144,23 +229,24 @@ const ChatsScreen = () => {
           </button>
         </div>
 
-        {/* Messages + Offers interleaved */}
+        {/* Messages + Offers */}
         <div className="flex-1 overflow-y-auto px-4 py-3 pb-20 space-y-3">
-          {timeline.map((item, idx) => {
+          {timeline.map((item) => {
             if (item.type === "message") {
               const msg = item.data;
+              const isMe = msg.sender_id === user?.id;
               return (
-                <div key={`msg-${msg.id}`} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
+                <div key={`msg-${msg.id}`} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                   <div
                     className={`max-w-[75%] rounded-2xl px-3.5 py-2 font-body text-sm ${
-                      msg.sender === "me"
+                      isMe
                         ? "bg-primary text-primary-foreground rounded-br-sm"
                         : "bg-card text-foreground rounded-bl-sm vinyl-shadow"
                     }`}
                   >
                     <p>{msg.text}</p>
-                    <p className={`mt-1 text-[9px] ${msg.sender === "me" ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                      {msg.time}
+                    <p className={`mt-1 text-[9px] ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                      {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
                 </div>
@@ -171,14 +257,15 @@ const ChatsScreen = () => {
                 <OfferCard
                   key={`offer-${offer.id}`}
                   offer={offer}
-                  senderName={offer.sender_id === user?.id ? "You" : activeChatData.name}
-                  receiverName={offer.receiver_id === user?.id ? "You" : activeChatData.name}
+                  senderName={offer.sender_id === user?.id ? "You" : otherName}
+                  receiverName={offer.receiver_id === user?.id ? "You" : otherName}
                   onUpdate={fetchOffers}
                   onCounterOffer={() => setShowOfferDialog(true)}
                 />
               );
             }
           })}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Fixed input bar */}
@@ -201,49 +288,64 @@ const ChatsScreen = () => {
           </div>
         </div>
 
-        {/* Create Offer Dialog */}
         <CreateOfferDialog
           open={showOfferDialog}
           onOpenChange={setShowOfferDialog}
           chatId={activeChat}
-          otherUserId={activeChatData.otherUserId}
-          otherUserName={activeChatData.name}
+          otherUserId={otherUserId}
+          otherUserName={otherName}
           onOfferCreated={fetchOffers}
         />
       </div>
     );
   }
 
+  // Chat list view
   return (
     <div className="px-4 pt-4 pb-2">
       <h1 className="mb-4 font-display text-3xl font-bold text-foreground">Chats</h1>
 
-      <div className="space-y-1">
-        {chats.map((chat) => (
-          <div
-            key={chat.id}
-            onClick={() => setActiveChat(chat.id)}
-            className="flex cursor-pointer items-center gap-3 rounded-xl p-3 transition-colors hover:bg-card"
-          >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
-              {chat.name.charAt(0)}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between">
-                <h3 className="font-body text-sm font-semibold text-foreground">{chat.name}</h3>
-                <span className="font-body text-[10px] text-muted-foreground">{chat.time}</span>
+      {chats.length === 0 ? (
+        <div className="flex flex-col items-center py-16 text-center">
+          <MessageCircle size={48} className="mb-4 text-muted-foreground/40" />
+          <p className="font-display text-base font-semibold text-muted-foreground">No conversations yet</p>
+          <p className="mt-1 font-body text-sm text-muted-foreground">Find a record in Discover and contact the seller</p>
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {chats.map((chat) => {
+            const otherName = getOtherName(chat);
+            const last = lastMessages[chat.id];
+            return (
+              <div
+                key={chat.id}
+                onClick={() => setActiveChat(chat.id)}
+                className="flex cursor-pointer items-center gap-3 rounded-xl p-3 transition-colors hover:bg-card"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
+                  {otherName.charAt(0)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-body text-sm font-semibold text-foreground">{otherName}</h3>
+                    {last && (
+                      <span className="font-body text-[10px] text-muted-foreground">
+                        {new Date(last.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
+                  </div>
+                  {chat.record_title && (
+                    <p className="font-body text-[10px] font-medium text-primary">{chat.record_title}</p>
+                  )}
+                  {last && (
+                    <p className="truncate font-body text-xs text-muted-foreground">{last.text}</p>
+                  )}
+                </div>
               </div>
-              <p className="font-body text-[10px] font-medium text-primary">{chat.record}</p>
-              <p className="truncate font-body text-xs text-muted-foreground">{chat.lastMessage}</p>
-            </div>
-            {chat.unread > 0 && (
-              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 font-body text-[10px] font-bold text-primary-foreground">
-                {chat.unread}
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

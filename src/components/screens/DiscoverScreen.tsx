@@ -9,7 +9,11 @@ import { toast } from "sonner";
 
 const GENRES = ["All", "Rock", "Jazz", "Soul", "Electronic", "Hip Hop", "Pop", "Classical", "Funk", "R&B"];
 
-const DiscoverScreen = () => {
+interface DiscoverScreenProps {
+  onNavigateToChat: (chatId: number) => void;
+}
+
+const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
   const { user } = useAuth();
   const [view, setView] = useState<"grid" | "list">("grid");
   const [searchText, setSearchText] = useState("");
@@ -52,9 +56,50 @@ const DiscoverScreen = () => {
     return items;
   }, [records, user?.id, activeGenre, searchText]);
 
-  const handleContactSeller = (record: any, sellerName: string) => {
-    toast.info(`Messaging ${sellerName} about "${record.title}" — coming soon!`);
-    setSelectedRecord(null);
+  const handleContactSeller = async (record: any, sellerName: string) => {
+    if (!user) return;
+
+    try {
+      // Check if a chat already exists between these users about this record
+      const { data: existingChats } = await supabase
+        .from("chats")
+        .select("id")
+        .eq("record_id", record.id)
+        .or(`and(participant_1.eq.${user.id},participant_2.eq.${record.user_id}),and(participant_1.eq.${record.user_id},participant_2.eq.${user.id})`);
+
+      if (existingChats && existingChats.length > 0) {
+        setSelectedRecord(null);
+        onNavigateToChat(existingChats[0].id);
+        return;
+      }
+
+      // Create a new chat
+      const { data: newChat, error } = await supabase
+        .from("chats")
+        .insert({
+          participant_1: user.id,
+          participant_2: record.user_id,
+          record_id: record.id,
+          record_title: record.title,
+        })
+        .select("id")
+        .single();
+
+      if (error) throw error;
+
+      // Send initial message
+      await supabase.from("chat_messages").insert({
+        chat_id: newChat.id,
+        sender_id: user.id,
+        text: `Hi! I'm interested in "${record.title}" by ${record.artist}. Is it still available?`,
+      });
+
+      setSelectedRecord(null);
+      onNavigateToChat(newChat.id);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to start conversation");
+    }
   };
 
   return (
