@@ -67,7 +67,7 @@ const WishlistScreen = () => {
               )}
               <div className="flex-1 min-w-0">
                 <h3 className="font-display text-base font-semibold text-foreground truncate">{item.title}</h3>
-                <p className="font-body text-sm text-muted-foreground truncate">{item.artist}{item.year ? ` · ${item.year}` : ""}</p>
+                <p className="font-display text-sm text-muted-foreground truncate">{item.artist}{item.year ? ` · ${item.year}` : ""}</p>
               </div>
             </div>
           ))}
@@ -84,7 +84,7 @@ const WishlistScreen = () => {
                 )}
               </div>
               <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{item.title}</h3>
-              <p className="mt-0.5 font-body text-xs text-muted-foreground truncate">{item.artist}</p>
+              <p className="mt-0.5 font-display text-xs text-muted-foreground truncate">{item.artist}</p>
               <div className="mt-2">
                 <span className="font-body text-xs text-muted-foreground">{item.year || "—"}</span>
               </div>
