@@ -16,7 +16,7 @@ const DiscoverScreen = () => {
   return (
     <div className="px-4 pt-4 pb-2">
       <div className="mb-1 flex items-center justify-between">
-        <h1 className="font-display text-xl font-bold text-foreground">Discover</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground">Discover</h1>
         <button
           onClick={() => setView(view === "grid" ? "list" : "grid")}
           className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
@@ -24,7 +24,7 @@ const DiscoverScreen = () => {
           {view === "grid" ? <List size={18} /> : <LayoutGrid size={18} />}
         </button>
       </div>
-      <p className="mb-4 font-body text-xs text-muted-foreground">Find your next favourite record</p>
+      <p className="mb-4 font-body text-sm text-muted-foreground">Find your next favourite record</p>
 
       {/* Categories */}
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -49,8 +49,8 @@ const DiscoverScreen = () => {
               <div className="mb-2 flex aspect-square items-center justify-center rounded-lg bg-primary/10">
                 <Disc3 size={36} className="text-primary transition-transform group-hover:rotate-45" />
               </div>
-              <h3 className="font-display text-xs font-semibold leading-tight text-foreground">{item.title}</h3>
-              <p className="mt-0.5 font-body text-[10px] text-muted-foreground">{item.artist}</p>
+              <h3 className="font-display text-sm font-semibold leading-tight text-foreground">{item.title}</h3>
+              <p className="mt-0.5 font-body text-xs text-muted-foreground">{item.artist}</p>
               <div className="mt-2 flex items-center justify-between">
                 <span className="font-body text-sm font-bold text-primary">{item.price}</span>
                 <span className="rounded bg-secondary px-1.5 py-0.5 font-body text-[9px] font-semibold text-secondary-foreground">
@@ -68,8 +68,8 @@ const DiscoverScreen = () => {
                 <Disc3 size={24} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="font-display text-sm font-semibold text-foreground truncate">{item.title}</h3>
-                <p className="font-body text-xs text-muted-foreground">{item.artist}</p>
+                <h3 className="font-display text-base font-semibold text-foreground truncate">{item.title}</h3>
+                <p className="font-body text-sm text-muted-foreground">{item.artist}</p>
               </div>
               <div className="flex flex-col items-end gap-1">
                 <span className="font-body text-sm font-bold text-primary">{item.price}</span>

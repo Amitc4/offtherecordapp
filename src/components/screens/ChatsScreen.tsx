@@ -216,7 +216,7 @@ const ChatsScreen = () => {
 
   return (
     <div className="px-4 pt-4 pb-2">
-      <h1 className="mb-4 font-display text-xl font-bold text-foreground">Chats</h1>
+      <h1 className="mb-4 font-display text-2xl font-bold text-foreground">Chats</h1>
 
       <div className="space-y-1">
         {chats.map((chat) => (

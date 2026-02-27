@@ -173,7 +173,7 @@ const ProfileScreen = () => {
 
   return (
     <div className="px-4 pt-4 pb-2">
-      <h1 className="mb-4 font-display text-xl font-bold text-foreground">Profile</h1>
+      <h1 className="mb-4 font-display text-2xl font-bold text-foreground">Profile</h1>
 
       <div className="mb-6 flex items-center gap-4">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary font-display text-xl font-bold text-primary-foreground">
