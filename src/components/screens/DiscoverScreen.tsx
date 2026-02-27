@@ -10,7 +10,7 @@ import { toast } from "sonner";
 const GENRES = ["All", "Rock", "Jazz", "Soul", "Electronic", "Hip Hop", "Pop", "Classical", "Funk", "R&B"];
 
 interface DiscoverScreenProps {
-  onNavigateToChat: (chatId: number) => void;
+  onNavigateToChat: (chatId: number, draftMessage?: string) => void;
 }
 
 const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
@@ -67,9 +67,11 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
         .eq("record_id", record.id)
         .or(`and(participant_1.eq.${user.id},participant_2.eq.${record.user_id}),and(participant_1.eq.${record.user_id},participant_2.eq.${user.id})`);
 
+      const draftText = `Hi! I'm interested in "${record.title}" by ${record.artist}. Is it still available?`;
+
       if (existingChats && existingChats.length > 0) {
         setSelectedRecord(null);
-        onNavigateToChat(existingChats[0].id);
+        onNavigateToChat(existingChats[0].id, draftText);
         return;
       }
 
@@ -87,15 +89,8 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
 
       if (error) throw error;
 
-      // Send initial message
-      await supabase.from("chat_messages").insert({
-        chat_id: newChat.id,
-        sender_id: user.id,
-        text: `Hi! I'm interested in "${record.title}" by ${record.artist}. Is it still available?`,
-      });
-
       setSelectedRecord(null);
-      onNavigateToChat(newChat.id);
+      onNavigateToChat(newChat.id, draftText);
     } catch (err) {
       console.error(err);
       toast.error("Failed to start conversation");

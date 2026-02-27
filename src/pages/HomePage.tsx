@@ -24,6 +24,7 @@ const HomePage = () => {
   const [activeTab, setActiveTab] = useState<Tab>("discover");
   const [isAdmin, setIsAdmin] = useState(false);
   const [openChatId, setOpenChatId] = useState<number | null>(null);
+  const [draftMessage, setDraftMessage] = useState<string>("");
   const { user } = useAuth();
 
   useEffect(() => {
@@ -40,8 +41,9 @@ const HomePage = () => {
     ? [...baseTabs, { id: "admin" as Tab, label: "Admin", icon: ShieldCheck }]
     : baseTabs;
 
-  const handleNavigateToChat = (chatId: number) => {
+  const handleNavigateToChat = (chatId: number, draft?: string) => {
     setOpenChatId(chatId);
+    setDraftMessage(draft || "");
     setActiveTab("chats");
   };
 
@@ -50,7 +52,7 @@ const HomePage = () => {
       case "collection": return <CollectionScreen />;
       case "wishlist": return <WishlistScreen />;
       case "discover": return <DiscoverScreen onNavigateToChat={handleNavigateToChat} />;
-      case "chats": return <ChatsScreen initialChatId={openChatId} onChatOpened={() => setOpenChatId(null)} />;
+      case "chats": return <ChatsScreen initialChatId={openChatId} initialDraft={draftMessage} onChatOpened={() => { setOpenChatId(null); setDraftMessage(""); }} />;
       case "profile": return <ProfileScreen />;
       case "admin": return <AdminScreen />;
     }
