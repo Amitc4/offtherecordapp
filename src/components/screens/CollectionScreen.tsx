@@ -269,7 +269,7 @@ const CollectionScreen = () => {
                     animate={{ y: 0, opacity: 1, scale: 1 }}
                     exit={{ y: 8, opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 w-52 rounded-xl border border-border bg-card p-1.5 shadow-xl"
+                    className="absolute bottom-full right-0 z-50 mb-2 w-52 rounded-xl border border-border bg-card p-1.5 shadow-xl"
                   >
                     <button
                       onClick={() => handleMark("for_sale")}
