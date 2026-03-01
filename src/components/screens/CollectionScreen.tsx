@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { Disc3, Plus, Camera, RefreshCw, CheckSquare, X, Tag } from "lucide-react";
+import { Disc3, Plus, Camera, RefreshCw, CheckSquare, X, Tag, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import ViewToggle from "@/components/ViewToggle";
 import { useUserRecords } from "@/hooks/useDiscogs";
 import { useDiscogsProfile, useDiscogsSync } from "@/hooks/useDiscogs";
@@ -21,6 +31,7 @@ const CollectionScreen = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [menuOpen, setMenuOpen] = useState(false);
   const [marking, setMarking] = useState(false);
+  const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
   const [detailRecord, setDetailRecord] = useState<any>(null);
   const { data: records = [], isLoading } = useUserRecords();
   const { data: profile } = useDiscogsProfile();
@@ -58,6 +69,25 @@ const CollectionScreen = () => {
     }
     setMarking(false);
     setMenuOpen(false);
+    exitSelectMode();
+  };
+
+  const handleBulkRemove = async () => {
+    if (selected.size === 0) return;
+    setMarking(true);
+    const ids = Array.from(selected);
+    const { error } = await supabase
+      .from("user_records")
+      .delete()
+      .in("id", ids);
+    if (error) {
+      toast.error("Failed to remove records");
+    } else {
+      toast.success(`${ids.length} record${ids.length > 1 ? "s" : ""} removed from collection`);
+      queryClient.invalidateQueries({ queryKey: ["user_records"] });
+    }
+    setMarking(false);
+    setRemoveConfirmOpen(false);
     exitSelectMode();
   };
 
@@ -288,6 +318,15 @@ const CollectionScreen = () => {
                       <Disc3 size={15} className="text-primary" />
                       Personal Collection
                     </button>
+                    <div className="my-1 h-px bg-border" />
+                    <button
+                      onClick={() => { setMenuOpen(false); setRemoveConfirmOpen(true); }}
+                      disabled={marking}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-3 font-body text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 active:bg-destructive/20"
+                    >
+                      <Trash2 size={15} />
+                      Remove from Collection
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -303,6 +342,26 @@ const CollectionScreen = () => {
         onOpenChange={(open) => !open && setDetailRecord(null)}
       />
       <ScanRecordDialog open={scanOpen} onOpenChange={setScanOpen} />
+
+      <AlertDialog open={removeConfirmOpen} onOpenChange={setRemoveConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Records</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove {selected.size} record{selected.size > 1 ? "s" : ""} from your collection? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleBulkRemove}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
     </div>
   );
