@@ -115,7 +115,7 @@
 
   /* Auto-hiding overlay scrollbar */
   .scrollbar-overlay {
-    overflow-y: auto;
+    overflow-y: scroll;
     scrollbar-width: thin;
     scrollbar-color: transparent transparent;
     transition: scrollbar-color 0.3s ease;
