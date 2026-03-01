@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Disc3, Camera, Calendar, Tag, Package, Star } from "lucide-react";
+import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2 } from "lucide-react";
 import GradeVinylDialog from "@/components/GradeVinylDialog";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface RecordDetailSheetProps {
   record: {
@@ -244,6 +255,45 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Remove from collection */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button className="flex w-full items-center gap-3 rounded-xl bg-destructive/10 p-4 transition-colors active:bg-destructive/20">
+                <Trash2 size={18} className="text-destructive" />
+                <p className="font-body text-sm font-medium text-destructive">Remove from Collection</p>
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Remove Record</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to remove "{record.title}" from your collection? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={async () => {
+                    const { error } = await supabase
+                      .from("user_records")
+                      .delete()
+                      .eq("id", record.id);
+                    if (error) {
+                      toast.error("Failed to remove record");
+                    } else {
+                      toast.success("Record removed from collection");
+                      queryClient.invalidateQueries({ queryKey: ["user_records"] });
+                      onOpenChange(false);
+                    }
+                  }}
+                >
+                  Remove
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </SheetContent>
     </Sheet>
