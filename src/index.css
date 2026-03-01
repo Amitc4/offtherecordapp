@@ -112,4 +112,37 @@
   .glow-orange {
     box-shadow: 0 0 40px 8px hsl(24 100% 60% / 0.15);
   }
+
+  /* Auto-hiding overlay scrollbar */
+  .scrollbar-overlay {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.3s ease;
+  }
+
+  .scrollbar-overlay:hover,
+  .scrollbar-overlay.is-scrolling {
+    scrollbar-color: hsl(24 90% 50% / 0.4) transparent;
+  }
+
+  /* Webkit (Chrome, Safari, Edge) */
+  .scrollbar-overlay::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-overlay::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-overlay::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 3px;
+    transition: background 0.3s ease;
+  }
+
+  .scrollbar-overlay:hover::-webkit-scrollbar-thumb,
+  .scrollbar-overlay.is-scrolling::-webkit-scrollbar-thumb {
+    background: hsl(24 90% 50% / 0.4);
+  }
 }
