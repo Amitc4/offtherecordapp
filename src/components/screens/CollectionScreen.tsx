@@ -107,6 +107,7 @@ const CollectionScreen = () => {
               <X size={18} />
             </button>
           )}
+        </div>
       </div>
 
       {!selectMode && (
@@ -114,7 +115,6 @@ const CollectionScreen = () => {
           <ViewToggle view={view} onChange={setView} />
         </div>
       )}
-      </div>
 
       {selectMode ? (
         <p className="mb-4 font-body text-xs text-primary font-medium">
