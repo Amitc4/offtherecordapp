@@ -105,7 +105,7 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
       </div>
       <p className="mb-3 font-body text-sm text-muted-foreground">Find your next favourite record</p>
 
-      <div className="mb-3 flex justify-center">
+      <div className="mb-3 flex justify-end">
         <ViewToggle view={view} onChange={setView} />
       </div>
 
