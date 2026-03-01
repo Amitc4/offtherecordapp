@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Disc3, Plus, Camera, LayoutGrid, List, RefreshCw, CheckSquare, X, Tag } from "lucide-react";
+import { Disc3, Plus, Camera, RefreshCw, CheckSquare, X, Tag } from "lucide-react";
+import ViewToggle from "@/components/ViewToggle";
 import { useUserRecords } from "@/hooks/useDiscogs";
 import { useDiscogsProfile, useDiscogsSync } from "@/hooks/useDiscogs";
 import AddRecordDialog from "@/components/AddRecordDialog";
@@ -68,12 +69,6 @@ const CollectionScreen = () => {
         <div className="flex items-center gap-2">
           {!selectMode ? (
             <>
-              <button
-                onClick={() => setView(view === "grid" ? "list" : "grid")}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
-              >
-                {view === "grid" ? <List size={18} /> : <LayoutGrid size={18} />}
-              </button>
               {records.length > 0 && (
                 <button
                   onClick={() => setSelectMode(true)}
@@ -82,6 +77,27 @@ const CollectionScreen = () => {
                   <CheckSquare size={18} />
                 </button>
               )}
+              {profile?.discogs_connected && (
+                <button
+                  onClick={() => syncCollection.mutate()}
+                  disabled={syncCollection.isPending}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
+                >
+                  <RefreshCw size={18} className={syncCollection.isPending ? "animate-spin" : ""} />
+                </button>
+              )}
+              <button
+                onClick={() => setScanOpen(true)}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
+              >
+                <Camera size={18} />
+              </button>
+              <button
+                onClick={() => setAddOpen(true)}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-95"
+              >
+                <Plus size={18} />
+              </button>
               {profile?.discogs_connected && (
                 <button
                   onClick={() => syncCollection.mutate()}
@@ -112,7 +128,13 @@ const CollectionScreen = () => {
               <X size={18} />
             </button>
           )}
+      </div>
+
+      {!selectMode && (
+        <div className="mb-4 flex justify-center">
+          <ViewToggle view={view} onChange={setView} />
         </div>
+      )}
       </div>
 
       {selectMode ? (

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Heart, Plus, LayoutGrid, List, RefreshCw } from "lucide-react";
+import { Heart, Plus, RefreshCw } from "lucide-react";
+import ViewToggle from "@/components/ViewToggle";
 import { useUserWishlist, useDiscogsProfile, useDiscogsSync } from "@/hooks/useDiscogs";
 import AddRecordDialog from "@/components/AddRecordDialog";
 
@@ -15,12 +16,6 @@ const WishlistScreen = () => {
       <div className="mb-2 flex items-center justify-between">
         <h1 className="font-display text-3xl font-bold text-foreground">Wishlist</h1>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setView(view === "grid" ? "list" : "grid")}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
-          >
-            {view === "grid" ? <List size={18} /> : <LayoutGrid size={18} />}
-          </button>
           {profile?.discogs_connected && (
             <button
               onClick={() => syncWishlist.mutate()}
@@ -37,6 +32,9 @@ const WishlistScreen = () => {
             <Plus size={18} />
           </button>
         </div>
+      </div>
+      <div className="mb-4 flex justify-center">
+        <ViewToggle view={view} onChange={setView} />
       </div>
       <p className="mb-4 font-body text-sm text-muted-foreground">{wishlist.length} records wanted</p>
 
