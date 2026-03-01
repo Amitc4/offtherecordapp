@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { Disc3, LayoutGrid, List, Search } from "lucide-react";
+import { Disc3, Search } from "lucide-react";
+import ViewToggle from "@/components/ViewToggle";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -101,14 +102,12 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
     <div className="px-4 pt-4 pb-2">
       <div className="mb-1 flex items-center justify-between">
         <h1 className="font-display text-3xl font-bold text-foreground">Discover</h1>
-        <button
-          onClick={() => setView(view === "grid" ? "list" : "grid")}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
-        >
-          {view === "grid" ? <List size={18} /> : <LayoutGrid size={18} />}
-        </button>
       </div>
       <p className="mb-3 font-body text-sm text-muted-foreground">Find your next favourite record</p>
+
+      <div className="mb-3 flex justify-center">
+        <ViewToggle view={view} onChange={setView} />
+      </div>
 
       {/* Search bar */}
       <div className="relative mb-3">
