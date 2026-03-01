@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Disc3, Heart, Compass, MessageCircle, User, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CollectionScreen from "@/components/screens/CollectionScreen";
@@ -26,6 +26,16 @@ const HomePage = () => {
   const [openChatId, setOpenChatId] = useState<number | null>(null);
   const [draftMessage, setDraftMessage] = useState<string>("");
   const { user } = useAuth();
+  const mainRef = useRef<HTMLElement>(null);
+  const scrollTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleScroll = useCallback(() => {
+    mainRef.current?.classList.add("is-scrolling");
+    clearTimeout(scrollTimer.current);
+    scrollTimer.current = setTimeout(() => {
+      mainRef.current?.classList.remove("is-scrolling");
+    }, 800);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -60,7 +70,11 @@ const HomePage = () => {
 
   return (
     <div className="mx-auto flex h-screen max-w-md flex-col overflow-x-hidden bg-background">
-      <main className="flex-1 overflow-y-auto pb-20">
+      <main
+        ref={mainRef}
+        className="flex-1 scrollbar-overlay pb-20"
+        onScroll={handleScroll}
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
