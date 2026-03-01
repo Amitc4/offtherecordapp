@@ -33,7 +33,7 @@ const WishlistScreen = () => {
           </button>
         </div>
       </div>
-      <div className="mb-4 flex justify-center">
+      <div className="mb-4 flex justify-end">
         <ViewToggle view={view} onChange={setView} />
       </div>
       <p className="mb-4 font-body text-sm text-muted-foreground">{wishlist.length} records wanted</p>

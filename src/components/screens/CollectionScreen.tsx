@@ -98,27 +98,6 @@ const CollectionScreen = () => {
               >
                 <Plus size={18} />
               </button>
-              {profile?.discogs_connected && (
-                <button
-                  onClick={() => syncCollection.mutate()}
-                  disabled={syncCollection.isPending}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
-                >
-                  <RefreshCw size={18} className={syncCollection.isPending ? "animate-spin" : ""} />
-                </button>
-              )}
-              <button
-                onClick={() => setScanOpen(true)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
-              >
-                <Camera size={18} />
-              </button>
-              <button
-                onClick={() => setAddOpen(true)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-95"
-              >
-                <Plus size={18} />
-              </button>
             </>
           ) : (
             <button
@@ -131,7 +110,7 @@ const CollectionScreen = () => {
       </div>
 
       {!selectMode && (
-        <div className="mb-4 flex justify-center">
+        <div className="mb-4 flex justify-end">
           <ViewToggle view={view} onChange={setView} />
         </div>
       )}
