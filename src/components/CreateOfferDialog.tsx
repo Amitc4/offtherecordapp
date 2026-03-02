@@ -61,7 +61,7 @@ const RecordGrid = ({
   )
 );
 
-const CashField = ({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) => (
+const CashField = ({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) => (
   <div className="mt-2">
     <div className="relative">
       <span className="absolute left-3 top-1/2 -translate-y-1/2 font-body text-xs font-semibold text-muted-foreground">₪</span>
@@ -70,7 +70,7 @@ const CashField = ({ value, onChange, label }: { value: string; onChange: (v: st
         min="0"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={`${label} adds cash`}
+        placeholder={placeholder}
         className="pl-7 h-9 font-body text-sm"
       />
     </div>
@@ -171,12 +171,12 @@ const CreateOfferDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm max-h-[85vh] flex flex-col p-0">
+      <DialogContent className="max-w-sm max-h-[85vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="px-4 pt-4 pb-2">
           <DialogTitle className="font-display text-lg">Create Offer</DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-4">
+        <div className="flex-1 overflow-y-auto px-4 min-h-0">
           <div className="space-y-4 pb-4">
             {/* Your side */}
             <div>
@@ -186,7 +186,7 @@ const CreateOfferDialog = ({
                 selected={selectedMine}
                 onToggle={(id) => toggleRecord(id, selectedMine, setSelectedMine)}
               />
-              <CashField value={senderCash} onChange={setSenderCash} label="You" />
+              <CashField value={senderCash} onChange={setSenderCash} placeholder="My funds" />
             </div>
 
             <div className="flex items-center justify-center gap-2">
@@ -203,10 +203,10 @@ const CreateOfferDialog = ({
                 selected={selectedTheirs}
                 onToggle={(id) => toggleRecord(id, selectedTheirs, setSelectedTheirs)}
               />
-              <CashField value={receiverCash} onChange={setReceiverCash} label={otherUserName} />
+              <CashField value={receiverCash} onChange={setReceiverCash} placeholder={`${otherUserName.split(" ")[0]}'s funds`} />
             </div>
           </div>
-        </ScrollArea>
+        </div>
 
         <div className="border-t border-border px-4 py-3">
           <Button
