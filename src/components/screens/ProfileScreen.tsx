@@ -7,6 +7,7 @@ import { useDiscogsProfile, useDiscogsConnect, useDiscogsSync, useUserRecords, u
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import UserCollectionSheet from "@/components/UserCollectionSheet";
+import EditProfileSheet from "@/components/EditProfileSheet";
 
 interface FriendRow {
   id: string;
@@ -42,6 +43,7 @@ const ProfileScreen = () => {
   const [pendingRequests, setPendingRequests] = useState<(FriendRow & { profile?: ProfileRow })[]>([]);
   const [myShortId, setMyShortId] = useState<string | null>(null);
   const [viewingUser, setViewingUser] = useState<{ id: string; name: string } | null>(null);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -403,7 +405,13 @@ const ProfileScreen = () => {
           <button
             key={item.label}
             className="flex w-full items-center gap-3 rounded-xl p-4 transition-colors hover:bg-card"
-            onClick={() => toast.info(`${item.label} — coming soon!`)}
+            onClick={() => {
+              if (item.label === "Edit Profile") {
+                setEditProfileOpen(true);
+              } else {
+                toast.info(`${item.label} — coming soon!`);
+              }
+            }}
           >
             <item.icon size={18} className="text-muted-foreground" />
             <span className="flex-1 text-left font-body text-sm font-medium text-foreground">{item.label}</span>
@@ -424,6 +432,11 @@ const ProfileScreen = () => {
         onOpenChange={(open) => !open && setViewingUser(null)}
         userId={viewingUser?.id || ""}
         userName={viewingUser?.name || ""}
+      />
+
+      <EditProfileSheet
+        open={editProfileOpen}
+        onOpenChange={setEditProfileOpen}
       />
     </div>
   );
