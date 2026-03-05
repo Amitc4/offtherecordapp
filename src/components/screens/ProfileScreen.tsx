@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { User, Settings, LogOut, ChevronRight, Disc3, Heart, Package, Star, RefreshCw, Unlink, Clock, Bell, HelpCircle, Pencil, Users, UserPlus, Search, Check, X, Copy } from "lucide-react";
+import { User, Settings, LogOut, ChevronRight, Disc3, Heart, Package, Star, RefreshCw, Unlink, Clock, Bell, HelpCircle, Pencil, Users, UserPlus, Search, Check, X, Copy, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useDiscogsProfile, useDiscogsConnect, useDiscogsSync, useUserRecords, useUserWishlist } from "@/hooks/useDiscogs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import UserCollectionSheet from "@/components/UserCollectionSheet";
 
 interface FriendRow {
   id: string;
@@ -40,6 +41,7 @@ const ProfileScreen = () => {
   const [friends, setFriends] = useState<(FriendRow & { profile?: ProfileRow })[]>([]);
   const [pendingRequests, setPendingRequests] = useState<(FriendRow & { profile?: ProfileRow })[]>([]);
   const [myShortId, setMyShortId] = useState<string | null>(null);
+  const [viewingUser, setViewingUser] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -334,8 +336,14 @@ const ProfileScreen = () => {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-body text-sm font-medium text-foreground">{f.profile?.display_name || "Unknown"}</p>
-                      <p className="font-body text-[10px] text-muted-foreground">ID: {f.profile?.short_id}</p>
                     </div>
+                    <button
+                      onClick={() => setViewingUser({ id: f.user_id === user?.id ? f.friend_id : f.user_id, name: f.profile?.display_name || "Unknown" })}
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                      title="View collection"
+                    >
+                      <Eye size={14} />
+                    </button>
                     <button onClick={() => removeFriend(f.id)} className="font-body text-[10px] text-muted-foreground hover:text-destructive">
                       Remove
                     </button>
@@ -410,6 +418,13 @@ const ProfileScreen = () => {
           Sign Out
         </Button>
       </div>
+
+      <UserCollectionSheet
+        open={!!viewingUser}
+        onOpenChange={(open) => !open && setViewingUser(null)}
+        userId={viewingUser?.id || ""}
+        userName={viewingUser?.name || ""}
+      />
     </div>
   );
 };
