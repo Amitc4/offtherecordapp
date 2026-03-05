@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 
 const CollectionScreen = () => {
-  const [view, setView] = useState<"grid" | "list">("list");
+  const [view, setView] = useState<"grid" | "list">("grid");
   const [addOpen, setAddOpen] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
   
