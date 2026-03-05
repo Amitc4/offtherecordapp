@@ -76,38 +76,30 @@ const UserCollectionSheet = ({ open, onOpenChange, userId, userName }: UserColle
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2.5">
               {displayed.map((record) => (
-                <div key={record.id} className="flex items-center gap-3 rounded-xl bg-card p-3 vinyl-shadow">
-                  {record.cover_image ? (
-                    <img
-                      src={record.cover_image}
-                      alt={record.title}
-                      className="h-12 w-12 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
-                      <Disc3 size={20} className="text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-body text-sm font-semibold text-foreground">{record.title}</p>
-                    <p className="truncate font-body text-xs text-muted-foreground">{record.artist}</p>
-                    <div className="mt-0.5 flex items-center gap-2">
-                      {record.year && (
-                        <span className="font-body text-[10px] text-muted-foreground">{record.year}</span>
-                      )}
-                      {record.format && (
-                        <span className="font-body text-[10px] text-muted-foreground">· {record.format}</span>
-                      )}
-                      {record.condition && (
-                        <span className="font-body text-[10px] text-muted-foreground">· {record.condition}</span>
-                      )}
-                    </div>
+                <div key={record.id} className="rounded-xl bg-card p-2.5 vinyl-shadow">
+                  <div className="mb-2 flex aspect-square items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
+                    {record.cover_image ? (
+                      <img src={record.cover_image} alt={record.title} className="h-full w-full object-cover" />
+                    ) : (
+                      <Disc3 size={36} className="text-primary" />
+                    )}
                   </div>
-                  {record.status === "for_sale" && record.price != null && (
-                    <span className="font-display text-sm font-bold text-primary">₪{record.price}</span>
-                  )}
+                  <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{record.title}</h3>
+                  <p className="mt-0.5 font-display text-xs text-muted-foreground truncate">{record.artist}</p>
+                  <div className="mt-1.5 flex items-center justify-between">
+                    {record.status === "for_sale" && record.price != null ? (
+                      <span className="font-body text-sm font-bold text-primary">₪{record.price}</span>
+                    ) : (
+                      <span className="font-body text-xs text-muted-foreground">{record.year || "—"}</span>
+                    )}
+                    {record.condition && (
+                      <span className="rounded bg-secondary px-1.5 py-0.5 font-body text-[9px] font-semibold text-secondary-foreground">
+                        {record.condition}
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

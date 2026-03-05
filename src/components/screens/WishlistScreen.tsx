@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/sheet";
 
 const WishlistScreen = () => {
-  const [view, setView] = useState<"grid" | "list">("list");
+  const [view, setView] = useState<"grid" | "list">("grid");
   const [addOpen, setAddOpen] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
