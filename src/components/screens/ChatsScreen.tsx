@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive } from "lucide-react";
+import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import CreateOfferDialog from "@/components/CreateOfferDialog";
 import OfferCard from "@/components/OfferCard";
+import UserCollectionSheet from "@/components/UserCollectionSheet";
 
 interface ChatRow {
   id: number;
@@ -53,6 +54,7 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
   const [showOfferDialog, setShowOfferDialog] = useState(false);
   const [offers, setOffers] = useState<TradeOffer[]>([]);
   const [participantNames, setParticipantNames] = useState<Record<string, string>>({});
+  const [viewingCollection, setViewingCollection] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Handle initial chat navigation from Discover
@@ -238,6 +240,13 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
             )}
           </div>
           <button
+            onClick={() => setViewingCollection(true)}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary"
+            title="View collection"
+          >
+            <Eye size={16} />
+          </button>
+          <button
             onClick={() => setShowOfferDialog(true)}
             className="flex h-9 items-center gap-1.5 rounded-full bg-primary/15 px-3 font-body text-xs font-semibold text-primary transition-colors hover:bg-primary/25 active:scale-95"
           >
@@ -320,6 +329,13 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
           otherUserId={otherUserId}
           otherUserName={otherName}
           onOfferCreated={fetchOffers}
+        />
+
+        <UserCollectionSheet
+          open={viewingCollection}
+          onOpenChange={setViewingCollection}
+          userId={otherUserId}
+          userName={otherName}
         />
       </div>
     );
