@@ -45,7 +45,7 @@ const AccessibilityMenu = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 80, scale: 0.95 }}
               transition={settings.reduceAnimations ? { duration: 0 } : { type: "spring", stiffness: 400, damping: 30 }}
-              className="fixed right-3 bottom-32 z-[62] w-72 rounded-2xl border border-border bg-card p-4 shadow-xl"
+              className="fixed right-3 bottom-[9rem] z-[62] w-72 rounded-2xl border border-border bg-card p-4 shadow-xl"
             >
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="font-display text-sm font-bold text-foreground flex items-center gap-2">
