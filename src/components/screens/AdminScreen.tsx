@@ -160,6 +160,12 @@ const AdminScreen = () => {
     updateMutation.mutate(params);
   };
 
+  const getStatusBadge = (status: string) => {
+    if (status === "blocked") return <Badge variant="destructive" className="text-[10px] px-1.5">Blocked</Badge>;
+    if (status === "archived") return <Badge variant="outline" className="text-[10px] px-1.5">Archived</Badge>;
+    return <Badge variant="secondary" className="text-[10px] px-1.5 bg-primary/10 text-primary border-0">Active</Badge>;
+  };
+
   const getRoleBadgeVariant = (role: string) => {
     if (role === "main_admin") return "default" as const;
     if (role === "admin") return "default" as const;
