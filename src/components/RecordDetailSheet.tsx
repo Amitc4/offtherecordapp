@@ -57,12 +57,15 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const [savingPrice, setSavingPrice] = useState(false);
   const [gradeOpen, setGradeOpen] = useState(false);
 
+  const recordStatus = record?.status;
+  const recordPrice = record?.price;
+
   useEffect(() => {
     if (record) {
-      setLocalStatus((record as any).status || "personal");
-      setPrice((record as any).price != null ? String((record as any).price) : "");
+      setLocalStatus(recordStatus || "personal");
+      setPrice(recordPrice != null ? String(recordPrice) : "");
     }
-  }, [record?.id, (record as any)?.status, (record as any)?.price]);
+  }, [record?.id, recordStatus, recordPrice]);
 
   if (!record) return null;
 
