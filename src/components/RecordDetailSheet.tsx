@@ -1,13 +1,19 @@
 import { useRef, useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2 } from "lucide-react";
+import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, ChevronDown, Archive } from "lucide-react";
 import GradeVinylDialog from "@/components/GradeVinylDialog";
-import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,38 +43,44 @@ interface RecordDetailSheetProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const STATUS_OPTIONS = [
+  { value: "for_sale", label: "For Sale / Trade", icon: Tag, description: "Visible to other users" },
+  { value: "personal", label: "Personal Collection", icon: Package, description: "Private to you" },
+  { value: "sold", label: "Sold", icon: Archive, description: "Archived as sold" },
+];
+
 const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProps) => {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [updating, setUpdating] = useState(false);
-  const [localForSale, setLocalForSale] = useState(false);
+  const [localStatus, setLocalStatus] = useState("personal");
   const [price, setPrice] = useState("");
   const [savingPrice, setSavingPrice] = useState(false);
   const [gradeOpen, setGradeOpen] = useState(false);
 
-  // Sync local state when record changes
   useEffect(() => {
     if (record) {
-      setLocalForSale((record as any).status === "for_sale");
+      setLocalStatus((record as any).status || "personal");
       setPrice((record as any).price != null ? String((record as any).price) : "");
     }
   }, [record?.id, (record as any)?.status, (record as any)?.price]);
 
   if (!record) return null;
 
-  const handleStatusToggle = async (checked: boolean) => {
-    setLocalForSale(checked); // instant UI update
+  const handleStatusChange = async (newStatus: string) => {
+    const oldStatus = localStatus;
+    setLocalStatus(newStatus);
     setUpdating(true);
-    const newStatus = checked ? "for_sale" : "personal";
     const { error } = await supabase
       .from("user_records")
       .update({ status: newStatus } as any)
       .eq("id", record.id);
     if (error) {
-      setLocalForSale(!checked); // revert on error
+      setLocalStatus(oldStatus);
       toast.error("Failed to update status");
     } else {
-      toast.success(checked ? "Marked as For Sale / Trade" : "Marked as Personal Collection");
+      const label = STATUS_OPTIONS.find(o => o.value === newStatus)?.label || newStatus;
+      toast.success(`Marked as ${label}`, { position: "top-center" });
       queryClient.invalidateQueries({ queryKey: ["user_records"] });
     }
     setUpdating(false);
@@ -88,7 +100,7 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
     if (error) {
       toast.error("Failed to save price");
     } else {
-      toast.success(numPrice != null ? `Price set to ₪${numPrice}` : "Price removed");
+      toast.success(numPrice != null ? `Price set to ₪${numPrice}` : "Price removed", { position: "top-center" });
       queryClient.invalidateQueries({ queryKey: ["user_records"] });
     }
     setSavingPrice(false);
@@ -116,6 +128,9 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
       toast.info("Photo captured! AI grading coming soon.");
     }
   };
+
+  const currentOption = STATUS_OPTIONS.find(o => o.value === localStatus) || STATUS_OPTIONS[1];
+  const StatusIcon = currentOption.icon;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -192,33 +207,35 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
 
           <GradeVinylDialog open={gradeOpen} onOpenChange={setGradeOpen} />
 
-          {/* Status toggle */}
-          <div className="flex items-center justify-between rounded-xl bg-background p-4">
-            <div className="flex items-center gap-3">
-              {localForSale ? (
-                <Tag size={18} className="text-primary" />
-              ) : (
-                <Package size={18} className="text-muted-foreground" />
-              )}
+          {/* Status dropdown */}
+          <div className="rounded-xl bg-background p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <StatusIcon size={18} className="text-primary" />
               <div>
-                <p className="font-body text-sm font-medium text-foreground">
-                  {localForSale ? "For Sale / Trade" : "Personal Collection"}
-                </p>
-                <p className="font-body text-[11px] text-muted-foreground">
-                  {localForSale ? "Visible to other users" : "Private to you"}
-                </p>
+                <p className="font-body text-sm font-medium text-foreground">Record Status</p>
+                <p className="font-body text-[11px] text-muted-foreground">{currentOption.description}</p>
               </div>
             </div>
-            <Switch
-              checked={localForSale}
-              onCheckedChange={handleStatusToggle}
-              disabled={updating}
-            />
+            <Select value={localStatus} onValueChange={handleStatusChange} disabled={updating}>
+              <SelectTrigger className="h-11 font-body text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <span className="flex items-center gap-2">
+                      <opt.icon size={14} />
+                      {opt.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Price input — shown when for sale */}
           <AnimatePresence>
-            {localForSale && (
+            {localStatus === "for_sale" && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}

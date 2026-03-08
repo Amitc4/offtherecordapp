@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Disc3, Plus, Camera, RefreshCw, CheckSquare, X, Tag, Trash2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Disc3, Plus, Camera, RefreshCw, CheckSquare, X, Tag, Trash2, ArrowUp, ArrowDown, Filter, Archive } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +22,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 
+type FilterType = "default" | "year" | "for_sale" | "personal" | "sold";
+
 const CollectionScreen = () => {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [addOpen, setAddOpen] = useState(false);
@@ -33,10 +35,59 @@ const CollectionScreen = () => {
   const [marking, setMarking] = useState(false);
   const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false);
   const [detailRecord, setDetailRecord] = useState<any>(null);
+  
+  const [activeFilter, setActiveFilter] = useState<FilterType>("default");
+  const [yearAsc, setYearAsc] = useState(false);
+
   const { data: records = [], isLoading } = useUserRecords();
   const { data: profile } = useDiscogsProfile();
   const { syncCollection } = useDiscogsSync();
   const queryClient = useQueryClient();
+
+  const handleFilterClick = (filter: FilterType) => {
+    if (filter === "year") {
+      if (activeFilter === "year") {
+        setYearAsc(!yearAsc);
+      } else {
+        setActiveFilter("year");
+        setYearAsc(false); // start descending
+      }
+    } else {
+      setActiveFilter(activeFilter === filter ? "default" : filter);
+    }
+  };
+
+  const filteredRecords = useMemo(() => {
+    let items = [...records];
+
+    // Filter by status
+    if (activeFilter === "for_sale") {
+      items = items.filter((r) => (r as any).status === "for_sale");
+    } else if (activeFilter === "personal") {
+      items = items.filter((r) => (r as any).status === "personal");
+    } else if (activeFilter === "sold") {
+      items = items.filter((r) => (r as any).status === "sold");
+    }
+
+    // Sort
+    if (activeFilter === "year") {
+      items.sort((a, b) => {
+        const ya = a.year || 0;
+        const yb = b.year || 0;
+        return yearAsc ? ya - yb : yb - ya;
+      });
+    } else if (activeFilter === "default") {
+      // for_sale first, then personal, then sold
+      const statusOrder: Record<string, number> = { for_sale: 0, personal: 1, sold: 2 };
+      items.sort((a, b) => {
+        const sa = statusOrder[(a as any).status] ?? 1;
+        const sb = statusOrder[(b as any).status] ?? 1;
+        return sa - sb;
+      });
+    }
+
+    return items;
+  }, [records, activeFilter, yearAsc]);
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
@@ -64,7 +115,8 @@ const CollectionScreen = () => {
     if (error) {
       toast.error("Failed to update records");
     } else {
-      toast.success(`${ids.length} record${ids.length > 1 ? "s" : ""} marked as ${status === "for_sale" ? "For Sale / Trade" : "Personal Collection"}`);
+      const label = status === "for_sale" ? "For Sale / Trade" : status === "sold" ? "Sold" : "Personal Collection";
+      toast.success(`${ids.length} record${ids.length > 1 ? "s" : ""} marked as ${label}`, { position: "top-center" });
       queryClient.invalidateQueries({ queryKey: ["user_records"] });
     }
     setMarking(false);
@@ -90,6 +142,34 @@ const CollectionScreen = () => {
     setRemoveConfirmOpen(false);
     exitSelectMode();
   };
+
+  const getStatusBadge = (status: string) => {
+    if (status === "for_sale") {
+      return <span className="rounded-md bg-primary/15 px-1.5 py-0.5 font-body text-[9px] font-semibold text-primary">For Sale</span>;
+    }
+    if (status === "sold") {
+      return <span className="rounded-md bg-muted px-1.5 py-0.5 font-body text-[9px] font-semibold text-muted-foreground">Sold</span>;
+    }
+    return null;
+  };
+
+  const getStatusBadgeSmall = (status: string) => {
+    if (status === "for_sale") {
+      return <span className="rounded bg-primary/15 px-1 py-0.5 font-body text-[8px] font-semibold text-primary">Sale</span>;
+    }
+    if (status === "sold") {
+      return <span className="rounded bg-muted px-1 py-0.5 font-body text-[8px] font-semibold text-muted-foreground">Sold</span>;
+    }
+    return null;
+  };
+
+  const FILTERS: { key: FilterType; label: string }[] = [
+    { key: "default", label: "Default" },
+    { key: "year", label: "Release Date" },
+    { key: "for_sale", label: "For Sale" },
+    { key: "personal", label: "Personal" },
+    { key: "sold", label: "Sold" },
+  ];
 
   return (
     <div className="px-4 pt-4 pb-2">
@@ -140,18 +220,42 @@ const CollectionScreen = () => {
         </div>
       </div>
 
+      {/* Filter chips */}
+      {!selectMode && records.length > 0 && (
+        <div className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {FILTERS.map((f) => {
+            const isActive = activeFilter === f.key;
+            return (
+              <button
+                key={f.key}
+                onClick={() => handleFilterClick(f.key)}
+                className={`shrink-0 flex items-center gap-1 rounded-full px-3 py-1.5 font-body text-xs font-medium transition-colors ${
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "bg-primary/10 text-primary hover:bg-primary/20"
+                }`}
+              >
+                {f.label}
+                {f.key === "year" && isActive && (
+                  yearAsc ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {!selectMode && (
-        <div className="mb-4 flex justify-end">
+        <div className="mb-4 flex items-center justify-between">
+          <p className="font-body text-sm text-muted-foreground">{filteredRecords.length} records</p>
           <ViewToggle view={view} onChange={setView} />
         </div>
       )}
 
-      {selectMode ? (
+      {selectMode && (
         <p className="mb-4 font-body text-xs text-primary font-medium">
           {selected.size} selected · tap records to select
         </p>
-      ) : (
-        <p className="mb-4 font-body text-sm text-muted-foreground">{records.length} records</p>
       )}
 
       {isLoading ? (
@@ -168,9 +272,14 @@ const CollectionScreen = () => {
               : "Connect your Discogs account in Profile to import"}
           </p>
         </div>
+      ) : filteredRecords.length === 0 ? (
+        <div className="flex flex-col items-center py-12 text-center">
+          <Filter size={48} className="mb-4 text-muted-foreground/40" />
+          <p className="font-body text-sm text-muted-foreground">No records match this filter</p>
+        </div>
       ) : view === "list" ? (
         <div className="space-y-3">
-          {records.map((record) => {
+          {filteredRecords.map((record) => {
             const isSelected = selected.has(record.id);
             const recordStatus = (record as any).status as string | undefined;
             const recordPrice = (record as any).price as number | null | undefined;
@@ -178,7 +287,7 @@ const CollectionScreen = () => {
               <div
                 key={record.id}
                 onClick={() => selectMode ? toggleSelect(record.id) : setDetailRecord(record)}
-                className={`flex items-center gap-4 rounded-xl p-4 vinyl-shadow transition-all cursor-pointer ${isSelected ? "bg-primary/10 ring-2 ring-primary/40" : "bg-card"}`}
+                className={`flex items-center gap-4 rounded-xl p-4 vinyl-shadow transition-all cursor-pointer ${isSelected ? "bg-primary/10 ring-2 ring-primary/40" : "bg-card"} ${recordStatus === "sold" ? "opacity-60" : ""}`}
               >
                 {selectMode && (
                   <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
@@ -203,11 +312,7 @@ const CollectionScreen = () => {
                     <span className="font-body text-sm font-bold text-primary">₪{recordPrice}</span>
                   )}
                   <div className="flex items-center gap-1.5">
-                    {recordStatus === "for_sale" && (
-                      <span className="rounded-md bg-primary/15 px-1.5 py-0.5 font-body text-[9px] font-semibold text-primary">
-                        For Sale
-                      </span>
-                    )}
+                    {recordStatus && getStatusBadge(recordStatus)}
                     {record.condition && (
                       <span className="rounded-md bg-secondary px-2 py-1 font-body text-[10px] font-semibold text-secondary-foreground">
                         {record.condition}
@@ -221,7 +326,7 @@ const CollectionScreen = () => {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2.5">
-          {records.map((record) => {
+          {filteredRecords.map((record) => {
             const isSelected = selected.has(record.id);
             const recordStatus = (record as any).status as string | undefined;
             const recordPrice = (record as any).price as number | null | undefined;
@@ -231,7 +336,7 @@ const CollectionScreen = () => {
                 onClick={() => selectMode ? toggleSelect(record.id) : setDetailRecord(record)}
                 className={`group rounded-xl p-2.5 vinyl-shadow transition-all cursor-pointer ${
                   selectMode ? "" : "hover:scale-[1.02]"
-                } ${isSelected ? "bg-primary/10 ring-2 ring-primary/40" : "bg-card"}`}
+                } ${isSelected ? "bg-primary/10 ring-2 ring-primary/40" : "bg-card"} ${recordStatus === "sold" ? "opacity-60" : ""}`}
               >
                 <div className="relative mb-2 flex aspect-square items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
                   {selectMode && (
@@ -256,11 +361,7 @@ const CollectionScreen = () => {
                     <span className="font-body text-xs text-muted-foreground">{record.year || "—"}</span>
                   )}
                   <div className="flex items-center gap-1">
-                    {recordStatus === "for_sale" && (
-                      <span className="rounded bg-primary/15 px-1 py-0.5 font-body text-[8px] font-semibold text-primary">
-                        Sale
-                      </span>
-                    )}
+                    {recordStatus && getStatusBadgeSmall(recordStatus)}
                     {record.format && (
                       <span className="rounded bg-secondary px-1.5 py-0.5 font-body text-[9px] font-semibold text-secondary-foreground">
                         {record.format}
@@ -317,6 +418,14 @@ const CollectionScreen = () => {
                     >
                       <Disc3 size={15} className="text-primary" />
                       Personal Collection
+                    </button>
+                    <button
+                      onClick={() => handleMark("sold")}
+                      disabled={marking}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-3 font-body text-sm font-medium text-foreground transition-colors hover:bg-primary/10 active:bg-primary/20"
+                    >
+                      <Archive size={15} className="text-primary" />
+                      Sold
                     </button>
                     <div className="my-1 h-px bg-border" />
                     <button
