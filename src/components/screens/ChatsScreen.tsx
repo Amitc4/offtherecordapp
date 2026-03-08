@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive, Eye } from "lucide-react";
+import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive, Eye, Flag } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import CreateOfferDialog from "@/components/CreateOfferDialog";
 import OfferCard from "@/components/OfferCard";
 import UserCollectionSheet from "@/components/UserCollectionSheet";
+import ReportBlockDialog from "@/components/ReportBlockDialog";
 
 interface ChatRow {
   id: number;
