@@ -357,10 +357,34 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     );
   }
 
+  const [chatSearch, setChatSearch] = useState("");
+
+  const filteredChats = useMemo(() => {
+    if (!chatSearch.trim()) return chats;
+    const q = chatSearch.trim().toLowerCase();
+    return chats.filter((chat) => {
+      const name = getOtherName(chat).toLowerCase();
+      const recordTitle = (chat.record_title || "").toLowerCase();
+      return name.includes(q) || recordTitle.includes(q);
+    });
+  }, [chats, chatSearch, participantNames]);
+
   // Chat list view
   return (
     <div className="px-4 pt-4 pb-2">
-      <h1 className="mb-4 font-display text-3xl font-bold text-foreground">Chats</h1>
+      <h1 className="mb-3 font-display text-3xl font-bold text-foreground">Chats</h1>
+
+      {chats.length > 0 && (
+        <div className="relative mb-3">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={chatSearch}
+            onChange={(e) => setChatSearch(e.target.value)}
+            placeholder="Search by name or record..."
+            className="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 font-body text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+        </div>
+      )}
 
       {chats.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-center">
@@ -368,9 +392,14 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
           <p className="font-display text-base font-semibold text-muted-foreground">No conversations yet</p>
           <p className="mt-1 font-body text-sm text-muted-foreground">Find a record in Discover and contact the seller</p>
         </div>
+      ) : filteredChats.length === 0 ? (
+        <div className="flex flex-col items-center py-12 text-center">
+          <Search size={40} className="mb-3 text-muted-foreground/40" />
+          <p className="font-body text-sm text-muted-foreground">No chats match your search</p>
+        </div>
       ) : (
         <div className="space-y-1">
-          {chats.map((chat) => {
+          {filteredChats.map((chat) => {
             const otherName = getOtherName(chat);
             const last = lastMessages[chat.id];
             return (
