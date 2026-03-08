@@ -53,6 +53,7 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
   const [activeChat, setActiveChat] = useState<number | null>(null);
   const [inputText, setInputText] = useState("");
   const [showOfferDialog, setShowOfferDialog] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [offers, setOffers] = useState<TradeOffer[]>([]);
   const [participantNames, setParticipantNames] = useState<Record<string, string>>({});
   const [viewingCollection, setViewingCollection] = useState(false);
