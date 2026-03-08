@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive, Eye, Flag } from "lucide-react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive, Eye, Flag, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/useAuth";
