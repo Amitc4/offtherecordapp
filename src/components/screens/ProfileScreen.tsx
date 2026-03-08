@@ -73,7 +73,7 @@ const ProfileScreen = () => {
     const otherIds = friendRows.map(f => f.user_id === user.id ? f.friend_id : f.user_id);
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("user_id, display_name, short_id, avatar_url")
+      .select("user_id, display_name, short_id, avatar_url, nickname, first_name, last_name")
       .in("user_id", otherIds.length ? otherIds : ["none"]);
 
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
