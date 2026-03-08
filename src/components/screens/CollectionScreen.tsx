@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Disc3, Plus, Camera, RefreshCw, CheckSquare, X, Tag, Trash2, ArrowUp, ArrowDown, Filter, Archive } from "lucide-react";
 import {
   AlertDialog,
@@ -38,6 +38,7 @@ const CollectionScreen = () => {
   
   const [activeFilter, setActiveFilter] = useState<FilterType>("default");
   const [yearAsc, setYearAsc] = useState(false);
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
 
   const { data: records = [], isLoading } = useUserRecords();
   const { data: profile } = useDiscogsProfile();
@@ -220,35 +221,69 @@ const CollectionScreen = () => {
         </div>
       </div>
 
-      {/* Filter chips */}
-      {!selectMode && records.length > 0 && (
-        <div className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {FILTERS.map((f) => {
-            const isActive = activeFilter === f.key;
-            return (
-              <button
-                key={f.key}
-                onClick={() => handleFilterClick(f.key)}
-                className={`shrink-0 flex items-center gap-1 rounded-full px-3 py-1.5 font-body text-xs font-medium transition-colors ${
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-md"
-                    : "bg-primary/10 text-primary hover:bg-primary/20"
-                }`}
-              >
-                {f.label}
-                {f.key === "year" && isActive && (
-                  yearAsc ? <ArrowUp size={12} /> : <ArrowDown size={12} />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       {!selectMode && (
         <div className="mb-4 flex items-center justify-between">
           <p className="font-body text-sm text-muted-foreground">{filteredRecords.length} records</p>
-          <ViewToggle view={view} onChange={setView} />
+          <div className="flex items-center gap-2">
+            {records.length > 0 && (
+              <div className="relative">
+                <button
+                  onClick={() => setFilterMenuOpen(!filterMenuOpen)}
+                  className={`flex h-9 items-center gap-1.5 rounded-lg px-3 font-body text-xs font-medium transition-colors ${
+                    activeFilter !== "default"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-primary/10 text-primary hover:bg-primary/20"
+                  }`}
+                >
+                  <Filter size={14} />
+                  {activeFilter !== "default" && (
+                    <span>{FILTERS.find(f => f.key === activeFilter)?.label}</span>
+                  )}
+                  {activeFilter === "year" && (
+                    yearAsc ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                  )}
+                </button>
+                <AnimatePresence>
+                  {filterMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setFilterMenuOpen(false)} />
+                      <motion.div
+                        initial={{ y: -4, opacity: 0, scale: 0.95 }}
+                        animate={{ y: 0, opacity: 1, scale: 1 }}
+                        exit={{ y: -4, opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 top-full z-50 mt-1 w-48 rounded-xl border border-border bg-card p-1.5 shadow-xl"
+                      >
+                        {FILTERS.map((f) => {
+                          const isActive = activeFilter === f.key;
+                          return (
+                            <button
+                              key={f.key}
+                              onClick={() => {
+                                handleFilterClick(f.key);
+                                if (f.key !== "year") setFilterMenuOpen(false);
+                              }}
+                              className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 font-body text-sm font-medium transition-colors ${
+                                isActive
+                                  ? "bg-primary/10 text-primary"
+                                  : "text-foreground hover:bg-muted"
+                              }`}
+                            >
+                              <span>{f.label}</span>
+                              {f.key === "year" && isActive && (
+                                yearAsc ? <ArrowUp size={14} /> : <ArrowDown size={14} />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+            <ViewToggle view={view} onChange={setView} />
+          </div>
         </div>
       )}
 
