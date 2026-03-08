@@ -346,6 +346,13 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
           userId={otherUserId}
           userName={otherName}
         />
+
+        <ReportBlockDialog
+          open={reportOpen}
+          onOpenChange={setReportOpen}
+          targetUserId={otherUserId}
+          targetUserName={otherName}
+        />
       </div>
     );
   }
