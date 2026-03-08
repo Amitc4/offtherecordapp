@@ -213,12 +213,27 @@ const ProfileScreen = () => {
       <h1 className="mb-4 font-display text-3xl font-bold text-foreground">Profile</h1>
 
       <div className="mb-6 flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary font-display text-xl font-bold text-primary-foreground">
-          {initial}
+        <div className="relative">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="Avatar" className="h-16 w-16 rounded-full object-cover" />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary font-display text-xl font-bold text-primary-foreground">
+              {initial}
+            </div>
+          )}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingAvatar}
+            className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90"
+          >
+            <Camera size={13} />
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
         </div>
-        <div>
-          <h2 className="font-display text-lg font-bold text-foreground">{displayName}</h2>
-          <p className="font-body text-sm text-muted-foreground">{user?.email}</p>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-display text-lg font-bold text-foreground truncate">{nicknameDisplay}</h2>
+          {fullName && <p className="font-body text-sm text-muted-foreground truncate">{fullName}</p>}
+          <p className="font-body text-xs text-muted-foreground truncate">{user?.email}</p>
           {myShortId && (
             <button onClick={copyId} className="mt-1 flex items-center gap-1 font-body text-xs text-primary hover:underline">
               <Copy size={12} />
