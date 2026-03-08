@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { User, Settings, LogOut, ChevronRight, Disc3, Heart, Package, Star, RefreshCw, Unlink, Clock, Bell, HelpCircle, Pencil, Users, UserPlus, Search, Check, X, Copy, Eye } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { User, Settings, LogOut, ChevronRight, Disc3, Heart, Package, Star, RefreshCw, Unlink, Clock, Bell, HelpCircle, Pencil, Users, UserPlus, Search, Check, X, Copy, Eye, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,6 +22,9 @@ interface ProfileRow {
   display_name: string | null;
   short_id: string | null;
   avatar_url: string | null;
+  nickname: string | null;
+  first_name: string | null;
+  last_name: string | null;
 }
 
 const ProfileScreen = () => {
@@ -44,12 +47,17 @@ const ProfileScreen = () => {
   const [myShortId, setMyShortId] = useState<string | null>(null);
   const [viewingUser, setViewingUser] = useState<{ id: string; name: string } | null>(null);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [myProfile, setMyProfile] = useState<ProfileRow | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) return;
-    // Fetch my short_id
-    supabase.from("profiles").select("short_id").eq("user_id", user.id).single()
-      .then(({ data }) => setMyShortId(data?.short_id || null));
+    supabase.from("profiles").select("user_id, short_id, display_name, avatar_url, nickname, first_name, last_name").eq("user_id", user.id).single()
+      .then(({ data }) => {
+        setMyShortId(data?.short_id || null);
+        setMyProfile(data as ProfileRow | null);
+      });
     loadFriends();
   }, [user]);
 
@@ -65,7 +73,7 @@ const ProfileScreen = () => {
     const otherIds = friendRows.map(f => f.user_id === user.id ? f.friend_id : f.user_id);
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("user_id, display_name, short_id, avatar_url")
+      .select("user_id, display_name, short_id, avatar_url, nickname, first_name, last_name")
       .in("user_id", otherIds.length ? otherIds : ["none"]);
 
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
@@ -89,7 +97,7 @@ const ProfileScreen = () => {
       const q = searchQuery.trim();
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, display_name, short_id, avatar_url")
+        .select("user_id, display_name, short_id, avatar_url, nickname, first_name, last_name")
         .neq("user_id", user.id)
         .or(`display_name.ilike.%${q}%,short_id.ilike.%${q}%`)
         .limit(10);
@@ -156,8 +164,33 @@ const ProfileScreen = () => {
     }
   };
 
-  const displayName = profile?.display_name || user?.email?.split("@")[0] || "User";
-  const initial = displayName.charAt(0).toUpperCase();
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${user.id}/avatar.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+      const avatarUrl = `${publicUrl}?t=${Date.now()}`;
+      const { error: updateError } = await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("user_id", user.id);
+      if (updateError) throw updateError;
+      setMyProfile(prev => prev ? { ...prev, avatar_url: avatarUrl } : prev);
+      toast.success("Profile picture updated!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to upload avatar");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const nicknameDisplay = myProfile?.nickname || profile?.display_name || user?.email?.split("@")[0] || "User";
+  const fullName = [myProfile?.first_name, myProfile?.last_name].filter(Boolean).join(" ");
+  const displayName = nicknameDisplay;
+  const initial = nicknameDisplay.charAt(0).toUpperCase();
+  const avatarUrl = myProfile?.avatar_url;
 
   const stats = [
     { icon: Disc3, value: records.length, label: "Records" },
@@ -180,12 +213,27 @@ const ProfileScreen = () => {
       <h1 className="mb-4 font-display text-3xl font-bold text-foreground">Profile</h1>
 
       <div className="mb-6 flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary font-display text-xl font-bold text-primary-foreground">
-          {initial}
+        <div className="relative">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="Avatar" className="h-16 w-16 rounded-full object-cover" />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary font-display text-xl font-bold text-primary-foreground">
+              {initial}
+            </div>
+          )}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingAvatar}
+            className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90"
+          >
+            <Camera size={13} />
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
         </div>
-        <div>
-          <h2 className="font-display text-lg font-bold text-foreground">{displayName}</h2>
-          <p className="font-body text-sm text-muted-foreground">{user?.email}</p>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-display text-lg font-bold text-foreground truncate">{nicknameDisplay}</h2>
+          {fullName && <p className="font-body text-sm text-muted-foreground truncate">{fullName}</p>}
+          <p className="font-body text-xs text-muted-foreground truncate">{user?.email}</p>
           {myShortId && (
             <button onClick={copyId} className="mt-1 flex items-center gap-1 font-body text-xs text-primary hover:underline">
               <Copy size={12} />
@@ -436,7 +484,13 @@ const ProfileScreen = () => {
 
       <EditProfileSheet
         open={editProfileOpen}
-        onOpenChange={setEditProfileOpen}
+        onOpenChange={(open) => {
+          setEditProfileOpen(open);
+          if (!open && user) {
+            supabase.from("profiles").select("user_id, short_id, display_name, avatar_url, nickname, first_name, last_name").eq("user_id", user.id).single()
+              .then(({ data }) => setMyProfile(data as ProfileRow | null));
+          }
+        }}
       />
     </div>
   );
