@@ -48,8 +48,10 @@ const ProfileScreen = () => {
   const [myShortId, setMyShortId] = useState<string | null>(null);
   const [viewingUser, setViewingUser] = useState<{ id: string; name: string } | null>(null);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [transactionHistoryOpen, setTransactionHistoryOpen] = useState(false);
   const [myProfile, setMyProfile] = useState<ProfileRow | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [completedCount, setCompletedCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
