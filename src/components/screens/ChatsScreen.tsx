@@ -213,6 +213,18 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
   const getOtherUserId = (chat: ChatRow) => chat.participant_1 === user?.id ? chat.participant_2 : chat.participant_1;
   const getOtherName = (chat: ChatRow) => participantNames[getOtherUserId(chat)] || "User";
 
+  const [chatSearch, setChatSearch] = useState("");
+
+  const filteredChats = useMemo(() => {
+    if (!chatSearch.trim()) return chats;
+    const q = chatSearch.trim().toLowerCase();
+    return chats.filter((chat) => {
+      const name = getOtherName(chat).toLowerCase();
+      const recordTitle = (chat.record_title || "").toLowerCase();
+      return name.includes(q) || recordTitle.includes(q);
+    });
+  }, [chats, chatSearch, participantNames]);
+
   // Active chat view
   if (activeChat && activeChatData) {
     const otherName = getOtherName(activeChatData);
