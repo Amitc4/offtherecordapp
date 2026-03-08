@@ -177,6 +177,50 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          from_user_id: string | null
+          id: string
+          read: boolean
+          record_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          from_user_id?: string | null
+          id?: string
+          read?: boolean
+          record_id?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          from_user_id?: string | null
+          id?: string
+          read?: boolean
+          record_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "user_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -187,6 +231,8 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          latitude: number | null
+          longitude: number | null
           nickname: string | null
           phone_number: string | null
           short_id: string | null
@@ -202,6 +248,8 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          latitude?: number | null
+          longitude?: number | null
           nickname?: string | null
           phone_number?: string | null
           short_id?: string | null
@@ -217,6 +265,8 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          latitude?: number | null
+          longitude?: number | null
           nickname?: string | null
           phone_number?: string | null
           short_id?: string | null
@@ -224,6 +274,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      record_photos: {
+        Row: {
+          created_at: string
+          id: string
+          photo_url: string
+          record_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          photo_url: string
+          record_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          photo_url?: string
+          record_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "record_photos_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "user_records"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trade_offer_items: {
         Row: {
@@ -306,6 +385,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       user_records: {
         Row: {
           artist: string
@@ -354,6 +454,36 @@ export type Database = {
           title?: string
           user_id?: string
           year?: number | null
+        }
+        Relationships: []
+      }
+      user_reports: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          reason: string
+          reported_id: string
+          reporter_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          reason: string
+          reported_id: string
+          reporter_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          reason?: string
+          reported_id?: string
+          reporter_id?: string
+          status?: string
         }
         Relationships: []
       }

@@ -1,12 +1,13 @@
 import { useRef, useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, ChevronDown, Archive } from "lucide-react";
+import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive } from "lucide-react";
 import GradeVinylDialog from "@/components/GradeVinylDialog";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
+import RecordPhotoUpload from "@/components/RecordPhotoUpload";
 import {
   Select,
   SelectContent,
@@ -57,6 +58,22 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const [price, setPrice] = useState("");
   const [savingPrice, setSavingPrice] = useState(false);
   const [gradeOpen, setGradeOpen] = useState(false);
+  const [photos, setPhotos] = useState<{ id: string; photo_url: string }[]>([]);
+
+  // Fetch existing photos for this record
+  const { data: existingPhotos = [] } = useQuery({
+    queryKey: ["record_photos", record?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("record_photos")
+        .select("id, photo_url")
+        .eq("record_id", record!.id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as { id: string; photo_url: string }[];
+    },
+    enabled: !!record?.id,
+  });
 
   useEffect(() => {
     if (record) {
@@ -65,9 +82,19 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
     }
   }, [record?.id, (record as any)?.status, (record as any)?.price]);
 
+  useEffect(() => {
+    setPhotos(existingPhotos);
+  }, [existingPhotos]);
+
   if (!record) return null;
 
   const handleStatusChange = async (newStatus: string) => {
+    // If trying to list for sale, require at least 2 photos
+    if (newStatus === "for_sale" && photos.length < 2) {
+      toast.error("Please upload at least 2 condition photos before listing for sale");
+      return;
+    }
+
     const oldStatus = localStatus;
     setLocalStatus(newStatus);
     setUpdating(true);
@@ -106,29 +133,6 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
     setSavingPrice(false);
   };
 
-  const handleCameraPress = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      stream.getTracks().forEach((t) => t.stop());
-      fileInputRef.current?.click();
-    } catch (err: any) {
-      if (err.name === "NotAllowedError") {
-        toast.error("Camera access denied. Please enable it in your device settings.");
-      } else if (err.name === "NotFoundError") {
-        toast.error("No camera found on this device.");
-      } else {
-        toast.error("Could not access camera. Check your browser/device settings.");
-      }
-    }
-  };
-
-  const handleCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      toast.info("Photo captured! AI grading coming soon.");
-    }
-  };
-
   const currentOption = STATUS_OPTIONS.find(o => o.value === localStatus) || STATUS_OPTIONS[1];
   const StatusIcon = currentOption.icon;
 
@@ -138,15 +142,6 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
         <SheetHeader className="px-5 pb-2">
           <SheetTitle className="font-display text-lg text-foreground">Record Details</SheetTitle>
         </SheetHeader>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={handleCapture}
-        />
 
         <div className="px-5 space-y-5">
           {/* Cover + title area */}
@@ -206,6 +201,14 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
           </button>
 
           <GradeVinylDialog open={gradeOpen} onOpenChange={setGradeOpen} />
+
+          {/* Condition photos upload */}
+          <RecordPhotoUpload
+            recordId={record.id}
+            existingPhotos={photos}
+            onPhotosChange={setPhotos}
+            minPhotos={2}
+          />
 
           {/* Status dropdown */}
           <div className="rounded-xl bg-background p-4">

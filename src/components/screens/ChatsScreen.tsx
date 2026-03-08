@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive, Eye } from "lucide-react";
+import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive, Eye, Flag } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import CreateOfferDialog from "@/components/CreateOfferDialog";
 import OfferCard from "@/components/OfferCard";
 import UserCollectionSheet from "@/components/UserCollectionSheet";
+import ReportBlockDialog from "@/components/ReportBlockDialog";
 
 interface ChatRow {
   id: number;
@@ -52,6 +53,7 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
   const [activeChat, setActiveChat] = useState<number | null>(null);
   const [inputText, setInputText] = useState("");
   const [showOfferDialog, setShowOfferDialog] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [offers, setOffers] = useState<TradeOffer[]>([]);
   const [participantNames, setParticipantNames] = useState<Record<string, string>>({});
   const [viewingCollection, setViewingCollection] = useState(false);
@@ -247,6 +249,13 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
             <Eye size={16} />
           </button>
           <button
+            onClick={() => setReportOpen(true)}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            title="Report or block user"
+          >
+            <Flag size={14} />
+          </button>
+          <button
             onClick={() => setShowOfferDialog(true)}
             className="flex h-9 items-center gap-1.5 rounded-full bg-primary/15 px-3 font-body text-xs font-semibold text-primary transition-colors hover:bg-primary/25 active:scale-95"
           >
@@ -336,6 +345,13 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
           onOpenChange={setViewingCollection}
           userId={otherUserId}
           userName={otherName}
+        />
+
+        <ReportBlockDialog
+          open={reportOpen}
+          onOpenChange={setReportOpen}
+          targetUserId={otherUserId}
+          targetUserName={otherName}
         />
       </div>
     );

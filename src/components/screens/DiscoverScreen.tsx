@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Disc3, Search } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Disc3, Search, MapPin } from "lucide-react";
 import ViewToggle from "@/components/ViewToggle";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import DiscoverRecordSheet from "@/components/DiscoverRecordSheet";
 import { toast } from "sonner";
+import { useLocation, getDistanceKm } from "@/hooks/useLocation";
 
 const GENRES = ["All", "Rock", "Jazz", "Soul", "Electronic", "Hip Hop", "Pop", "Classical", "Funk", "R&B"];
 
@@ -20,6 +21,34 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
   const [searchText, setSearchText] = useState("");
   const [activeGenre, setActiveGenre] = useState("All");
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
+  const { latitude, longitude, permissionGranted, requestLocation } = useLocation();
+
+  // Fetch seller profiles for distance calculation
+  const { data: sellerProfiles = {} } = useQuery({
+    queryKey: ["seller_profiles_location"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, latitude, longitude");
+      const map: Record<string, { latitude: number | null; longitude: number | null }> = {};
+      (data || []).forEach((p: any) => { map[p.user_id] = { latitude: p.latitude, longitude: p.longitude }; });
+      return map;
+    },
+    enabled: !!user && permissionGranted,
+  });
+
+  // Fetch blocked users to filter them out
+  const { data: blockedUserIds = [] } = useQuery({
+    queryKey: ["blocked_users", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_blocks")
+        .select("blocked_id")
+        .eq("blocker_id", user!.id);
+      return (data || []).map((b: any) => b.blocked_id);
+    },
+    enabled: !!user,
+  });
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["discover_records"],
@@ -36,7 +65,7 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
   });
 
   const filtered = useMemo(() => {
-    let items = records.filter((r) => r.user_id !== user?.id);
+    let items = records.filter((r) => r.user_id !== user?.id && !blockedUserIds.includes(r.user_id));
 
     if (activeGenre !== "All") {
       items = items.filter((r) => {
@@ -55,13 +84,21 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
     }
 
     return items;
-  }, [records, user?.id, activeGenre, searchText]);
+  }, [records, user?.id, activeGenre, searchText, blockedUserIds]);
+
+  const getDistance = (sellerId: string): string | null => {
+    if (!latitude || !longitude || !permissionGranted) return null;
+    const seller = sellerProfiles[sellerId];
+    if (!seller?.latitude || !seller?.longitude) return null;
+    const dist = getDistanceKm(latitude, longitude, seller.latitude, seller.longitude);
+    if (dist < 1) return `${Math.round(dist * 1000)}m away`;
+    return `${dist.toFixed(1)}km away`;
+  };
 
   const handleContactSeller = async (record: any, sellerName: string) => {
     if (!user) return;
 
     try {
-      // Check if a chat already exists between these users about this record
       const { data: existingChats } = await supabase
         .from("chats")
         .select("id")
@@ -76,7 +113,6 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
         return;
       }
 
-      // Create a new chat
       const { data: newChat, error } = await supabase
         .from("chats")
         .insert({
@@ -105,7 +141,18 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
       </div>
       <p className="mb-3 font-body text-sm text-muted-foreground">Find your next favourite record</p>
 
-      <div className="mb-3 flex justify-end">
+      <div className="mb-3 flex items-center justify-between">
+        <button
+          onClick={requestLocation}
+          className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-body text-xs font-medium transition-colors ${
+            permissionGranted
+              ? "bg-primary/10 text-primary"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+          }`}
+        >
+          <MapPin size={14} />
+          {permissionGranted ? "Location on" : "Enable location"}
+        </button>
         <ViewToggle view={view} onChange={setView} />
       </div>
 
@@ -152,6 +199,7 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
         <div className="grid grid-cols-2 gap-2.5">
           {filtered.map((item) => {
             const price = (item as any).price as number | null;
+            const distance = getDistance(item.user_id);
             return (
               <div
                 key={item.id}
@@ -179,6 +227,11 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                     </span>
                   )}
                 </div>
+                {distance && (
+                  <p className="mt-1 flex items-center gap-1 font-body text-[10px] text-muted-foreground">
+                    <MapPin size={9} /> {distance}
+                  </p>
+                )}
               </div>
             );
           })}
@@ -187,6 +240,7 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
         <div className="space-y-3">
           {filtered.map((item) => {
             const price = (item as any).price as number | null;
+            const distance = getDistance(item.user_id);
             return (
               <div
                 key={item.id}
@@ -203,6 +257,11 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                 <div className="min-w-0 flex-1">
                   <h3 className="font-display text-base font-semibold text-foreground truncate">{item.title}</h3>
                   <p className="font-display text-sm text-muted-foreground">{item.artist}</p>
+                  {distance && (
+                    <p className="flex items-center gap-1 font-body text-[10px] text-muted-foreground">
+                      <MapPin size={9} /> {distance}
+                    </p>
+                  )}
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   {price != null && (
