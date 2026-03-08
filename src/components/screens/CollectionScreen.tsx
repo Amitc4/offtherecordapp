@@ -38,6 +38,7 @@ const CollectionScreen = () => {
   
   const [activeFilter, setActiveFilter] = useState<FilterType>("default");
   const [yearAsc, setYearAsc] = useState(false);
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
 
   const { data: records = [], isLoading } = useUserRecords();
   const { data: profile } = useDiscogsProfile();
