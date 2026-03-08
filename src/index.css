@@ -147,3 +147,48 @@
     background: hsl(24 90% 50% / 0.4);
   }
 }
+
+/* Accessibility: Font size */
+.a11y-font-large {
+  font-size: 112.5%; /* 18px base */
+}
+.a11y-font-xlarge {
+  font-size: 125%; /* 20px base */
+}
+
+/* Accessibility: High contrast */
+.a11y-high-contrast {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --card: 0 0% 97%;
+  --card-foreground: 0 0% 0%;
+  --muted: 0 0% 90%;
+  --muted-foreground: 0 0% 20%;
+  --border: 0 0% 40%;
+  --primary: 24 100% 40%;
+  --primary-foreground: 0 0% 100%;
+}
+.a11y-high-contrast.dark {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 8%;
+  --card-foreground: 0 0% 100%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 80%;
+  --border: 0 0% 50%;
+}
+
+/* Accessibility: Reduce animations */
+.a11y-reduce-motion *,
+.a11y-reduce-motion *::before,
+.a11y-reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
+/* Accessibility: Dyslexia font */
+.a11y-dyslexia-font,
+.a11y-dyslexia-font * {
+  font-family: 'OpenDyslexic', sans-serif !important;
+}
