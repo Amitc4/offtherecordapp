@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import UserCollectionSheet from "@/components/UserCollectionSheet";
 import EditProfileSheet from "@/components/EditProfileSheet";
+import TransactionHistorySheet from "@/components/TransactionHistorySheet";
 
 interface FriendRow {
   id: string;
