@@ -204,7 +204,7 @@ const ProfileScreen = () => {
   const stats = [
     { icon: Disc3, value: records.length, label: "Records" },
     { icon: Heart, value: wishlist.length, label: "Wishlist" },
-    { icon: Package, value: 0, label: "Sold / Swapped" },
+    { icon: Package, value: completedCount, label: "Sold / Swapped" },
     { icon: Star, value: "0.0", label: "Rating" },
   ];
 
