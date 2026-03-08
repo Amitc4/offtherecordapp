@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Accessibility, X, Type, Eye, Zap, BookOpen, RotateCcw, Minus, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAccessibility } from "@/hooks/useAccessibility";
+import NotificationsBell from "@/components/NotificationsBell";
 
 const fontSizeLabels = ["Default", "Large", "Extra Large"];
 

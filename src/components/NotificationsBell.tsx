@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, X, Disc3 } from "lucide-react";
+import { Bell, Disc3 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNotifications } from "@/hooks/useNotifications";
 import { formatDistanceToNow } from "date-fns";
@@ -12,9 +12,10 @@ const NotificationsBell = () => {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95"
+        aria-label="Notifications"
       >
-        <Bell size={18} />
+        <Bell size={20} />
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1 font-body text-[10px] font-bold text-destructive-foreground">
             {unreadCount > 99 ? "99+" : unreadCount}
@@ -25,29 +26,24 @@ const NotificationsBell = () => {
       <AnimatePresence>
         {open && (
           <>
-            <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+            <div className="fixed inset-0 z-[61]" onClick={() => setOpen(false)} />
             <motion.div
-              initial={{ y: -8, opacity: 0, scale: 0.95 }}
+              initial={{ y: 8, opacity: 0, scale: 0.95 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: -8, opacity: 0, scale: 0.95 }}
+              exit={{ y: 8, opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-0 top-full z-50 mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-border bg-card shadow-xl"
+              className="fixed right-3 bottom-[8.5rem] z-[62] w-80 max-h-80 overflow-y-auto rounded-xl border border-border bg-card shadow-xl"
             >
               <div className="flex items-center justify-between border-b border-border px-4 py-3">
                 <h3 className="font-display text-sm font-bold text-foreground">Notifications</h3>
-                <div className="flex items-center gap-2">
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={markAllRead}
-                      className="font-body text-[10px] font-medium text-primary hover:underline"
-                    >
-                      Mark all read
-                    </button>
-                  )}
-                  <button onClick={() => setOpen(false)} className="text-muted-foreground">
-                    <X size={14} />
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllRead}
+                    className="font-body text-[10px] font-medium text-primary hover:underline"
+                  >
+                    Mark all read
                   </button>
-                </div>
+                )}
               </div>
 
               {notifications.length === 0 ? (
