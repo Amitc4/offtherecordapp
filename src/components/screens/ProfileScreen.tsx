@@ -503,6 +503,11 @@ const ProfileScreen = () => {
           }
         }}
       />
+
+      <TransactionHistorySheet
+        open={transactionHistoryOpen}
+        onOpenChange={setTransactionHistoryOpen}
+      />
     </div>
   );
 };
