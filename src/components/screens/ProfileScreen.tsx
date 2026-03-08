@@ -465,6 +465,8 @@ const ProfileScreen = () => {
             onClick={() => {
               if (item.label === "Edit Profile") {
                 setEditProfileOpen(true);
+              } else if (item.label === "Transaction History") {
+                setTransactionHistoryOpen(true);
               } else {
                 toast.info(`${item.label} — coming soon!`);
               }
