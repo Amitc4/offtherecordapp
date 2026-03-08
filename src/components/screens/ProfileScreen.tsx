@@ -484,7 +484,13 @@ const ProfileScreen = () => {
 
       <EditProfileSheet
         open={editProfileOpen}
-        onOpenChange={setEditProfileOpen}
+        onOpenChange={(open) => {
+          setEditProfileOpen(open);
+          if (!open && user) {
+            supabase.from("profiles").select("user_id, short_id, display_name, avatar_url, nickname, first_name, last_name").eq("user_id", user.id).single()
+              .then(({ data }) => setMyProfile(data as ProfileRow | null));
+          }
+        }}
       />
     </div>
   );
