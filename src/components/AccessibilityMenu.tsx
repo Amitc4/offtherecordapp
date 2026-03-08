@@ -14,17 +14,20 @@ const AccessibilityMenu = () => {
 
   return (
     <>
-      {/* Floating trigger button */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="fixed right-3 bottom-20 z-[60] flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95"
-        aria-label="Accessibility menu"
-      >
-        <Accessibility size={20} />
-        {hasChanges && (
-          <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-accent border-2 border-primary" />
-        )}
-      </button>
+      {/* Floating buttons stack - right side above nav */}
+      <div className="fixed right-3 bottom-20 z-[60] flex flex-col items-center gap-2">
+        <button
+          onClick={() => setOpen(!open)}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95"
+          aria-label="Accessibility menu"
+        >
+          <Accessibility size={20} />
+          {hasChanges && (
+            <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-accent border-2 border-primary" />
+          )}
+        </button>
+        <NotificationsBell />
+      </div>
 
       {/* Menu panel */}
       <AnimatePresence>
