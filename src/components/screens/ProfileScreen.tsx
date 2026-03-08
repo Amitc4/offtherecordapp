@@ -47,12 +47,17 @@ const ProfileScreen = () => {
   const [myShortId, setMyShortId] = useState<string | null>(null);
   const [viewingUser, setViewingUser] = useState<{ id: string; name: string } | null>(null);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [myProfile, setMyProfile] = useState<ProfileRow | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) return;
-    // Fetch my short_id
-    supabase.from("profiles").select("short_id").eq("user_id", user.id).single()
-      .then(({ data }) => setMyShortId(data?.short_id || null));
+    supabase.from("profiles").select("user_id, short_id, display_name, avatar_url, nickname, first_name, last_name").eq("user_id", user.id).single()
+      .then(({ data }) => {
+        setMyShortId(data?.short_id || null);
+        setMyProfile(data as ProfileRow | null);
+      });
     loadFriends();
   }, [user]);
 
