@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import UserCollectionSheet from "@/components/UserCollectionSheet";
 import EditProfileSheet from "@/components/EditProfileSheet";
+import TransactionHistorySheet from "@/components/TransactionHistorySheet";
 
 interface FriendRow {
   id: string;
@@ -47,8 +48,10 @@ const ProfileScreen = () => {
   const [myShortId, setMyShortId] = useState<string | null>(null);
   const [viewingUser, setViewingUser] = useState<{ id: string; name: string } | null>(null);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [transactionHistoryOpen, setTransactionHistoryOpen] = useState(false);
   const [myProfile, setMyProfile] = useState<ProfileRow | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [completedCount, setCompletedCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -58,6 +61,12 @@ const ProfileScreen = () => {
         setMyShortId(data?.short_id || null);
         setMyProfile(data as ProfileRow | null);
       });
+    supabase
+      .from("trade_offers")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "completed")
+      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+      .then(({ count }) => setCompletedCount(count || 0));
     loadFriends();
   }, [user]);
 
@@ -195,7 +204,7 @@ const ProfileScreen = () => {
   const stats = [
     { icon: Disc3, value: records.length, label: "Records" },
     { icon: Heart, value: wishlist.length, label: "Wishlist" },
-    { icon: Package, value: 0, label: "Sold / Swapped" },
+    { icon: Package, value: completedCount, label: "Sold / Swapped" },
     { icon: Star, value: "0.0", label: "Rating" },
   ];
 
@@ -456,6 +465,8 @@ const ProfileScreen = () => {
             onClick={() => {
               if (item.label === "Edit Profile") {
                 setEditProfileOpen(true);
+              } else if (item.label === "Transaction History") {
+                setTransactionHistoryOpen(true);
               } else {
                 toast.info(`${item.label} — coming soon!`);
               }
@@ -491,6 +502,11 @@ const ProfileScreen = () => {
               .then(({ data }) => setMyProfile(data as ProfileRow | null));
           }
         }}
+      />
+
+      <TransactionHistorySheet
+        open={transactionHistoryOpen}
+        onOpenChange={setTransactionHistoryOpen}
       />
     </div>
   );
