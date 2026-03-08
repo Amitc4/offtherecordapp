@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Accessibility, X, Type, Eye, Zap, BookOpen, RotateCcw, Minus, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAccessibility } from "@/hooks/useAccessibility";
+import NotificationsBell from "@/components/NotificationsBell";
 
 const fontSizeLabels = ["Default", "Large", "Extra Large"];
 
@@ -13,17 +14,20 @@ const AccessibilityMenu = () => {
 
   return (
     <>
-      {/* Floating trigger button */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="fixed right-3 bottom-20 z-[60] flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95"
-        aria-label="Accessibility menu"
-      >
-        <Accessibility size={20} />
-        {hasChanges && (
-          <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-accent border-2 border-primary" />
-        )}
-      </button>
+      {/* Floating buttons stack - right side above nav */}
+      <div className="fixed right-3 bottom-20 z-[60] flex flex-col items-center gap-2">
+        <button
+          onClick={() => setOpen(!open)}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95"
+          aria-label="Accessibility menu"
+        >
+          <Accessibility size={20} />
+          {hasChanges && (
+            <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-accent border-2 border-primary" />
+          )}
+        </button>
+        <NotificationsBell />
+      </div>
 
       {/* Menu panel */}
       <AnimatePresence>
@@ -41,7 +45,7 @@ const AccessibilityMenu = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 80, scale: 0.95 }}
               transition={settings.reduceAnimations ? { duration: 0 } : { type: "spring", stiffness: 400, damping: 30 }}
-              className="fixed right-3 bottom-32 z-[62] w-72 rounded-2xl border border-border bg-card p-4 shadow-xl"
+              className="fixed right-3 bottom-[9rem] z-[62] w-72 rounded-2xl border border-border bg-card p-4 shadow-xl"
             >
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="font-display text-sm font-bold text-foreground flex items-center gap-2">

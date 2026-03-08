@@ -4,10 +4,9 @@ import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive } from "lu
 import GradeVinylDialog from "@/components/GradeVinylDialog";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
-import RecordPhotoUpload from "@/components/RecordPhotoUpload";
 import {
   Select,
   SelectContent,
@@ -52,49 +51,25 @@ const STATUS_OPTIONS = [
 
 const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProps) => {
   const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [updating, setUpdating] = useState(false);
   const [localStatus, setLocalStatus] = useState("personal");
   const [price, setPrice] = useState("");
   const [savingPrice, setSavingPrice] = useState(false);
   const [gradeOpen, setGradeOpen] = useState(false);
-  const [photos, setPhotos] = useState<{ id: string; photo_url: string }[]>([]);
 
-  // Fetch existing photos for this record
-  const { data: existingPhotos = [] } = useQuery({
-    queryKey: ["record_photos", record?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("record_photos")
-        .select("id, photo_url")
-        .eq("record_id", record!.id)
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return data as { id: string; photo_url: string }[];
-    },
-    enabled: !!record?.id,
-  });
+  const recordStatus = record?.status;
+  const recordPrice = record?.price;
 
   useEffect(() => {
     if (record) {
-      setLocalStatus((record as any).status || "personal");
-      setPrice((record as any).price != null ? String((record as any).price) : "");
+      setLocalStatus(recordStatus || "personal");
+      setPrice(recordPrice != null ? String(recordPrice) : "");
     }
-  }, [record?.id, (record as any)?.status, (record as any)?.price]);
-
-  useEffect(() => {
-    setPhotos(existingPhotos);
-  }, [existingPhotos]);
+  }, [record?.id, recordStatus, recordPrice]);
 
   if (!record) return null;
 
   const handleStatusChange = async (newStatus: string) => {
-    // If trying to list for sale, require at least 2 photos
-    if (newStatus === "for_sale" && photos.length < 2) {
-      toast.error("Please upload at least 2 condition photos before listing for sale");
-      return;
-    }
-
     const oldStatus = localStatus;
     setLocalStatus(newStatus);
     setUpdating(true);
@@ -196,19 +171,11 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
             </div>
             <div className="text-left">
               <p className="font-body text-sm font-semibold text-foreground">Grade this record</p>
-              <p className="font-body text-xs text-muted-foreground">Take a photo to get an AI condition grade</p>
+              <p className="font-body text-xs text-muted-foreground">Take photos to get an AI condition grade</p>
             </div>
           </button>
 
           <GradeVinylDialog open={gradeOpen} onOpenChange={setGradeOpen} />
-
-          {/* Condition photos upload */}
-          <RecordPhotoUpload
-            recordId={record.id}
-            existingPhotos={photos}
-            onPhotosChange={setPhotos}
-            minPhotos={2}
-          />
 
           {/* Status dropdown */}
           <div className="rounded-xl bg-background p-4">
