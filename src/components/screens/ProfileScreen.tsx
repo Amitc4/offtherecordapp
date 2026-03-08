@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { User, Settings, LogOut, ChevronRight, Disc3, Heart, Package, Star, RefreshCw, Unlink, Clock, Bell, HelpCircle, Pencil, Users, UserPlus, Search, Check, X, Copy, Eye } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { User, Settings, LogOut, ChevronRight, Disc3, Heart, Package, Star, RefreshCw, Unlink, Clock, Bell, HelpCircle, Pencil, Users, UserPlus, Search, Check, X, Copy, Eye, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
