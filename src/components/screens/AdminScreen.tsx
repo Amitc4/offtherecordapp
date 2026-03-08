@@ -17,6 +17,7 @@ interface AdminUser {
   phone: string;
   display_name: string;
   avatar_url: string;
+  account_status: string;
   role: string;
   created_at: string;
 }
