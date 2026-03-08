@@ -283,6 +283,31 @@ Deno.serve(async (req) => {
         });
       }
 
+      case "set_account_status": {
+        const { target_user_id, status } = params;
+        if (!target_user_id || !UUID_RE.test(target_user_id)) throw new Error("Valid target_user_id required");
+        if (!status || !["active", "archived", "blocked"].includes(status)) throw new Error("Invalid status");
+
+        // Prevent changing main_admin's status
+        const { data: targetRoles } = await adminClient
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", target_user_id);
+        if (targetRoles?.some((r: any) => r.role === "main_admin")) {
+          throw new Error("Cannot change main admin's status");
+        }
+
+        const { error } = await adminClient
+          .from("profiles")
+          .update({ account_status: status })
+          .eq("user_id", target_user_id);
+        if (error) throw error;
+
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+        });
+      }
+
       default:
         return new Response(JSON.stringify({ error: "Unknown action" }), {
           status: 400,
