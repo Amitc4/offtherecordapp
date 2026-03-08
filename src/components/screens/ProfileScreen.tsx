@@ -164,8 +164,33 @@ const ProfileScreen = () => {
     }
   };
 
-  const displayName = profile?.display_name || user?.email?.split("@")[0] || "User";
-  const initial = displayName.charAt(0).toUpperCase();
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${user.id}/avatar.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+      const avatarUrl = `${publicUrl}?t=${Date.now()}`;
+      const { error: updateError } = await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("user_id", user.id);
+      if (updateError) throw updateError;
+      setMyProfile(prev => prev ? { ...prev, avatar_url: avatarUrl } : prev);
+      toast.success("Profile picture updated!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to upload avatar");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const nicknameDisplay = myProfile?.nickname || profile?.display_name || user?.email?.split("@")[0] || "User";
+  const fullName = [myProfile?.first_name, myProfile?.last_name].filter(Boolean).join(" ");
+  const displayName = nicknameDisplay;
+  const initial = nicknameDisplay.charAt(0).toUpperCase();
+  const avatarUrl = myProfile?.avatar_url;
 
   const stats = [
     { icon: Disc3, value: records.length, label: "Records" },
