@@ -7,6 +7,7 @@ import DiscoverScreen from "@/components/screens/DiscoverScreen";
 import ChatsScreen from "@/components/screens/ChatsScreen";
 import ProfileScreen from "@/components/screens/ProfileScreen";
 import AdminScreen from "@/components/screens/AdminScreen";
+import NotificationsBell from "@/components/NotificationsBell";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -70,6 +71,11 @@ const HomePage = () => {
 
   return (
     <div className="mx-auto flex h-screen max-w-md flex-col overflow-x-hidden bg-background">
+      {/* Top bar with notifications */}
+      <div className="flex items-center justify-end px-4 pt-3 pb-0">
+        <NotificationsBell />
+      </div>
+
       <main
         ref={mainRef}
         className="flex-1 scrollbar-overlay pb-20"
