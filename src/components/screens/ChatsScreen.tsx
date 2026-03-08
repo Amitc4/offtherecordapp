@@ -249,6 +249,13 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
             <Eye size={16} />
           </button>
           <button
+            onClick={() => setReportOpen(true)}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            title="Report or block user"
+          >
+            <Flag size={14} />
+          </button>
+          <button
             onClick={() => setShowOfferDialog(true)}
             className="flex h-9 items-center gap-1.5 rounded-full bg-primary/15 px-3 font-body text-xs font-semibold text-primary transition-colors hover:bg-primary/25 active:scale-95"
           >
