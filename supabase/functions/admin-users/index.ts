@@ -94,6 +94,7 @@ Deno.serve(async (req) => {
             phone: u.phone || "",
             display_name: profile?.display_name || "",
             avatar_url: profile?.avatar_url || "",
+            account_status: profile?.account_status || "active",
             role: roleMap.get(u.id) || "user",
             created_at: u.created_at,
           };
