@@ -369,18 +369,6 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     );
   }
 
-  const [chatSearch, setChatSearch] = useState("");
-
-  const filteredChats = useMemo(() => {
-    if (!chatSearch.trim()) return chats;
-    const q = chatSearch.trim().toLowerCase();
-    return chats.filter((chat) => {
-      const name = getOtherName(chat).toLowerCase();
-      const recordTitle = (chat.record_title || "").toLowerCase();
-      return name.includes(q) || recordTitle.includes(q);
-    });
-  }, [chats, chatSearch, participantNames]);
-
   // Chat list view
   return (
     <div className="px-4 pt-4 pb-2">
