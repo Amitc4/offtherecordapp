@@ -61,6 +61,12 @@ const ProfileScreen = () => {
         setMyShortId(data?.short_id || null);
         setMyProfile(data as ProfileRow | null);
       });
+    supabase
+      .from("trade_offers")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "completed")
+      .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+      .then(({ count }) => setCompletedCount(count || 0));
     loadFriends();
   }, [user]);
 
