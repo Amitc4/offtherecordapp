@@ -97,7 +97,7 @@ const ProfileScreen = () => {
       const q = searchQuery.trim();
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, display_name, short_id, avatar_url")
+        .select("user_id, display_name, short_id, avatar_url, nickname, first_name, last_name")
         .neq("user_id", user.id)
         .or(`display_name.ilike.%${q}%,short_id.ilike.%${q}%`)
         .limit(10);
