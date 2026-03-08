@@ -223,6 +223,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string
           avatar_url: string | null
           created_at: string
           discogs_connected: boolean
@@ -240,6 +241,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_status?: string
           avatar_url?: string | null
           created_at?: string
           discogs_connected?: boolean
@@ -257,6 +259,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_status?: string
           avatar_url?: string | null
           created_at?: string
           discogs_connected?: boolean

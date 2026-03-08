@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Shield, Pencil, Users, CheckCircle, XCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,6 +17,7 @@ interface AdminUser {
   phone: string;
   display_name: string;
   avatar_url: string;
+  account_status: string;
   role: string;
   created_at: string;
 }
@@ -124,6 +126,16 @@ const AdminScreen = () => {
     onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
+  const statusMutation = useMutation({
+    mutationFn: async (params: { target_user_id: string; status: string }) =>
+      callAdmin({ action: "set_account_status", ...params }),
+    onSuccess: () => {
+      toast({ title: "User status updated" });
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
   const openEdit = (u: AdminUser) => {
     setEditUser(u);
     setEditForm({ display_name: u.display_name, email: u.email, phone: u.phone, password: "" });
@@ -146,6 +158,12 @@ const AdminScreen = () => {
     if (editForm.phone !== editUser.phone) params.phone = editForm.phone;
     if (editForm.password) params.password = editForm.password;
     updateMutation.mutate(params);
+  };
+
+  const getStatusBadge = (status: string) => {
+    if (status === "blocked") return <Badge variant="destructive" className="text-[10px] px-1.5">Blocked</Badge>;
+    if (status === "archived") return <Badge variant="outline" className="text-[10px] px-1.5">Archived</Badge>;
+    return <Badge variant="secondary" className="text-[10px] px-1.5 bg-primary/10 text-primary border-0">Active</Badge>;
   };
 
   const getRoleBadgeVariant = (role: string) => {
@@ -237,27 +255,56 @@ const AdminScreen = () => {
       ) : (
         <div className="space-y-2">
           {users.map((u) => (
-            <div key={u.id} className="flex items-center gap-2 sm:gap-3 rounded-lg bg-card p-3 border border-border">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary font-display text-sm font-bold text-secondary-foreground">
-                {(u.display_name || u.email)?.[0]?.toUpperCase() || "?"}
+            <div key={u.id} className="flex flex-col gap-2 rounded-lg bg-card p-3 border border-border">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary font-display text-sm font-bold text-secondary-foreground">
+                  {(u.display_name || u.email)?.[0]?.toUpperCase() || "?"}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-body text-sm font-medium text-foreground">
+                    {u.display_name || "No name"}
+                  </p>
+                  <p className="truncate font-body text-xs text-muted-foreground">{u.email}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Badge variant={getRoleBadgeVariant(u.role)} className="text-[10px] px-1.5">
+                    {getRoleLabel(u.role)}
+                  </Badge>
+                  {getStatusBadge(u.account_status)}
+                  <Button variant="ghost" size="icon" onClick={() => openRole(u)} title="Change role" className="h-9 w-9">
+                    <Shield size={16} />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => openEdit(u)} title="Edit user" className="h-9 w-9">
+                    <Pencil size={16} />
+                  </Button>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-body text-sm font-medium text-foreground">
-                  {u.display_name || "No name"}
-                </p>
-                <p className="truncate font-body text-xs text-muted-foreground">{u.email}</p>
-              </div>
-              <div className="flex shrink-0 items-center gap-1">
-                <Badge variant={getRoleBadgeVariant(u.role)} className="text-[10px] px-1.5">
-                  {getRoleLabel(u.role)}
-                </Badge>
-                <Button variant="ghost" size="icon" onClick={() => openRole(u)} title="Change role" className="h-9 w-9">
-                  <Shield size={16} />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => openEdit(u)} title="Edit user" className="h-9 w-9">
-                  <Pencil size={16} />
-                </Button>
-              </div>
+              {/* Status dropdown */}
+              {u.role !== "main_admin" && (
+                <div className="flex items-center gap-2 pl-12">
+                  <span className="font-body text-[11px] text-muted-foreground">Status:</span>
+                  <Select
+                    value={u.account_status || "active"}
+                    onValueChange={(val) => statusMutation.mutate({ target_user_id: u.id, status: val })}
+                    disabled={statusMutation.isPending}
+                  >
+                    <SelectTrigger className="h-8 w-32 font-body text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">
+                        <span className="flex items-center gap-1.5">🟢 Active</span>
+                      </SelectItem>
+                      <SelectItem value="archived">
+                        <span className="flex items-center gap-1.5">📦 Archived</span>
+                      </SelectItem>
+                      <SelectItem value="blocked">
+                        <span className="flex items-center gap-1.5">🚫 Blocked</span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           ))}
         </div>

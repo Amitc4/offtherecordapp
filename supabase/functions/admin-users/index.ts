@@ -94,6 +94,7 @@ Deno.serve(async (req) => {
             phone: u.phone || "",
             display_name: profile?.display_name || "",
             avatar_url: profile?.avatar_url || "",
+            account_status: profile?.account_status || "active",
             role: roleMap.get(u.id) || "user",
             created_at: u.created_at,
           };
@@ -278,6 +279,31 @@ Deno.serve(async (req) => {
 
       case "get_my_role": {
         return new Response(JSON.stringify({ role: userRole, is_main_admin: isMainAdmin }), {
+          headers: { ...cors, "Content-Type": "application/json" },
+        });
+      }
+
+      case "set_account_status": {
+        const { target_user_id, status } = params;
+        if (!target_user_id || !UUID_RE.test(target_user_id)) throw new Error("Valid target_user_id required");
+        if (!status || !["active", "archived", "blocked"].includes(status)) throw new Error("Invalid status");
+
+        // Prevent changing main_admin's status
+        const { data: targetRoles } = await adminClient
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", target_user_id);
+        if (targetRoles?.some((r: any) => r.role === "main_admin")) {
+          throw new Error("Cannot change main admin's status");
+        }
+
+        const { error } = await adminClient
+          .from("profiles")
+          .update({ account_status: status })
+          .eq("user_id", target_user_id);
+        if (error) throw error;
+
+        return new Response(JSON.stringify({ success: true }), {
           headers: { ...cors, "Content-Type": "application/json" },
         });
       }
