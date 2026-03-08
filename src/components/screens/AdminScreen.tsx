@@ -126,6 +126,16 @@ const AdminScreen = () => {
     onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
+  const statusMutation = useMutation({
+    mutationFn: async (params: { target_user_id: string; status: string }) =>
+      callAdmin({ action: "set_account_status", ...params }),
+    onSuccess: () => {
+      toast({ title: "User status updated" });
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
   const openEdit = (u: AdminUser) => {
     setEditUser(u);
     setEditForm({ display_name: u.display_name, email: u.email, phone: u.phone, password: "" });
