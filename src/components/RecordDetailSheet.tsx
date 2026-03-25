@@ -57,6 +57,21 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const [price, setPrice] = useState("");
   const [savingPrice, setSavingPrice] = useState(false);
   const [gradeOpen, setGradeOpen] = useState(false);
+  const [photos, setPhotos] = useState<{ id: string; photo_url: string }[]>([]);
+
+  // Fetch existing photos when record opens
+  useEffect(() => {
+    if (!record?.id || !open) return;
+    const fetchPhotos = async () => {
+      const { data } = await supabase
+        .from("record_photos")
+        .select("id, photo_url")
+        .eq("record_id", record.id)
+        .order("created_at", { ascending: true });
+      setPhotos(data || []);
+    };
+    fetchPhotos();
+  }, [record?.id, open]);
 
   const recordStatus = record?.status;
   const recordPrice = record?.price;
