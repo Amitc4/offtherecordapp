@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Camera, X, ImagePlus, AlertCircle } from "lucide-react";
+import { Camera, X, ImagePlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
