@@ -21,10 +21,17 @@ const RecordPhotoUpload = ({ recordId, existingPhotos = [], onPhotosChange, minP
     const files = e.target.files;
     if (!files || !user) return;
 
+    const remaining = maxPhotos - existingPhotos.length;
+    if (remaining <= 0) {
+      toast.error(`Maximum ${maxPhotos} photos allowed`);
+      return;
+    }
+
+    const filesToUpload = Array.from(files).slice(0, remaining);
     setUploading(true);
     const newPhotos: { id: string; photo_url: string }[] = [];
 
-    for (const file of Array.from(files)) {
+    for (const file of filesToUpload) {
       if (file.size > 5 * 1024 * 1024) {
         toast.error(`${file.name} is too large (max 5MB)`);
         continue;
