@@ -175,6 +175,13 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
               <p className="font-body text-sm text-foreground">{record.notes}</p>
             </div>
           )}
+          {/* Record & cover photos */}
+          <RecordPhotoUpload
+            recordId={record.id}
+            existingPhotos={photos}
+            onPhotosChange={setPhotos}
+            minPhotos={0}
+          />
 
           {/* AI Grade button */}
           <button
