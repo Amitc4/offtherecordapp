@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive } from "lucide-react";
 import GradeVinylDialog from "@/components/GradeVinylDialog";
+import RecordPhotoUpload from "@/components/RecordPhotoUpload";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -56,6 +57,21 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const [price, setPrice] = useState("");
   const [savingPrice, setSavingPrice] = useState(false);
   const [gradeOpen, setGradeOpen] = useState(false);
+  const [photos, setPhotos] = useState<{ id: string; photo_url: string }[]>([]);
+
+  // Fetch existing photos when record opens
+  useEffect(() => {
+    if (!record?.id || !open) return;
+    const fetchPhotos = async () => {
+      const { data } = await supabase
+        .from("record_photos")
+        .select("id, photo_url")
+        .eq("record_id", record.id)
+        .order("created_at", { ascending: true });
+      setPhotos(data || []);
+    };
+    fetchPhotos();
+  }, [record?.id, open]);
 
   const recordStatus = record?.status;
   const recordPrice = record?.price;
@@ -159,6 +175,13 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
               <p className="font-body text-sm text-foreground">{record.notes}</p>
             </div>
           )}
+          {/* Record & cover photos */}
+          <RecordPhotoUpload
+            recordId={record.id}
+            existingPhotos={photos}
+            onPhotosChange={setPhotos}
+            minPhotos={0}
+          />
 
           {/* AI Grade button */}
           <button

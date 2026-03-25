@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Camera, X, ImagePlus, AlertCircle } from "lucide-react";
+import { Camera, X, ImagePlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -9,9 +9,10 @@ interface RecordPhotoUploadProps {
   existingPhotos?: { id: string; photo_url: string }[];
   onPhotosChange: (photos: { id: string; photo_url: string }[]) => void;
   minPhotos?: number;
+  maxPhotos?: number;
 }
 
-const RecordPhotoUpload = ({ recordId, existingPhotos = [], onPhotosChange, minPhotos = 2 }: RecordPhotoUploadProps) => {
+const RecordPhotoUpload = ({ recordId, existingPhotos = [], onPhotosChange, minPhotos = 2, maxPhotos = 4 }: RecordPhotoUploadProps) => {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -20,10 +21,17 @@ const RecordPhotoUpload = ({ recordId, existingPhotos = [], onPhotosChange, minP
     const files = e.target.files;
     if (!files || !user) return;
 
+    const remaining = maxPhotos - existingPhotos.length;
+    if (remaining <= 0) {
+      toast.error(`Maximum ${maxPhotos} photos allowed`);
+      return;
+    }
+
+    const filesToUpload = Array.from(files).slice(0, remaining);
     setUploading(true);
     const newPhotos: { id: string; photo_url: string }[] = [];
 
-    for (const file of Array.from(files)) {
+    for (const file of filesToUpload) {
       if (file.size > 5 * 1024 * 1024) {
         toast.error(`${file.name} is too large (max 5MB)`);
         continue;
@@ -71,20 +79,17 @@ const RecordPhotoUpload = ({ recordId, existingPhotos = [], onPhotosChange, minP
     onPhotosChange(updated);
   };
 
-  const needsMore = existingPhotos.length < minPhotos;
+  const atMax = existingPhotos.length >= maxPhotos;
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <p className="font-body text-xs font-medium text-muted-foreground">
-          Condition Photos
+          Record & Cover Photos
         </p>
-        {needsMore && (
-          <span className="flex items-center gap-1 font-body text-[10px] text-destructive">
-            <AlertCircle size={10} />
-            At least {minPhotos} photos required
-          </span>
-        )}
+        <span className="font-body text-[10px] text-muted-foreground">
+          {existingPhotos.length}/{maxPhotos}
+        </span>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -100,20 +105,22 @@ const RecordPhotoUpload = ({ recordId, existingPhotos = [], onPhotosChange, minP
           </div>
         ))}
 
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-primary/30 text-primary transition-colors hover:border-primary/50 hover:bg-primary/5 disabled:opacity-50"
-        >
-          {uploading ? (
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          ) : (
-            <>
-              <ImagePlus size={18} />
-              <span className="font-body text-[9px]">Add</span>
-            </>
-          )}
-        </button>
+        {!atMax && (
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-primary/30 text-primary transition-colors hover:border-primary/50 hover:bg-primary/5 disabled:opacity-50"
+          >
+            {uploading ? (
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            ) : (
+              <>
+                <ImagePlus size={18} />
+                <span className="font-body text-[9px]">Add</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       <input
