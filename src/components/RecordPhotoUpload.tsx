@@ -79,20 +79,17 @@ const RecordPhotoUpload = ({ recordId, existingPhotos = [], onPhotosChange, minP
     onPhotosChange(updated);
   };
 
-  const needsMore = existingPhotos.length < minPhotos;
+  const atMax = existingPhotos.length >= maxPhotos;
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <p className="font-body text-xs font-medium text-muted-foreground">
-          Condition Photos
+          Record & Cover Photos
         </p>
-        {needsMore && (
-          <span className="flex items-center gap-1 font-body text-[10px] text-destructive">
-            <AlertCircle size={10} />
-            At least {minPhotos} photos required
-          </span>
-        )}
+        <span className="font-body text-[10px] text-muted-foreground">
+          {existingPhotos.length}/{maxPhotos}
+        </span>
       </div>
 
       <div className="flex flex-wrap gap-2">
