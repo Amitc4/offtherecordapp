@@ -9,9 +9,10 @@ interface RecordPhotoUploadProps {
   existingPhotos?: { id: string; photo_url: string }[];
   onPhotosChange: (photos: { id: string; photo_url: string }[]) => void;
   minPhotos?: number;
+  maxPhotos?: number;
 }
 
-const RecordPhotoUpload = ({ recordId, existingPhotos = [], onPhotosChange, minPhotos = 2 }: RecordPhotoUploadProps) => {
+const RecordPhotoUpload = ({ recordId, existingPhotos = [], onPhotosChange, minPhotos = 2, maxPhotos = 4 }: RecordPhotoUploadProps) => {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
