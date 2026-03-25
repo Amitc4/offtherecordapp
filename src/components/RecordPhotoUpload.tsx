@@ -105,20 +105,22 @@ const RecordPhotoUpload = ({ recordId, existingPhotos = [], onPhotosChange, minP
           </div>
         ))}
 
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-primary/30 text-primary transition-colors hover:border-primary/50 hover:bg-primary/5 disabled:opacity-50"
-        >
-          {uploading ? (
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          ) : (
-            <>
-              <ImagePlus size={18} />
-              <span className="font-body text-[9px]">Add</span>
-            </>
-          )}
-        </button>
+        {!atMax && (
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-primary/30 text-primary transition-colors hover:border-primary/50 hover:bg-primary/5 disabled:opacity-50"
+          >
+            {uploading ? (
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            ) : (
+              <>
+                <ImagePlus size={18} />
+                <span className="font-body text-[9px]">Add</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       <input
