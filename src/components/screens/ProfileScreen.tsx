@@ -490,13 +490,12 @@ const ProfileScreen = () => {
             key={item.label}
             className="flex w-full items-center gap-3 rounded-xl p-4 transition-colors hover:bg-card"
             onClick={() => {
-              if (item.label === "Edit Profile") {
-                setEditProfileOpen(true);
-              } else if (item.label === "Transaction History") {
-                setTransactionHistoryOpen(true);
-              } else {
-                toast.info(`${item.label} — coming soon!`);
-              }
+              if (item.label === "Edit Profile") setEditProfileOpen(true);
+              else if (item.label === "Transaction History") setTransactionHistoryOpen(true);
+              else if (item.label === "Grading History") setGradingHistoryOpen(true);
+              else if (item.label === "Notification Settings") setNotifSettingsOpen(true);
+              else if (item.label === "Help & Support") setHelpSupportOpen(true);
+              else if (item.label === "Settings") setSettingsOpen(true);
             }}
           >
             <item.icon size={18} className="text-muted-foreground" />
