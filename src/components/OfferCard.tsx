@@ -1,3 +1,21 @@
+/**
+ * @file OfferCard.tsx — Inline trade offer card displayed within the chat timeline.
+ *
+ * Shows what each side is offering (records + cash) and provides action buttons
+ * based on the offer's current status:
+ *
+ * | Status    | Receiver sees            | Sender sees              |
+ * |-----------|--------------------------|--------------------------|
+ * | pending   | Accept / Decline / Counter | Waiting… / Change Offer |
+ * | accepted  | Confirm Complete         | Confirm Complete         |
+ * | completed | Leave a Review           | Leave a Review           |
+ * | declined  | (no actions)             | (no actions)             |
+ *
+ * When both parties confirm completion, the status transitions to "completed"
+ * and a review form becomes available (1–5 stars + optional text).
+ *
+ * @see CreateOfferDialog – Used to create or counter an offer.
+ */
 import { useState, useEffect } from "react";
 import { Check, X, Star, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";

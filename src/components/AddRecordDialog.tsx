@@ -1,3 +1,15 @@
+/**
+ * @file AddRecordDialog.tsx — Dialog for adding a record to the collection or wishlist.
+ *
+ * Two modes (tabs):
+ * 1. **Discogs Search** – Search the Discogs database by keyword, then tap "+" to add.
+ *    Calls the `discogs` edge function with `action=search`.
+ * 2. **Manual** – Enter title, artist, and year manually.
+ *
+ * The `target` prop determines which table the record is inserted into:
+ * - `"collection"` → `user_records`
+ * - `"wishlist"`   → `user_wishlist`
+ */
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";

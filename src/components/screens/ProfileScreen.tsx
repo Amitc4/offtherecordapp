@@ -1,3 +1,22 @@
+/**
+ * @file ProfileScreen.tsx — User profile, friends, settings, and Discogs integration.
+ *
+ * **Sections:**
+ * 1. **Header** – Avatar (with camera upload), display name, email, copyable short ID.
+ * 2. **Stats cubes** – Records count, Wishlist count, Completed trades, Rating.
+ * 3. **Pending friend requests** – Accept / reject incoming requests.
+ * 4. **Friends list** – Search by name or ID, send requests, view a friend's collection.
+ * 5. **Menu items:**
+ *    - Edit Profile (opens `EditProfileSheet`)
+ *    - Transaction History (opens `TransactionHistorySheet`)
+ *    - Grading History, Notification Settings, Help, Settings (placeholders).
+ * 6. **Discogs integration** – Connect / disconnect, sync collection, sync wishlist.
+ * 7. **Sign Out** button.
+ *
+ * @see EditProfileSheet          – Bottom sheet for editing personal info.
+ * @see TransactionHistorySheet   – Completed trade history.
+ * @see UserCollectionSheet       – View another user's collection (from friends list).
+ */
 import { useState, useEffect, useRef } from "react";
 import { User, Settings, LogOut, ChevronRight, Disc3, Heart, Package, Star, RefreshCw, Unlink, Clock, Bell, HelpCircle, Pencil, Users, UserPlus, Search, Check, X, Copy, Eye, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";

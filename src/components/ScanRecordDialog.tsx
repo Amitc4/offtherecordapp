@@ -1,3 +1,16 @@
+/**
+ * @file ScanRecordDialog.tsx — AI-powered record identification via camera/photo.
+ *
+ * **Flow:**
+ * 1. **Capture** – User takes a photo of a record's cover art (camera or gallery).
+ * 2. **Identifying** – The image is base64-encoded and sent to the `identify-record`
+ *    edge function, which uses AI vision to identify the artist and title.
+ * 3. **Results** – Displays Discogs search matches based on the AI identification.
+ *    User can tap "+" to add any match directly to their collection.
+ *
+ * The edge function returns both the AI identification (`title` + `artist`) and
+ * a list of Discogs search results for the user to choose from.
+ */
 import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";

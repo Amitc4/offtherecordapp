@@ -1,3 +1,27 @@
+/**
+ * @file HomePage.tsx — Main app shell with bottom tab navigation.
+ *
+ * Rendered after authentication. Contains:
+ *
+ * **Tabs (bottom nav bar):**
+ * | Tab        | Screen             | Description                           |
+ * |------------|--------------------|---------------------------------------|
+ * | Collection | CollectionScreen   | User's vinyl records with CRUD        |
+ * | Wishlist   | WishlistScreen     | Records the user wants                |
+ * | Discover   | DiscoverScreen     | Browse other users' for-sale records  |
+ * | Chats      | ChatsScreen        | Messaging + trade offers              |
+ * | Profile    | ProfileScreen      | User info, friends, Discogs link      |
+ * | Admin      | AdminScreen        | (Only shown if user has admin role)   |
+ *
+ * **Key behaviour:**
+ * - `handleNavigateToChat(chatId, draft?)` allows the Discover screen to
+ *   open a specific chat with a pre-filled draft message.
+ * - An admin check runs on mount: if the user has role `admin` or `main_admin`
+ *   in `user_roles`, the Admin tab is appended.
+ * - Tab transitions use Framer Motion `AnimatePresence`.
+ * - A scroll listener adds/removes an `is-scrolling` CSS class for hiding
+ *   overlays during scroll.
+ */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Disc3, Heart, Compass, MessageCircle, User, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";

@@ -1,3 +1,15 @@
+/**
+ * @file AccessibilityMenu.tsx — Floating accessibility settings panel + notifications.
+ *
+ * Renders two floating buttons pinned to the bottom-right (above the nav bar):
+ * 1. **Accessibility button** – Opens a panel with font size, high contrast,
+ *    reduce animations, and dyslexia font toggles. A dot indicator shows when
+ *    any non-default setting is active.
+ * 2. **Notifications bell** – Rendered via `NotificationsBell` component.
+ *
+ * The panel uses `useAccessibility()` to read/write settings which are
+ * persisted in localStorage and applied as CSS classes on `<html>`.
+ */
 import { useState } from "react";
 import { Accessibility, X, Type, Eye, Zap, BookOpen, RotateCcw, Minus, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";

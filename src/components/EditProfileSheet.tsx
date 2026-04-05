@@ -1,3 +1,13 @@
+/**
+ * @file EditProfileSheet.tsx — Bottom sheet for editing the user's profile information.
+ *
+ * Editable fields: First Name, Last Name, Email, App Nickname, Phone Number, Password.
+ *
+ * - Profile fields are saved to the `profiles` table.
+ * - Email changes trigger a confirmation email via `supabase.auth.updateUser`.
+ * - Password changes require a minimum of 6 characters.
+ * - The `display_name` is auto-computed from first + last name (or nickname fallback).
+ */
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";

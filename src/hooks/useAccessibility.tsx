@@ -1,5 +1,29 @@
+/**
+ * @file useAccessibility.tsx — Accessibility settings context & hook.
+ *
+ * Provides a React context that stores and applies user accessibility
+ * preferences across the entire application. Settings are persisted in
+ * `localStorage` under the key `"a11y-settings"` so they survive page reloads.
+ *
+ * **Available settings:**
+ * | Setting           | Values          | Effect                                          |
+ * |-------------------|-----------------|-------------------------------------------------|
+ * | `fontSize`        | 0 / 1 / 2      | Default → Large → Extra-large (CSS class on `<html>`) |
+ * | `highContrast`    | boolean         | Toggles the `a11y-high-contrast` CSS class      |
+ * | `reduceAnimations`| boolean         | Toggles `a11y-reduce-motion` (disables transitions) |
+ * | `dyslexiaFont`    | boolean         | Toggles `a11y-dyslexia-font` (swaps to OpenDyslexic) |
+ *
+ * The actual visual changes are defined in `index.css` via the CSS classes
+ * toggled on `document.documentElement`.
+ *
+ * **Usage:**
+ * ```tsx
+ * const { settings, setFontSize, toggleHighContrast } = useAccessibility();
+ * ```
+ */
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
+/** Shape of the persisted accessibility preferences. */
 interface AccessibilitySettings {
   fontSize: number; // 0 = default, 1 = large, 2 = x-large
   highContrast: boolean;
@@ -7,6 +31,7 @@ interface AccessibilitySettings {
   dyslexiaFont: boolean;
 }
 
+/** Methods + state exposed by the context. */
 interface AccessibilityContextType {
   settings: AccessibilitySettings;
   setFontSize: (level: number) => void;
@@ -16,6 +41,7 @@ interface AccessibilityContextType {
   resetAll: () => void;
 }
 
+/** Sensible defaults — no modifications applied. */
 const defaultSettings: AccessibilitySettings = {
   fontSize: 0,
   highContrast: false,
@@ -25,12 +51,22 @@ const defaultSettings: AccessibilitySettings = {
 
 const AccessibilityContext = createContext<AccessibilityContextType | null>(null);
 
+/**
+ * Hook to read / modify accessibility preferences.
+ * Must be rendered inside `<AccessibilityProvider>`.
+ */
 export const useAccessibility = () => {
   const ctx = useContext(AccessibilityContext);
   if (!ctx) throw new Error("useAccessibility must be used within AccessibilityProvider");
   return ctx;
 };
 
+/**
+ * Provider that:
+ * 1. Restores settings from localStorage on mount.
+ * 2. Applies matching CSS classes on `<html>` whenever settings change.
+ * 3. Persists any change back to localStorage.
+ */
 export const AccessibilityProvider = ({ children }: { children: ReactNode }) => {
   const [settings, setSettings] = useState<AccessibilitySettings>(() => {
     try {
@@ -41,6 +77,7 @@ export const AccessibilityProvider = ({ children }: { children: ReactNode }) => 
     }
   });
 
+  // Sync settings → localStorage + DOM classes
   useEffect(() => {
     localStorage.setItem("a11y-settings", JSON.stringify(settings));
 
