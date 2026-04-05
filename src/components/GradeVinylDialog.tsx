@@ -24,6 +24,9 @@ import { motion, AnimatePresence } from "framer-motion";
 interface GradeVinylDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  recordId?: string;
+  recordTitle?: string;
+  recordArtist?: string;
 }
 
 interface GradingResult {
