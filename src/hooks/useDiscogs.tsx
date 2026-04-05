@@ -1,9 +1,40 @@
+/**
+ * @file useDiscogs.tsx — Hooks for Discogs integration and local record/wishlist queries.
+ *
+ * This file contains multiple exported hooks:
+ *
+ * ### `useDiscogsProfile()`
+ * Fetches the current user's profile row from the `profiles` table.
+ * Used everywhere to check Discogs connection status, display name, etc.
+ *
+ * ### `useDiscogsConnect()`
+ * Manages the OAuth 1.0a flow for linking a Discogs account:
+ * 1. `startConnect(callbackUrl)` – Gets a request token from the Discogs edge function
+ *    and returns the authorization URL the user should be redirected to.
+ * 2. `completeConnect(oauthToken, oauthVerifier)` – Exchanges the verifier for an
+ *    access token and saves it server-side.
+ *
+ * ### `useDiscogsSync()`
+ * Provides mutations to sync data from Discogs:
+ * - `syncCollection` – Imports the user's Discogs collection into `user_records`.
+ * - `syncWishlist`   – Imports the user's Discogs wantlist into `user_wishlist`.
+ * - `disconnect`     – Removes the Discogs OAuth tokens and resets the connection flag.
+ *
+ * ### `useUserRecords()`
+ * Fetches all records owned by the current user from `user_records`, sorted newest-first.
+ *
+ * ### `useUserWishlist()`
+ * Fetches all wishlist items owned by the current user from `user_wishlist`, sorted newest-first.
+ *
+ * All hooks communicate with the `discogs` edge function via authenticated fetch calls.
+ */
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+/** Base URL for the Discogs edge function. */
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/discogs`;
 
 function getHeaders(accessToken: string) {
