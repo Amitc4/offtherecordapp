@@ -76,7 +76,7 @@ const severityColor = (level: string) => {
   }
 };
 
-const GradeVinylDialog = ({ open, onOpenChange }: GradeVinylDialogProps) => {
+const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArtist }: GradeVinylDialogProps) => {
   const { user, session } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stage, setStage] = useState<Stage>("capture");
