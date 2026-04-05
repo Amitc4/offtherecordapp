@@ -28,6 +28,10 @@ import { toast } from "sonner";
 import UserCollectionSheet from "@/components/UserCollectionSheet";
 import EditProfileSheet from "@/components/EditProfileSheet";
 import TransactionHistorySheet from "@/components/TransactionHistorySheet";
+import GradingHistorySheet from "@/components/GradingHistorySheet";
+import NotificationSettingsSheet from "@/components/NotificationSettingsSheet";
+import HelpSupportSheet from "@/components/HelpSupportSheet";
+import SettingsSheet from "@/components/SettingsSheet";
 
 interface FriendRow {
   id: string;
