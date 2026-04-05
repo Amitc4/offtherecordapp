@@ -534,6 +534,26 @@ const ProfileScreen = () => {
         open={transactionHistoryOpen}
         onOpenChange={setTransactionHistoryOpen}
       />
+
+      <GradingHistorySheet
+        open={gradingHistoryOpen}
+        onOpenChange={setGradingHistoryOpen}
+      />
+
+      <NotificationSettingsSheet
+        open={notifSettingsOpen}
+        onOpenChange={setNotifSettingsOpen}
+      />
+
+      <HelpSupportSheet
+        open={helpSupportOpen}
+        onOpenChange={setHelpSupportOpen}
+      />
+
+      <SettingsSheet
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+      />
     </div>
   );
 };
