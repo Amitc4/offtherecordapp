@@ -26,6 +26,7 @@
  * @see UserCollectionSheet – View another user's collection.
  * @see ReportBlockDialog   – Report or block a user.
  */
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive, Eye, Flag, Search } from "lucide-react";
 import { toast } from "sonner";
 

@@ -13,6 +13,7 @@
  * When a record matching a wishlist item is listed for sale by another user,
  * the wishlist-match notification system (server-side trigger) alerts the user.
  */
+import { useState } from "react";
 import { Heart, Plus, RefreshCw, CheckSquare, X, Trash2 } from "lucide-react";
 import ViewToggle from "@/components/ViewToggle";
 import { useUserWishlist, useDiscogsProfile, useDiscogsSync } from "@/hooks/useDiscogs";

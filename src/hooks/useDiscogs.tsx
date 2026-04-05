@@ -38,6 +38,7 @@ import { toast } from "sonner";
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/discogs`;
 
 /** Build common headers for authenticated edge-function calls. */
+function getHeaders(accessToken: string) {
   return {
     Authorization: `Bearer ${accessToken}`,
     "Content-Type": "application/json",
