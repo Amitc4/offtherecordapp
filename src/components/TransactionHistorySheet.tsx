@@ -10,6 +10,7 @@
  *
  * Accessed from the Profile screen's "Transaction History" menu item.
  */
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ArrowRightLeft, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";

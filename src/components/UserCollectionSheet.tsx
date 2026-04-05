@@ -7,6 +7,7 @@
  *
  * Each record card shows cover art, title, artist, price (if for sale), and condition.
  */
+import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";

@@ -5,6 +5,7 @@
  * When `spinning` is true, the image rotates continuously (8s per revolution)
  * using Framer Motion. Used on the LoginPage.
  */
+import { motion } from "framer-motion";
 import vinylImage from "@/assets/vinyl-logo.jpg";
 
 const VinylLogo = ({ size = 200, spinning = false }: { size?: number; spinning?: boolean }) => {

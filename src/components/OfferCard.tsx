@@ -16,6 +16,7 @@
  *
  * @see CreateOfferDialog – Used to create or counter an offer.
  */
+import { useState, useEffect } from "react";
 import { Check, X, Star, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";

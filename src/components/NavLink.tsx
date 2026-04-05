@@ -5,6 +5,7 @@
  * instead of the function-based `className` prop that React Router requires.
  * Uses `cn()` to merge them together based on the link's active/pending state.
  */
+import { NavLink as RouterNavLink, NavLinkProps } from "react-router-dom";
 import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 

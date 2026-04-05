@@ -12,6 +12,7 @@
  * Grade scale: GEM → M → NM → G → OK → F (best to worst).
  * Each grade has a distinct color for visual clarity.
  */
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Camera, Loader2, Star } from "lucide-react";

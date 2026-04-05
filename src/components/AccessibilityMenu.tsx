@@ -10,6 +10,7 @@
  * The panel uses `useAccessibility()` to read/write settings which are
  * persisted in localStorage and applied as CSS classes on `<html>`.
  */
+import { useState } from "react";
 import { Accessibility, X, Type, Eye, Zap, BookOpen, RotateCcw, Minus, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAccessibility } from "@/hooks/useAccessibility";

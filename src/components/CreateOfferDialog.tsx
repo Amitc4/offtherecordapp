@@ -11,6 +11,7 @@
  *
  * @see OfferCard – Renders the offer with accept/decline/confirm actions.
  */
+import { useState, useEffect } from "react";
 import { Plus, ArrowRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";

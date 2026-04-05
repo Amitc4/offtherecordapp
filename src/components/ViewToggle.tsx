@@ -5,6 +5,7 @@
  * The active view is highlighted with the primary color.
  * Used in Collection, Wishlist, and Discover screens.
  */
+import { LayoutGrid, List } from "lucide-react";
 
 interface ViewToggleProps {
   view: "grid" | "list";

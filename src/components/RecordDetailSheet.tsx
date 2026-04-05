@@ -11,6 +11,7 @@
  * - **Price input** – Shown only when status is "for_sale". Saves on blur or Enter.
  * - **Remove** – Delete the record from the collection with confirmation dialog.
  */
+import { useRef, useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive } from "lucide-react";
 import GradeVinylDialog from "@/components/GradeVinylDialog";

@@ -14,6 +14,7 @@
  *
  * **Constraints:** Max 5 MB per file. Accepts image/* formats.
  */
+import { useState, useRef } from "react";
 import { Camera, X, ImagePlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";

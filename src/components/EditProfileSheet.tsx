@@ -8,6 +8,7 @@
  * - Password changes require a minimum of 6 characters.
  * - The `display_name` is auto-computed from first + last name (or nickname fallback).
  */
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

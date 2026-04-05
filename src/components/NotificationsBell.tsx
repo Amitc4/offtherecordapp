@@ -8,6 +8,7 @@
  *
  * Uses the `useNotifications()` hook for data and actions.
  */
+import { useState } from "react";
 import { Bell, Disc3 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNotifications } from "@/hooks/useNotifications";

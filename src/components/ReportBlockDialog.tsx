@@ -10,6 +10,7 @@
  *
  * Accessible from the Discover record detail sheet and the chat header.
  */
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogContent,
