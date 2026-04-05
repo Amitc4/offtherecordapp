@@ -37,7 +37,7 @@ import { toast } from "sonner";
 /** Base URL for the Discogs edge function. */
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/discogs`;
 
-function getHeaders(accessToken: string) {
+/** Build common headers for authenticated edge-function calls. */
   return {
     Authorization: `Bearer ${accessToken}`,
     "Content-Type": "application/json",

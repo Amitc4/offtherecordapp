@@ -1,4 +1,20 @@
-import { useState } from "react";
+/**
+ * @file AdminScreen.tsx — Admin user management panel.
+ *
+ * Only visible to users with `admin` or `main_admin` role (the tab is hidden otherwise).
+ * Communicates with the `admin-users` edge function for all operations.
+ *
+ * **Features:**
+ * - **User list** – Searchable list of all users with avatar, name, email, role badge.
+ * - **Edit user** – Change display name, email, phone, or reset password.
+ * - **Change role** – Promote to admin or demote to user.
+ *   - Regular admins can only *request* admin promotion (requires main_admin approval).
+ *   - Main admins can approve/reject pending admin requests.
+ * - **Account status** – Dropdown to set a user's status to Active / Archived / Blocked.
+ *   Cannot change the main admin's status.
+ *
+ * @see supabase/functions/admin-users/index.ts – Backend edge function handling all admin actions.
+ */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";

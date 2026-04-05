@@ -1,4 +1,31 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+/**
+ * @file ChatsScreen.tsx — Messaging and trade negotiation screen.
+ *
+ * Has two views:
+ *
+ * ### Chat List (default)
+ * - Shows all non-archived conversations sorted by last update.
+ * - Search bar filters by participant name or associated record title.
+ * - Swipe / tap the archive button to hide a chat.
+ * - Displays last message preview and timestamp.
+ *
+ * ### Active Chat (when a conversation is selected)
+ * - Real-time message feed (text bubbles) via Supabase Realtime subscription.
+ * - Trade offer cards interleaved in the timeline (accept / decline / confirm).
+ * - "Offer" button opens `CreateOfferDialog` to propose a swap or purchase.
+ * - "View Collection" button opens the other user's records in a bottom sheet.
+ * - "Report / Block" flag icon for safety.
+ * - Auto-scrolls to the latest message.
+ *
+ * **Props:**
+ * - `initialChatId` / `initialDraft` – Allow the Discover screen to deep-link
+ *   into a chat with a pre-composed message.
+ *
+ * @see CreateOfferDialog  – Dialog for creating a trade offer.
+ * @see OfferCard          – Renders a single trade offer with action buttons.
+ * @see UserCollectionSheet – View another user's collection.
+ * @see ReportBlockDialog   – Report or block a user.
+ */
 import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive, Eye, Flag, Search } from "lucide-react";
 import { toast } from "sonner";
 

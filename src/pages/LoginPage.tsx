@@ -1,3 +1,15 @@
+/**
+ * @file LoginPage.tsx — Sign-in / registration screen.
+ *
+ * Displays the "Off The Record" branding (spinning vinyl logo + tagline)
+ * and a form that toggles between **Sign In** and **Register** modes.
+ *
+ * - **Sign In** – calls `signIn(email, password)` from `useAuth`.
+ * - **Register** – calls `signUp(email, password, displayName)`.
+ *   On success a confirmation-email toast is shown (email verification is required).
+ *
+ * The page uses Framer Motion for entrance animations.
+ */
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Music } from "lucide-react";

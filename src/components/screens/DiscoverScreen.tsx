@@ -1,3 +1,20 @@
+/**
+ * @file DiscoverScreen.tsx — Browse records listed for sale / trade by other users.
+ *
+ * **Features:**
+ * - **Search bar** – Filter by title or artist name.
+ * - **Genre chips** – Quick-filter by genre (Rock, Jazz, Soul, etc.).
+ * - **Grid / List toggle** – Switch between card grid and compact list view.
+ * - **Location-based distance** – If the user grants location permission,
+ *   each listing shows how far away the seller is (e.g. "2.3 km away").
+ * - **Blocked-user filtering** – Records from blocked users are hidden.
+ * - **Contact seller** – Opens (or creates) a chat with a pre-filled message.
+ *
+ * Data is fetched from `user_records` where `status = 'for_sale'`, excluding
+ * the current user's own records and any blocked users' records.
+ *
+ * @see DiscoverRecordSheet – Bottom sheet shown when a record card is tapped.
+ */
 import { useState, useMemo, useEffect } from "react";
 import { Disc3, Search, MapPin } from "lucide-react";
 import ViewToggle from "@/components/ViewToggle";
@@ -9,6 +26,7 @@ import DiscoverRecordSheet from "@/components/DiscoverRecordSheet";
 import { toast } from "sonner";
 import { useLocation, getDistanceKm } from "@/hooks/useLocation";
 
+/** List of genre filter options shown as horizontal chips. */
 const GENRES = ["All", "Rock", "Jazz", "Soul", "Electronic", "Hip Hop", "Pop", "Classical", "Funk", "R&B"];
 
 interface DiscoverScreenProps {

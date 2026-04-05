@@ -1,4 +1,18 @@
-import { useState } from "react";
+/**
+ * @file WishlistScreen.tsx — Records the user wants to find / buy.
+ *
+ * Similar in structure to CollectionScreen but simpler (no status management).
+ *
+ * **Features:**
+ * - Grid / List view toggle.
+ * - Select mode for bulk removal.
+ * - Discogs wishlist sync (if connected).
+ * - Add to wishlist (Discogs search or manual entry).
+ * - Detail sheet showing record info + single-item removal.
+ *
+ * When a record matching a wishlist item is listed for sale by another user,
+ * the wishlist-match notification system (server-side trigger) alerts the user.
+ */
 import { Heart, Plus, RefreshCw, CheckSquare, X, Trash2 } from "lucide-react";
 import ViewToggle from "@/components/ViewToggle";
 import { useUserWishlist, useDiscogsProfile, useDiscogsSync } from "@/hooks/useDiscogs";

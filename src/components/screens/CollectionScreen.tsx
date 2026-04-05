@@ -1,3 +1,23 @@
+/**
+ * @file CollectionScreen.tsx — The user's personal vinyl record collection.
+ *
+ * **Features:**
+ * - Grid / List view toggle.
+ * - **Filters:** Default (for_sale first), Release Date (asc/desc), For Sale only,
+ *   Personal only, Sold only.
+ * - **Select mode:** Tap the checkbox icon to enter multi-select. Selected records
+ *   can be bulk-marked as "For Sale", "Personal", or "Sold", or removed entirely.
+ * - **Discogs sync:** If the user has linked their Discogs account, a sync button
+ *   imports their Discogs collection.
+ * - **Scan Record:** Opens the AI-powered camera scanner to identify a record.
+ * - **Add Record:** Opens a dialog to search Discogs or add manually.
+ * - **Record detail:** Tapping a record opens `RecordDetailSheet` with status
+ *   management, pricing, photo uploads, and AI grading.
+ *
+ * @see RecordDetailSheet – Bottom sheet for viewing / editing a single record.
+ * @see ScanRecordDialog  – AI camera identification dialog.
+ * @see AddRecordDialog   – Search Discogs or add manually.
+ */
 import { useState, useMemo, useRef } from "react";
 import { Disc3, Plus, Camera, RefreshCw, CheckSquare, X, Tag, Trash2, ArrowUp, ArrowDown, Filter, Archive } from "lucide-react";
 import {
