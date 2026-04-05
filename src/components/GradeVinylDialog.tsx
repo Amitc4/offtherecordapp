@@ -24,6 +24,9 @@ import { motion, AnimatePresence } from "framer-motion";
 interface GradeVinylDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  recordId?: string;
+  recordTitle?: string;
+  recordArtist?: string;
 }
 
 interface GradingResult {
@@ -73,7 +76,7 @@ const severityColor = (level: string) => {
   }
 };
 
-const GradeVinylDialog = ({ open, onOpenChange }: GradeVinylDialogProps) => {
+const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArtist }: GradeVinylDialogProps) => {
   const { user, session } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stage, setStage] = useState<Stage>("capture");
@@ -137,6 +140,22 @@ const GradeVinylDialog = ({ open, onOpenChange }: GradeVinylDialogProps) => {
 
       setGrading(data.grading);
       setStage("results");
+
+      // Save to grading history
+      if (user) {
+        await supabase.from("grading_history").insert({
+          user_id: user.id,
+          record_id: recordId || null,
+          record_title: recordTitle || null,
+          record_artist: recordArtist || null,
+          grade: data.grading.grade,
+          grade_label: data.grading.grade_label,
+          confidence: data.grading.confidence,
+          summary: data.grading.summary,
+          details: data.grading.details,
+          notes: data.grading.notes,
+        });
+      }
     } catch {
       setError("Something went wrong. Please try again.");
       setStage("capture");

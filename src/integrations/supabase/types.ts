@@ -177,6 +177,62 @@ export type Database = {
         }
         Relationships: []
       }
+      grading_history: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          details: Json | null
+          grade: string | null
+          grade_label: string | null
+          id: string
+          notes: string | null
+          photo_url: string | null
+          record_artist: string | null
+          record_id: string | null
+          record_title: string | null
+          summary: string | null
+          user_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          details?: Json | null
+          grade?: string | null
+          grade_label?: string | null
+          id?: string
+          notes?: string | null
+          photo_url?: string | null
+          record_artist?: string | null
+          record_id?: string | null
+          record_title?: string | null
+          summary?: string | null
+          user_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          details?: Json | null
+          grade?: string | null
+          grade_label?: string | null
+          id?: string
+          notes?: string | null
+          photo_url?: string | null
+          record_artist?: string | null
+          record_id?: string | null
+          record_title?: string | null
+          summary?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grading_history_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "user_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
@@ -306,6 +362,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      support_inquiries: {
+        Row: {
+          admin_response: string | null
+          created_at: string
+          id: string
+          message: string
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_response?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_response?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       trade_offer_items: {
         Row: {

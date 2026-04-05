@@ -28,6 +28,10 @@ import { toast } from "sonner";
 import UserCollectionSheet from "@/components/UserCollectionSheet";
 import EditProfileSheet from "@/components/EditProfileSheet";
 import TransactionHistorySheet from "@/components/TransactionHistorySheet";
+import GradingHistorySheet from "@/components/GradingHistorySheet";
+import NotificationSettingsSheet from "@/components/NotificationSettingsSheet";
+import HelpSupportSheet from "@/components/HelpSupportSheet";
+import SettingsSheet from "@/components/SettingsSheet";
 
 interface FriendRow {
   id: string;
@@ -68,6 +72,10 @@ const ProfileScreen = () => {
   const [viewingUser, setViewingUser] = useState<{ id: string; name: string } | null>(null);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [transactionHistoryOpen, setTransactionHistoryOpen] = useState(false);
+  const [gradingHistoryOpen, setGradingHistoryOpen] = useState(false);
+  const [notifSettingsOpen, setNotifSettingsOpen] = useState(false);
+  const [helpSupportOpen, setHelpSupportOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [myProfile, setMyProfile] = useState<ProfileRow | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [completedCount, setCompletedCount] = useState(0);
@@ -482,13 +490,12 @@ const ProfileScreen = () => {
             key={item.label}
             className="flex w-full items-center gap-3 rounded-xl p-4 transition-colors hover:bg-card"
             onClick={() => {
-              if (item.label === "Edit Profile") {
-                setEditProfileOpen(true);
-              } else if (item.label === "Transaction History") {
-                setTransactionHistoryOpen(true);
-              } else {
-                toast.info(`${item.label} — coming soon!`);
-              }
+              if (item.label === "Edit Profile") setEditProfileOpen(true);
+              else if (item.label === "Transaction History") setTransactionHistoryOpen(true);
+              else if (item.label === "Grading History") setGradingHistoryOpen(true);
+              else if (item.label === "Notification Settings") setNotifSettingsOpen(true);
+              else if (item.label === "Help & Support") setHelpSupportOpen(true);
+              else if (item.label === "Settings") setSettingsOpen(true);
             }}
           >
             <item.icon size={18} className="text-muted-foreground" />
@@ -526,6 +533,26 @@ const ProfileScreen = () => {
       <TransactionHistorySheet
         open={transactionHistoryOpen}
         onOpenChange={setTransactionHistoryOpen}
+      />
+
+      <GradingHistorySheet
+        open={gradingHistoryOpen}
+        onOpenChange={setGradingHistoryOpen}
+      />
+
+      <NotificationSettingsSheet
+        open={notifSettingsOpen}
+        onOpenChange={setNotifSettingsOpen}
+      />
+
+      <HelpSupportSheet
+        open={helpSupportOpen}
+        onOpenChange={setHelpSupportOpen}
+      />
+
+      <SettingsSheet
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
       />
     </div>
   );
