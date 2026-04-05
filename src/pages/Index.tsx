@@ -1,3 +1,11 @@
+/**
+ * @file Index.tsx — Root page component (route: `/`).
+ *
+ * Acts as an authentication gate:
+ * - While auth state is loading → shows a centered spinner.
+ * - If no user is signed in → renders `<LoginPage />`.
+ * - If user is authenticated → renders `<HomePage />` (the main app shell with tabs).
+ */
 import LoginPage from "@/pages/LoginPage";
 import HomePage from "@/pages/HomePage";
 import { useAuth } from "@/hooks/useAuth";
