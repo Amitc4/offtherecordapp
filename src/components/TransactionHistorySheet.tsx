@@ -1,4 +1,15 @@
-import { useState, useEffect } from "react";
+/**
+ * @file TransactionHistorySheet.tsx — Bottom sheet listing all completed trades.
+ *
+ * Fetches completed trade offers (`status = 'completed'`) involving the current user,
+ * enriches them with participant names and traded record details, then displays
+ * each transaction as a card showing:
+ * - "You gave" – Records and/or cash the user contributed.
+ * - "You received" – Records and/or cash the user got in return.
+ * - Trade partner name and completion date.
+ *
+ * Accessed from the Profile screen's "Transaction History" menu item.
+ */
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ArrowRightLeft, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";

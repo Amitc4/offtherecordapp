@@ -1,4 +1,12 @@
-import { useState } from "react";
+/**
+ * @file UserCollectionSheet.tsx — Bottom sheet displaying another user's record collection.
+ *
+ * Shown when viewing a friend's or chat partner's collection. Has two tabs:
+ * - **Personal** – Records with status "personal" (visible to friends only via RLS).
+ * - **For Sale** – Records listed for sale/trade (visible to all authenticated users).
+ *
+ * Each record card shows cover art, title, artist, price (if for sale), and condition.
+ */
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";

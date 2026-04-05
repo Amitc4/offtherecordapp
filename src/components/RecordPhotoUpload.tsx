@@ -1,4 +1,19 @@
-import { useState, useRef } from "react";
+/**
+ * @file RecordPhotoUpload.tsx — Reusable photo upload widget for record images.
+ *
+ * Renders a row of thumbnail previews with an "Add" button. Each photo can be
+ * removed individually. Files are uploaded to the `record-photos` storage bucket
+ * and metadata is stored in the `record_photos` database table.
+ *
+ * **Props:**
+ * - `recordId`       – The record these photos belong to.
+ * - `existingPhotos` – Already-uploaded photos to display.
+ * - `onPhotosChange` – Callback when photos are added or removed.
+ * - `minPhotos`      – Minimum required (used for validation messaging, default 2).
+ * - `maxPhotos`      – Maximum allowed (default 4). The "Add" button hides at max.
+ *
+ * **Constraints:** Max 5 MB per file. Accepts image/* formats.
+ */
 import { Camera, X, ImagePlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";

@@ -1,4 +1,17 @@
-import { useState, useRef } from "react";
+/**
+ * @file GradeVinylDialog.tsx — AI-powered vinyl condition grading dialog.
+ *
+ * **Flow:**
+ * 1. **Capture** – User takes a photo of the vinyl surface (via camera or file picker).
+ * 2. **Uploading** – Photo is uploaded to the `record-photos` storage bucket.
+ * 3. **Grading** – The `grade-vinyl` edge function sends the image to an AI model
+ *    that analyzes scratches, scuffs, warping, chips, and surface noise.
+ * 4. **Results** – Displays the grade (e.g. NM, G, F), confidence %, detailed
+ *    breakdown, and notes. The temporary upload is cleaned up after grading.
+ *
+ * Grade scale: GEM → M → NM → G → OK → F (best to worst).
+ * Each grade has a distinct color for visual clarity.
+ */
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Camera, Loader2, Star } from "lucide-react";

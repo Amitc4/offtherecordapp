@@ -1,3 +1,20 @@
+/**
+ * @file DiscoverRecordSheet.tsx — Bottom sheet showing full details of a for-sale record.
+ *
+ * Opened when the user taps a record card on the Discover screen.
+ *
+ * **Displays:**
+ * - Cover art, title, artist, year, format, condition, genre, price.
+ * - Condition photos uploaded by the seller (from `record_photos` table).
+ * - Seller info (avatar initial, display name).
+ * - "Report / Block" button for the seller.
+ * - "Contact Seller" button – creates or opens a chat with a pre-filled message.
+ *
+ * @param record         – The record object to display (null = hidden).
+ * @param open           – Whether the sheet is visible.
+ * @param onOpenChange   – Callback to close the sheet.
+ * @param onContactSeller – Called when the user taps "Contact Seller".
+ */
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Disc3, Calendar, MessageCircle, Flag } from "lucide-react";

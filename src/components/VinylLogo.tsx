@@ -1,4 +1,10 @@
-import { motion } from "framer-motion";
+/**
+ * @file VinylLogo.tsx — Animated vinyl record logo.
+ *
+ * Renders the app's logo image (`vinyl-logo.jpg`) in a circular frame.
+ * When `spinning` is true, the image rotates continuously (8s per revolution)
+ * using Framer Motion. Used on the LoginPage.
+ */
 import vinylImage from "@/assets/vinyl-logo.jpg";
 
 const VinylLogo = ({ size = 200, spinning = false }: { size?: number; spinning?: boolean }) => {

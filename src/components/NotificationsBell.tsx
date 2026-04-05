@@ -1,4 +1,13 @@
-import { useState } from "react";
+/**
+ * @file NotificationsBell.tsx — Floating notification bell with dropdown panel.
+ *
+ * Renders a circular bell button that shows the unread count as a badge.
+ * Clicking it opens an animated dropdown listing all notifications (newest first).
+ * Each notification can be tapped to mark it as read. A "Mark all read" link
+ * appears when there are unread items.
+ *
+ * Uses the `useNotifications()` hook for data and actions.
+ */
 import { Bell, Disc3 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNotifications } from "@/hooks/useNotifications";

@@ -1,4 +1,16 @@
-import { useRef, useState, useEffect } from "react";
+/**
+ * @file RecordDetailSheet.tsx — Bottom sheet for managing a record in the user's collection.
+ *
+ * Opened from CollectionScreen when a record is tapped.
+ *
+ * **Features:**
+ * - Cover art + metadata display (title, artist, year, format, condition).
+ * - **Photo upload** – Add up to 4 photos of the record/cover via `RecordPhotoUpload`.
+ * - **AI Grading** – Opens `GradeVinylDialog` to photograph and grade the vinyl's condition.
+ * - **Status dropdown** – Switch between "For Sale / Trade", "Personal Collection", or "Sold".
+ * - **Price input** – Shown only when status is "for_sale". Saves on blur or Enter.
+ * - **Remove** – Delete the record from the collection with confirmation dialog.
+ */
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive } from "lucide-react";
 import GradeVinylDialog from "@/components/GradeVinylDialog";

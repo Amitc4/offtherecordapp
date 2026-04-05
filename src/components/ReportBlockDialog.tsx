@@ -1,4 +1,15 @@
-import { useState } from "react";
+/**
+ * @file ReportBlockDialog.tsx — Dialog for reporting or blocking another user.
+ *
+ * **Three-step flow:**
+ * 1. **Choose** – "Report User" or "Block User".
+ * 2. **Report** – Select a reason (spam, harassment, fake listing, etc.) and
+ *    optionally describe the issue. Inserts a row into `user_reports`.
+ * 3. **Block** – Confirmation dialog. Inserts a row into `user_blocks`, which
+ *    hides the blocked user's listings and prevents messaging.
+ *
+ * Accessible from the Discover record detail sheet and the chat header.
+ */
 import {
   AlertDialog,
   AlertDialogContent,

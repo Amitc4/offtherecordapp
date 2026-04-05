@@ -1,4 +1,16 @@
-import { useState, useEffect } from "react";
+/**
+ * @file CreateOfferDialog.tsx — Dialog for creating a trade/purchase offer within a chat.
+ *
+ * Allows the user to compose an offer by:
+ * - Selecting records from their own collection ("You offer").
+ * - Selecting records from the other user's visible collection ("They offer").
+ * - Adding optional cash amounts on either side (in ₪).
+ *
+ * On submit, inserts a row into `trade_offers` and related `trade_offer_items`.
+ * The offer then appears as an inline card in the chat timeline via `OfferCard`.
+ *
+ * @see OfferCard – Renders the offer with accept/decline/confirm actions.
+ */
 import { Plus, ArrowRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";

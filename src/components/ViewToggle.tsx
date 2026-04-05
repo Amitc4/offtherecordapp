@@ -1,4 +1,10 @@
-import { LayoutGrid, List } from "lucide-react";
+/**
+ * @file ViewToggle.tsx — Grid / List view toggle button pair.
+ *
+ * A small pill-shaped toggle with two icon buttons (grid and list).
+ * The active view is highlighted with the primary color.
+ * Used in Collection, Wishlist, and Discover screens.
+ */
 
 interface ViewToggleProps {
   view: "grid" | "list";
