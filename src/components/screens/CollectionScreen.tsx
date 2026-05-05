@@ -554,4 +554,23 @@ const PerfectStar = ({ small = false }: { small?: boolean }) => (
   </div>
 );
 
+/**
+ * Blue diamond badge overlaid on the top-right corner of an album cover for
+ * records the user marked as sealed (still in original shrink wrap). When the
+ * record also has a perfect-score star, the diamond is shifted left so both
+ * badges remain visible side-by-side.
+ */
+const SealedDiamond = ({ small = false, offset = false }: { small?: boolean; offset?: boolean }) => (
+  <div
+    className={`absolute z-10 flex items-center justify-center rounded-full bg-blue-500 shadow-md ring-2 ring-card ${
+      small
+        ? `-top-1 ${offset ? "right-4" : "-right-1"} h-5 w-5`
+        : `top-1.5 ${offset ? "right-9" : "right-1.5"} h-6 w-6`
+    }`}
+    title="Sealed record"
+  >
+    <Diamond size={small ? 10 : 12} className="text-white" fill="white" />
+  </div>
+);
+
 export default CollectionScreen;
