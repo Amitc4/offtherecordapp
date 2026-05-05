@@ -13,9 +13,10 @@
  */
 import { useRef, useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive } from "lucide-react";
+import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive, Images } from "lucide-react";
 import GradeVinylDialog from "@/components/GradeVinylDialog";
 import RecordPhotoUpload from "@/components/RecordPhotoUpload";
+import GradingPhotosViewer from "@/components/GradingPhotosViewer";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -71,20 +72,31 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const [savingPrice, setSavingPrice] = useState(false);
   const [gradeOpen, setGradeOpen] = useState(false);
   const [photos, setPhotos] = useState<{ id: string; photo_url: string }[]>([]);
+  const [gradingPhotos, setGradingPhotos] = useState<string[]>([]);
+  const [viewerOpen, setViewerOpen] = useState(false);
 
-  // Fetch existing photos when record opens
+  // Fetch existing photos & latest grading photos when record opens
   useEffect(() => {
     if (!record?.id || !open) return;
-    const fetchPhotos = async () => {
-      const { data } = await supabase
+    const fetchData = async () => {
+      const { data: photoData } = await supabase
         .from("record_photos")
         .select("id, photo_url")
         .eq("record_id", record.id)
         .order("created_at", { ascending: true });
-      setPhotos(data || []);
+      setPhotos(photoData || []);
+
+      const { data: gradeData } = await supabase
+        .from("grading_history")
+        .select("photo_urls")
+        .eq("record_id", record.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setGradingPhotos(((gradeData as any)?.photo_urls as string[]) || []);
     };
-    fetchPhotos();
-  }, [record?.id, open]);
+    fetchData();
+  }, [record?.id, open, gradeOpen]);
 
   const recordStatus = record?.status;
   const recordPrice = record?.price;
@@ -207,11 +219,41 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
             </div>
             <div className="text-left">
               <p className="font-body text-sm font-semibold text-foreground">Grade this record</p>
-              <p className="font-body text-xs text-muted-foreground">Take photos to get an AI condition grade</p>
+              <p className="font-body text-xs text-muted-foreground">8 photos (4 per side) including the center label</p>
             </div>
           </button>
 
-          <GradeVinylDialog open={gradeOpen} onOpenChange={setGradeOpen} />
+          <GradeVinylDialog
+            open={gradeOpen}
+            onOpenChange={setGradeOpen}
+            recordId={record.id}
+            recordTitle={record.title}
+            recordArtist={record.artist}
+          />
+
+          {/* View grading photos button - only shown if available */}
+          {gradingPhotos.length > 0 && (
+            <button
+              onClick={() => setViewerOpen(true)}
+              className="flex w-full items-center gap-3 rounded-xl border border-border bg-background p-4 transition-colors active:bg-accent"
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+                <Images size={20} />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-body text-sm font-semibold text-foreground">View grading photos</p>
+                <p className="font-body text-xs text-muted-foreground">
+                  {gradingPhotos.length} photo{gradingPhotos.length !== 1 ? "s" : ""} from the latest AI grading
+                </p>
+              </div>
+            </button>
+          )}
+
+          <GradingPhotosViewer
+            open={viewerOpen}
+            onOpenChange={setViewerOpen}
+            photoUrls={gradingPhotos}
+          />
 
           {/* Status dropdown */}
           <div className="rounded-xl bg-background p-4">
