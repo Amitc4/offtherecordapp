@@ -66,24 +66,38 @@ const SLOT_LABELS = [
   "Side B · Q4 (top-left)",
 ];
 
-/** Tailwind text color per grade — mirrors the scale in the AI prompt. */
-const gradeColors: Record<string, string> = {
-  GEM: "text-emerald-500",
-  M: "text-emerald-400",
-  NM: "text-green-500",
-  G: "text-amber-500",
-  OK: "text-orange-500",
-  F: "text-destructive",
+/** Score-to-Tailwind-color mapping for the displayed decimal score. */
+const scoreColor = (score: number | null): string => {
+  if (score === null) return "text-foreground";
+  if (score >= 9.5) return "text-emerald-500";
+  if (score >= 9.0) return "text-emerald-400";
+  if (score >= 8.0) return "text-green-500";
+  if (score >= 7.0) return "text-amber-500";
+  if (score >= 5.5) return "text-orange-500";
+  return "text-destructive";
 };
 
-/** Tinted backgrounds per grade — used behind the large grade badge. */
-const gradeBackgrounds: Record<string, string> = {
-  GEM: "bg-emerald-500/15",
-  M: "bg-emerald-400/15",
-  NM: "bg-green-500/15",
-  G: "bg-amber-500/15",
-  OK: "bg-orange-500/15",
-  F: "bg-destructive/15",
+/** Background tint behind the score badge. */
+const scoreBackground = (score: number | null): string => {
+  if (score === null) return "bg-muted";
+  if (score >= 9.5) return "bg-emerald-500/15";
+  if (score >= 9.0) return "bg-emerald-400/15";
+  if (score >= 8.0) return "bg-green-500/15";
+  if (score >= 7.0) return "bg-amber-500/15";
+  if (score >= 5.5) return "bg-orange-500/15";
+  return "bg-destructive/15";
+};
+
+/** Short label describing what the numeric score means. */
+const scoreLabel = (score: number | null): string => {
+  if (score === null) return "Unknown";
+  if (score >= 9.5) return "Perfect";
+  if (score >= 9.0) return "Excellent";
+  if (score >= 8.0) return "Very Good";
+  if (score >= 7.0) return "Good";
+  if (score >= 5.5) return "Okay";
+  if (score >= 3.5) return "Poor";
+  return "Damaged";
 };
 
 /** Map a severity word from the AI breakdown to a Tailwind text color. */
