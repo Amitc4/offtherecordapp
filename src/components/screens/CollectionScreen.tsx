@@ -19,7 +19,8 @@
  * @see AddRecordDialog   – Search Discogs or add manually.
  */
 import { useState, useMemo, useRef } from "react";
-import { Disc3, Plus, Camera, RefreshCw, CheckSquare, X, Tag, Trash2, ArrowUp, ArrowDown, Filter, Archive } from "lucide-react";
+import { Disc3, Plus, Camera, RefreshCw, CheckSquare, X, Tag, Trash2, ArrowUp, ArrowDown, Filter, Archive, Star } from "lucide-react";
+import { usePerfectRecords } from "@/hooks/usePerfectRecords";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,6 +62,7 @@ const CollectionScreen = () => {
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
 
   const { data: records = [], isLoading } = useUserRecords();
+  const { data: perfectIds = new Set<string>() } = usePerfectRecords();
   const { data: profile } = useDiscogsProfile();
   const { syncCollection } = useDiscogsSync();
   const queryClient = useQueryClient();
