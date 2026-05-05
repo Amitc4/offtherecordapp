@@ -46,37 +46,63 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { file_path } = await req.json();
-    if (!file_path || typeof file_path !== "string") {
-      return new Response(JSON.stringify({ error: "file_path required" }), {
+    const body = await req.json();
+    // Accept either single `file_path` (legacy) or `file_paths` (8 quarter shots)
+    const filePaths: string[] = Array.isArray(body.file_paths)
+      ? body.file_paths
+      : (body.file_path ? [body.file_path] : []);
+
+    if (filePaths.length === 0) {
+      return new Response(JSON.stringify({ error: "file_paths required" }), {
         status: 400,
         headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
-    // Validate file path belongs to user
-    if (!file_path.startsWith(`${user.id}/`)) {
-      return new Response(JSON.stringify({ error: "Access denied" }), {
-        status: 403,
+    if (filePaths.length > 8) {
+      return new Response(JSON.stringify({ error: "Maximum 8 photos allowed" }), {
+        status: 400,
         headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
-    // Generate signed URL
+    for (const p of filePaths) {
+      if (typeof p !== "string" || !p.startsWith(`${user.id}/`)) {
+        return new Response(JSON.stringify({ error: "Access denied" }), {
+          status: 403,
+          headers: { ...cors, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // Generate signed URLs for each photo
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(SUPABASE_URL, serviceRoleKey);
-    const { data: signedData, error: signedError } = await adminClient.storage
-      .from("record-photos")
-      .createSignedUrl(file_path, 300);
-
-    if (signedError || !signedData?.signedUrl) {
-      return new Response(JSON.stringify({ error: "Failed to access uploaded photo" }), {
-        status: 500,
-        headers: { ...cors, "Content-Type": "application/json" },
-      });
+    const signedUrls: string[] = [];
+    for (const p of filePaths) {
+      const { data: signedData, error: signedError } = await adminClient.storage
+        .from("record-photos")
+        .createSignedUrl(p, 300);
+      if (signedError || !signedData?.signedUrl) {
+        return new Response(JSON.stringify({ error: "Failed to access uploaded photo" }), {
+          status: 500,
+          headers: { ...cors, "Content-Type": "application/json" },
+        });
+      }
+      signedUrls.push(signedData.signedUrl);
     }
 
-    const image_url = signedData.signedUrl;
+    // Quarter labels for the 8-photo workflow (Side A Q1-Q4, Side B Q1-Q4)
+    const quarterLabels = [
+      "Side A — Quarter 1 (top-right, including center)",
+      "Side A — Quarter 2 (bottom-right, including center)",
+      "Side A — Quarter 3 (bottom-left, including center)",
+      "Side A — Quarter 4 (top-left, including center)",
+      "Side B — Quarter 1 (top-right, including center)",
+      "Side B — Quarter 2 (bottom-right, including center)",
+      "Side B — Quarter 3 (bottom-left, including center)",
+      "Side B — Quarter 4 (top-left, including center)",
+    ];
 
     // Ask AI to grade the vinyl condition
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
