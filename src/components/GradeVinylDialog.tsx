@@ -430,11 +430,12 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                 exit={{ opacity: 0 }}
                 className="flex flex-col gap-4 pb-2"
               >
-                <div className={`rounded-xl p-5 text-center ${gradeBackgrounds[grading.grade || ""] || "bg-muted"}`}>
-                  <p className={`font-display text-4xl font-black ${gradeColors[grading.grade || ""] || "text-foreground"}`}>
-                    {grading.grade || "?"}
+                <div className={`rounded-xl p-5 text-center ${scoreBackground(grading.score)}`}>
+                  <p className={`font-display text-5xl font-black ${scoreColor(grading.score)}`}>
+                    {grading.score !== null ? grading.score.toFixed(1) : "?"}
+                    <span className="font-display text-2xl font-bold opacity-60">/10</span>
                   </p>
-                  <p className="font-display text-sm font-semibold text-foreground mt-1">{grading.grade_label}</p>
+                  <p className="font-display text-sm font-semibold text-foreground mt-1">{scoreLabel(grading.score)}</p>
                   <p className="font-body text-xs text-muted-foreground mt-1">
                     {grading.confidence}% confidence
                   </p>
