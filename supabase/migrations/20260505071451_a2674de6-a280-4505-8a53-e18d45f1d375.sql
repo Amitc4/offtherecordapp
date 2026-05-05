@@ -1,0 +1,1 @@
+ALTER TABLE public.grading_history ADD COLUMN IF NOT EXISTS score numeric;
