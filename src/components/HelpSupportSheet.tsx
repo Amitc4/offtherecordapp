@@ -14,11 +14,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
+/** Props for the Help & Support bottom-sheet. */
 interface HelpSupportSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+/** Static FAQ list. To add/edit FAQ entries, modify this array. */
 const faqs = [
   {
     q: "How do I add a record to my collection?",
@@ -62,6 +64,10 @@ const HelpSupportSheet = ({ open, onOpenChange }: HelpSupportSheetProps) => {
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
 
+  /**
+   * Send a support inquiry. Inserts into `support_inquiries`; admins read it
+   * from the admin screen. Subject + message must both be non-empty.
+   */
   const handleSubmit = async () => {
     if (!subject.trim() || !message.trim() || !user) return;
     setSending(true);

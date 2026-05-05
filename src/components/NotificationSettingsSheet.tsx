@@ -13,14 +13,20 @@ import { Switch } from "@/components/ui/switch";
 import { Bell, Volume2, Vibrate, Clock, MessageSquare, Heart, Package, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
+/** Props for the Notification Settings bottom-sheet. */
 interface NotificationSettingsSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+/**
+ * Persisted notification preferences. Stored as JSON in localStorage
+ * under {@link STORAGE_KEY}; not synced across devices by design.
+ */
 interface NotificationPrefs {
   sound: boolean;
   vibrate: boolean;
+  /** "immediate" pushes per event, "daily" batches into an end-of-day digest. */
   batchMode: "immediate" | "daily";
   tradeOffers: boolean;
   wishlistMatches: boolean;
@@ -28,8 +34,10 @@ interface NotificationPrefs {
   chatMessages: boolean;
 }
 
+/** localStorage key for persisted prefs (device-specific). */
 const STORAGE_KEY = "vinyl_notification_prefs";
 
+/** Default prefs applied on first run / when stored value is missing or invalid. */
 const defaultPrefs: NotificationPrefs = {
   sound: true,
   vibrate: true,
@@ -40,6 +48,7 @@ const defaultPrefs: NotificationPrefs = {
   chatMessages: true,
 };
 
+/** Read prefs from localStorage; returns {@link defaultPrefs} on miss/parse error. */
 const loadPrefs = (): NotificationPrefs => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -55,6 +64,7 @@ const NotificationSettingsSheet = ({ open, onOpenChange }: NotificationSettingsS
     if (open) setPrefs(loadPrefs());
   }, [open]);
 
+  /** Merge a partial change into prefs and persist immediately. */
   const update = (patch: Partial<NotificationPrefs>) => {
     const next = { ...prefs, ...patch };
     setPrefs(next);
