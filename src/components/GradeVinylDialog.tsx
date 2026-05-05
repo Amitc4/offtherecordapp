@@ -34,8 +34,8 @@ interface GradeVinylDialogProps {
 
 /** Shape of the grading payload returned by the `grade-vinyl` edge function. */
 interface GradingResult {
-  grade: string | null;
-  grade_label: string;
+  /** Decimal condition score from 0.0 (damaged) to 10.0 (perfect), or null if undecidable. */
+  score: number | null;
   confidence: number;
   summary: string;
   details: {
