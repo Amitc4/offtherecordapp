@@ -16,11 +16,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
+/** Props for the Settings bottom-sheet. */
 interface SettingsSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+/** Theme preference; "system" follows the OS color-scheme media query. */
 type Theme = "light" | "dark" | "system";
 
 const SettingsSheet = ({ open, onOpenChange }: SettingsSheetProps) => {
@@ -34,6 +36,10 @@ const SettingsSheet = ({ open, onOpenChange }: SettingsSheetProps) => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  /**
+   * Apply and persist a theme. For "system", reads `prefers-color-scheme`
+   * once at apply-time (does not subscribe to changes).
+   */
   const applyTheme = (t: Theme) => {
     setTheme(t);
     localStorage.setItem("theme", t);
@@ -53,6 +59,7 @@ const SettingsSheet = ({ open, onOpenChange }: SettingsSheetProps) => {
     toast.success(`Theme set to ${t}`);
   };
 
+  /** Update the user's auth password. Requires an active session. */
   const handleChangePassword = async () => {
     if (!newPassword || newPassword.length < 6) {
       toast.error("Password must be at least 6 characters");
@@ -77,6 +84,10 @@ const SettingsSheet = ({ open, onOpenChange }: SettingsSheetProps) => {
     }
   };
 
+  /**
+   * Wipe non-auth localStorage entries (notification prefs, theme cache, etc.).
+   * The Supabase auth token is preserved so the user stays signed in.
+   */
   const handleClearCache = () => {
     const keysToKeep = ["sb-zdfsqhrfnkdwtyipfisb-auth-token"];
     const allKeys = Object.keys(localStorage);
@@ -88,6 +99,11 @@ const SettingsSheet = ({ open, onOpenChange }: SettingsSheetProps) => {
     toast.success("Local cache cleared");
   };
 
+  /**
+   * Submit a deletion request and sign the user out. True account deletion
+   * happens server-side once an admin processes the inquiry (requires
+   * service-role privileges that the client doesn't have).
+   */
   const handleDeleteAccount = async () => {
     // Note: Full account deletion requires admin/edge function.
     // For now, we deactivate by signing out and notifying admin.
