@@ -19,7 +19,7 @@
  * @see AddRecordDialog   – Search Discogs or add manually.
  */
 import { useState, useMemo, useRef } from "react";
-import { Disc3, Plus, Camera, RefreshCw, CheckSquare, X, Tag, Trash2, ArrowUp, ArrowDown, Filter, Archive, Star } from "lucide-react";
+import { Disc3, Plus, Camera, RefreshCw, CheckSquare, X, Tag, Trash2, ArrowUp, ArrowDown, Filter, Archive, Star, Diamond } from "lucide-react";
 import { usePerfectRecords } from "@/hooks/usePerfectRecords";
 import {
   AlertDialog,
@@ -362,6 +362,7 @@ const CollectionScreen = () => {
                     </div>
                   )}
                   {perfectIds.has(record.id) && <PerfectStar small />}
+                  {(record as any).sealed && <SealedDiamond small offset={perfectIds.has(record.id)} />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-display text-base font-semibold text-foreground truncate">{record.title}</h3>
@@ -412,6 +413,7 @@ const CollectionScreen = () => {
                     <Disc3 size={36} className="text-primary transition-transform group-hover:rotate-45" />
                   )}
                   {perfectIds.has(record.id) && <PerfectStar />}
+                  {(record as any).sealed && <SealedDiamond offset={perfectIds.has(record.id)} />}
                 </div>
                 <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{record.title}</h3>
                 <p className="mt-0.5 font-display text-xs text-muted-foreground truncate">{record.artist}</p>
@@ -549,6 +551,25 @@ const PerfectStar = ({ small = false }: { small?: boolean }) => (
     title="Perfect 10.0 grading"
   >
     <Star size={small ? 11 : 13} className="text-white" fill="white" />
+  </div>
+);
+
+/**
+ * Blue diamond badge overlaid on the top-right corner of an album cover for
+ * records the user marked as sealed (still in original shrink wrap). When the
+ * record also has a perfect-score star, the diamond is shifted left so both
+ * badges remain visible side-by-side.
+ */
+const SealedDiamond = ({ small = false, offset = false }: { small?: boolean; offset?: boolean }) => (
+  <div
+    className={`absolute z-10 flex items-center justify-center rounded-full bg-blue-500 shadow-md ring-2 ring-card ${
+      small
+        ? `-top-1 ${offset ? "right-4" : "-right-1"} h-5 w-5`
+        : `top-1.5 ${offset ? "right-9" : "right-1.5"} h-6 w-6`
+    }`}
+    title="Sealed record"
+  >
+    <Diamond size={small ? 10 : 12} className="text-white" fill="white" />
   </div>
 );
 

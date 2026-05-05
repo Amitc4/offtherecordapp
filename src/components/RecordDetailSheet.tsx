@@ -13,7 +13,8 @@
  */
 import { useRef, useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive, Images } from "lucide-react";
+import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive, Images, Diamond } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import GradeVinylDialog from "@/components/GradeVinylDialog";
 import RecordPhotoUpload from "@/components/RecordPhotoUpload";
 import GradingPhotosViewer from "@/components/GradingPhotosViewer";
@@ -53,6 +54,7 @@ interface RecordDetailSheetProps {
     notes: string | null;
     status?: string;
     price?: number | null;
+    sealed?: boolean | null;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -74,6 +76,8 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const [photos, setPhotos] = useState<{ id: string; photo_url: string }[]>([]);
   const [gradingPhotos, setGradingPhotos] = useState<string[]>([]);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [sealed, setSealed] = useState(false);
+  const [sealedSaving, setSealedSaving] = useState(false);
 
   // Fetch existing photos & latest grading photos when record opens
   useEffect(() => {
@@ -105,8 +109,27 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
     if (record) {
       setLocalStatus(recordStatus || "personal");
       setPrice(recordPrice != null ? String(recordPrice) : "");
+      setSealed(!!record.sealed);
     }
   }, [record?.id, recordStatus, recordPrice]);
+
+  const handleSealedToggle = async (checked: boolean) => {
+    const prev = sealed;
+    setSealed(checked);
+    setSealedSaving(true);
+    const { error } = await supabase
+      .from("user_records")
+      .update({ sealed: checked } as any)
+      .eq("id", record!.id);
+    if (error) {
+      setSealed(prev);
+      toast.error("Failed to update sealed status");
+    } else {
+      toast.success(checked ? "Marked as sealed" : "Sealed mark removed", { position: "top-center" });
+      queryClient.invalidateQueries({ queryKey: ["user_records"] });
+    }
+    setSealedSaving(false);
+  };
 
   if (!record) return null;
 
@@ -254,6 +277,23 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
             onOpenChange={setViewerOpen}
             photoUrls={gradingPhotos}
           />
+
+          {/* Sealed toggle */}
+          <label className="flex w-full cursor-pointer items-center gap-3 rounded-xl bg-background p-4 transition-colors active:bg-accent">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-500/15 text-blue-500">
+              <Diamond size={20} fill="currentColor" />
+            </div>
+            <div className="flex-1">
+              <p className="font-body text-sm font-semibold text-foreground">Sealed Record</p>
+              <p className="font-body text-xs text-muted-foreground">Still in original shrink wrap (never opened)</p>
+            </div>
+            <Checkbox
+              checked={sealed}
+              onCheckedChange={(c) => handleSealedToggle(!!c)}
+              disabled={sealedSaving}
+              className="h-5 w-5"
+            />
+          </label>
 
           {/* Status dropdown */}
           <div className="rounded-xl bg-background p-4">
