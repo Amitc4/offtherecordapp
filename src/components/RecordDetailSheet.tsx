@@ -109,8 +109,27 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
     if (record) {
       setLocalStatus(recordStatus || "personal");
       setPrice(recordPrice != null ? String(recordPrice) : "");
+      setSealed(!!record.sealed);
     }
   }, [record?.id, recordStatus, recordPrice]);
+
+  const handleSealedToggle = async (checked: boolean) => {
+    const prev = sealed;
+    setSealed(checked);
+    setSealedSaving(true);
+    const { error } = await supabase
+      .from("user_records")
+      .update({ sealed: checked } as any)
+      .eq("id", record!.id);
+    if (error) {
+      setSealed(prev);
+      toast.error("Failed to update sealed status");
+    } else {
+      toast.success(checked ? "Marked as sealed" : "Sealed mark removed", { position: "top-center" });
+      queryClient.invalidateQueries({ queryKey: ["user_records"] });
+    }
+    setSealedSaving(false);
+  };
 
   if (!record) return null;
 
