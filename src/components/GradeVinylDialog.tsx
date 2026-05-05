@@ -443,6 +443,13 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
           </AnimatePresence>
         </div>
       </DialogContent>
+
+      <QuarterTutorial
+        open={tutorialOpen}
+        onOpenChange={setTutorialOpen}
+        slotIndex={tutorialSlot}
+        onConfirm={handleTutorialConfirm}
+      />
     </Dialog>
   );
 };
