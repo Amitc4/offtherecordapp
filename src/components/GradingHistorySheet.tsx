@@ -19,35 +19,38 @@ interface GradingHistorySheetProps {
 }
 
 /** Single row from the `grading_history` table shown in the list. */
+/** Single row from the `grading_history` table shown in the list. */
 interface GradingEntry {
   id: string;
   record_title: string | null;
   record_artist: string | null;
-  grade: string | null;
+  score: number | null;
   grade_label: string | null;
   confidence: number | null;
   summary: string | null;
   created_at: string;
 }
 
-/** Tailwind text color per condition grade (best → worst). */
-const gradeColors: Record<string, string> = {
-  GEM: "text-emerald-500",
-  M: "text-emerald-400",
-  NM: "text-green-500",
-  G: "text-amber-500",
-  OK: "text-orange-500",
-  F: "text-destructive",
+/** Tailwind text color for the decimal score (best → worst). */
+const scoreColor = (s: number | null): string => {
+  if (s === null) return "text-foreground";
+  if (s >= 9.5) return "text-emerald-500";
+  if (s >= 9.0) return "text-emerald-400";
+  if (s >= 8.0) return "text-green-500";
+  if (s >= 7.0) return "text-amber-500";
+  if (s >= 5.5) return "text-orange-500";
+  return "text-destructive";
 };
 
-/** Tailwind background tint per grade — used for the badge container. */
-const gradeBackgrounds: Record<string, string> = {
-  GEM: "bg-emerald-500/15",
-  M: "bg-emerald-400/15",
-  NM: "bg-green-500/15",
-  G: "bg-amber-500/15",
-  OK: "bg-orange-500/15",
-  F: "bg-destructive/15",
+/** Tinted badge background per score range. */
+const scoreBackground = (s: number | null): string => {
+  if (s === null) return "bg-muted";
+  if (s >= 9.5) return "bg-emerald-500/15";
+  if (s >= 9.0) return "bg-emerald-400/15";
+  if (s >= 8.0) return "bg-green-500/15";
+  if (s >= 7.0) return "bg-amber-500/15";
+  if (s >= 5.5) return "bg-orange-500/15";
+  return "bg-destructive/15";
 };
 
 const GradingHistorySheet = ({ open, onOpenChange }: GradingHistorySheetProps) => {
