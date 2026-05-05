@@ -278,6 +278,23 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
             photoUrls={gradingPhotos}
           />
 
+          {/* Sealed toggle */}
+          <label className="flex w-full cursor-pointer items-center gap-3 rounded-xl bg-background p-4 transition-colors active:bg-accent">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-500/15 text-blue-500">
+              <Diamond size={20} fill="currentColor" />
+            </div>
+            <div className="flex-1">
+              <p className="font-body text-sm font-semibold text-foreground">Sealed Record</p>
+              <p className="font-body text-xs text-muted-foreground">Still in original shrink wrap (never opened)</p>
+            </div>
+            <Checkbox
+              checked={sealed}
+              onCheckedChange={(c) => handleSealedToggle(!!c)}
+              disabled={sealedSaving}
+              className="h-5 w-5"
+            />
+          </label>
+
           {/* Status dropdown */}
           <div className="rounded-xl bg-background p-4">
             <div className="flex items-center gap-3 mb-2">
