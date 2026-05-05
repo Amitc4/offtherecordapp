@@ -13,9 +13,10 @@
  */
 import { useRef, useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive } from "lucide-react";
+import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive, Images } from "lucide-react";
 import GradeVinylDialog from "@/components/GradeVinylDialog";
 import RecordPhotoUpload from "@/components/RecordPhotoUpload";
+import GradingPhotosViewer from "@/components/GradingPhotosViewer";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
