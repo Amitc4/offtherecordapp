@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import QuarterTutorial from "@/components/QuarterTutorial";
 
 interface GradeVinylDialogProps {
   open: boolean;
