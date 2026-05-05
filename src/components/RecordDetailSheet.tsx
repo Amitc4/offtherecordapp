@@ -219,11 +219,41 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
             </div>
             <div className="text-left">
               <p className="font-body text-sm font-semibold text-foreground">Grade this record</p>
-              <p className="font-body text-xs text-muted-foreground">Take photos to get an AI condition grade</p>
+              <p className="font-body text-xs text-muted-foreground">8 photos (4 per side) including the center label</p>
             </div>
           </button>
 
-          <GradeVinylDialog open={gradeOpen} onOpenChange={setGradeOpen} />
+          <GradeVinylDialog
+            open={gradeOpen}
+            onOpenChange={setGradeOpen}
+            recordId={record.id}
+            recordTitle={record.title}
+            recordArtist={record.artist}
+          />
+
+          {/* View grading photos button - only shown if available */}
+          {gradingPhotos.length > 0 && (
+            <button
+              onClick={() => setViewerOpen(true)}
+              className="flex w-full items-center gap-3 rounded-xl border border-border bg-background p-4 transition-colors active:bg-accent"
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+                <Images size={20} />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-body text-sm font-semibold text-foreground">View grading photos</p>
+                <p className="font-body text-xs text-muted-foreground">
+                  {gradingPhotos.length} photo{gradingPhotos.length !== 1 ? "s" : ""} from the latest AI grading
+                </p>
+              </div>
+            </button>
+          )}
+
+          <GradingPhotosViewer
+            open={viewerOpen}
+            onOpenChange={setViewerOpen}
+            photoUrls={gradingPhotos}
+          />
 
           {/* Status dropdown */}
           <div className="rounded-xl bg-background p-4">
