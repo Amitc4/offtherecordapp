@@ -72,20 +72,31 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const [savingPrice, setSavingPrice] = useState(false);
   const [gradeOpen, setGradeOpen] = useState(false);
   const [photos, setPhotos] = useState<{ id: string; photo_url: string }[]>([]);
+  const [gradingPhotos, setGradingPhotos] = useState<string[]>([]);
+  const [viewerOpen, setViewerOpen] = useState(false);
 
-  // Fetch existing photos when record opens
+  // Fetch existing photos & latest grading photos when record opens
   useEffect(() => {
     if (!record?.id || !open) return;
-    const fetchPhotos = async () => {
-      const { data } = await supabase
+    const fetchData = async () => {
+      const { data: photoData } = await supabase
         .from("record_photos")
         .select("id, photo_url")
         .eq("record_id", record.id)
         .order("created_at", { ascending: true });
-      setPhotos(data || []);
+      setPhotos(photoData || []);
+
+      const { data: gradeData } = await supabase
+        .from("grading_history")
+        .select("photo_urls")
+        .eq("record_id", record.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setGradingPhotos(((gradeData as any)?.photo_urls as string[]) || []);
     };
-    fetchPhotos();
-  }, [record?.id, open]);
+    fetchData();
+  }, [record?.id, open, gradeOpen]);
 
   const recordStatus = record?.status;
   const recordPrice = record?.price;
