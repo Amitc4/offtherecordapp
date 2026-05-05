@@ -537,4 +537,19 @@ const CollectionScreen = () => {
   );
 };
 
+/**
+ * Yellow star badge overlaid on the top-right corner of an album cover for
+ * records that received a perfect 10.0 AI grading.
+ */
+const PerfectStar = ({ small = false }: { small?: boolean }) => (
+  <div
+    className={`absolute z-10 flex items-center justify-center rounded-full bg-yellow-400 shadow-md ring-2 ring-card ${
+      small ? "-top-1 -right-1 h-5 w-5" : "top-1.5 right-1.5 h-6 w-6"
+    }`}
+    title="Perfect 10.0 grading"
+  >
+    <Star size={small ? 11 : 13} className="text-white" fill="white" />
+  </div>
+);
+
 export default CollectionScreen;
