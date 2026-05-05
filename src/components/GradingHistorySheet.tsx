@@ -12,11 +12,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
+/** Props for the bottom-sheet that lists past gradings. */
 interface GradingHistorySheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+/** Single row from the `grading_history` table shown in the list. */
 interface GradingEntry {
   id: string;
   record_title: string | null;
@@ -28,6 +30,7 @@ interface GradingEntry {
   created_at: string;
 }
 
+/** Tailwind text color per condition grade (best → worst). */
 const gradeColors: Record<string, string> = {
   GEM: "text-emerald-500",
   M: "text-emerald-400",
@@ -37,6 +40,7 @@ const gradeColors: Record<string, string> = {
   F: "text-destructive",
 };
 
+/** Tailwind background tint per grade — used for the badge container. */
 const gradeBackgrounds: Record<string, string> = {
   GEM: "bg-emerald-500/15",
   M: "bg-emerald-400/15",
@@ -66,6 +70,7 @@ const GradingHistorySheet = ({ open, onOpenChange }: GradingHistorySheetProps) =
     }
   }, [open, user]);
 
+  /** Delete a grading entry by id. RLS ensures only the owner can delete. */
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("grading_history").delete().eq("id", id);
     if (error) {
@@ -76,6 +81,7 @@ const GradingHistorySheet = ({ open, onOpenChange }: GradingHistorySheetProps) =
     }
   };
 
+  /** Locale-aware short date for the entry footer (e.g. "May 5, 2026"). */
   const formatDate = (iso: string) => {
     const d = new Date(iso);
     return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
