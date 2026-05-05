@@ -7,18 +7,22 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Disc3, X } from "lucide-react";
 
+/** Props for the grading-photos viewer. */
 interface GradingPhotosViewerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Public URLs of the 8 quarter photos (Side A Q1-Q4 then Side B Q1-Q4). */
   photoUrls: string[];
 }
 
+/** Short label rendered on each thumbnail tile. Index matches `photoUrls`. */
 const SLOT_LABELS = [
   "A · Q1", "A · Q2", "A · Q3", "A · Q4",
   "B · Q1", "B · Q2", "B · Q3", "B · Q4",
 ];
 
 const GradingPhotosViewer = ({ open, onOpenChange, photoUrls }: GradingPhotosViewerProps) => {
+  /** When non-null, renders a full-screen lightbox of the given photo URL. */
   const [zoom, setZoom] = useState<string | null>(null);
 
   return (
@@ -90,6 +94,7 @@ const GradingPhotosViewer = ({ open, onOpenChange, photoUrls }: GradingPhotosVie
   );
 };
 
+/** Single photo thumbnail with its quarter label overlay. */
 const PhotoTile = ({ url, label, onClick }: { url: string; label: string; onClick: () => void }) => (
   <button
     onClick={onClick}
