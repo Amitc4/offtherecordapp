@@ -19,7 +19,8 @@
  * @see AddRecordDialog   – Search Discogs or add manually.
  */
 import { useState, useMemo, useRef } from "react";
-import { Disc3, Plus, Camera, RefreshCw, CheckSquare, X, Tag, Trash2, ArrowUp, ArrowDown, Filter, Archive } from "lucide-react";
+import { Disc3, Plus, Camera, RefreshCw, CheckSquare, X, Tag, Trash2, ArrowUp, ArrowDown, Filter, Archive, Star } from "lucide-react";
+import { usePerfectRecords } from "@/hooks/usePerfectRecords";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,6 +62,7 @@ const CollectionScreen = () => {
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
 
   const { data: records = [], isLoading } = useUserRecords();
+  const { data: perfectIds = new Set<string>() } = usePerfectRecords();
   const { data: profile } = useDiscogsProfile();
   const { syncCollection } = useDiscogsSync();
   const queryClient = useQueryClient();
@@ -351,13 +353,16 @@ const CollectionScreen = () => {
                     {isSelected && <CheckSquare size={14} className="text-primary-foreground" />}
                   </div>
                 )}
-                {record.cover_image ? (
-                  <img src={record.cover_image} alt={record.title} className="h-12 w-12 rounded-lg object-cover" />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/15">
-                    <Disc3 size={24} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
-                  </div>
-                )}
+                <div className="relative h-12 w-12 shrink-0">
+                  {record.cover_image ? (
+                    <img src={record.cover_image} alt={record.title} className="h-12 w-12 rounded-lg object-cover" />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/15">
+                      <Disc3 size={24} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
+                    </div>
+                  )}
+                  {perfectIds.has(record.id) && <PerfectStar small />}
+                </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-display text-base font-semibold text-foreground truncate">{record.title}</h3>
                   <p className="font-display text-sm text-muted-foreground truncate">{record.artist}{record.year ? ` · ${record.year}` : ""}</p>
@@ -406,6 +411,7 @@ const CollectionScreen = () => {
                   ) : (
                     <Disc3 size={36} className="text-primary transition-transform group-hover:rotate-45" />
                   )}
+                  {perfectIds.has(record.id) && <PerfectStar />}
                 </div>
                 <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{record.title}</h3>
                 <p className="mt-0.5 font-display text-xs text-muted-foreground truncate">{record.artist}</p>
@@ -530,5 +536,20 @@ const CollectionScreen = () => {
     </div>
   );
 };
+
+/**
+ * Yellow star badge overlaid on the top-right corner of an album cover for
+ * records that received a perfect 10.0 AI grading.
+ */
+const PerfectStar = ({ small = false }: { small?: boolean }) => (
+  <div
+    className={`absolute z-10 flex items-center justify-center rounded-full bg-yellow-400 shadow-md ring-2 ring-card ${
+      small ? "-top-1 -right-1 h-5 w-5" : "top-1.5 right-1.5 h-6 w-6"
+    }`}
+    title="Perfect 10.0 grading"
+  >
+    <Star size={small ? 11 : 13} className="text-white" fill="white" />
+  </div>
+);
 
 export default CollectionScreen;
