@@ -362,6 +362,7 @@ const CollectionScreen = () => {
                     </div>
                   )}
                   {perfectIds.has(record.id) && <PerfectStar small />}
+                  {(record as any).sealed && <SealedDiamond small offset={perfectIds.has(record.id)} />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-display text-base font-semibold text-foreground truncate">{record.title}</h3>
