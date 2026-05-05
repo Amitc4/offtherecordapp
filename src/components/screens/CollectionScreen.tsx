@@ -560,17 +560,31 @@ const PerfectStar = ({ small = false }: { small?: boolean }) => (
  * record also has a perfect-score star, the diamond is shifted left so both
  * badges remain visible side-by-side.
  */
-const SealedDiamond = ({ small = false, offset = false }: { small?: boolean; offset?: boolean }) => (
-  <div
-    className={`absolute z-10 flex items-center justify-center rounded-full bg-blue-500 shadow-md ring-2 ring-card ${
-      small
-        ? `-top-1 ${offset ? "right-4" : "-right-1"} h-5 w-5`
-        : `top-1.5 ${offset ? "right-9" : "right-1.5"} h-6 w-6`
-    }`}
-    title="Sealed record"
-  >
-    <Diamond size={small ? 10 : 12} className="text-white" fill="white" />
-  </div>
-);
+const SealedDiamond = ({ small = false, offset = false }: { small?: boolean; offset?: boolean }) => {
+  const s = small ? 11 : 14;
+  return (
+    <div
+      className={`absolute z-10 flex items-center justify-center rounded-full bg-white shadow-md ring-2 ring-card ${
+        small
+          ? `-top-1 ${offset ? "right-4" : "-right-1"} h-5 w-5`
+          : `top-1.5 ${offset ? "right-9" : "right-1.5"} h-6 w-6`
+      }`}
+      title="Sealed record"
+    >
+      {/* Brilliant-cut (wedding ring) diamond */}
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M5 9 L12 2 L19 9 L12 22 Z M5 9 H19 M9 9 L12 22 M15 9 L12 22 M8 5.5 L9 9 M16 5.5 L15 9 M12 2 L12 9"
+          stroke="hsl(217 91% 50%)"
+          strokeWidth="1.4"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          fill="hsl(217 91% 60% / 0.85)"
+        />
+      </svg>
+    </div>
+  );
+};
+
 
 export default CollectionScreen;
