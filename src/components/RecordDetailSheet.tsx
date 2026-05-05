@@ -54,6 +54,7 @@ interface RecordDetailSheetProps {
     notes: string | null;
     status?: string;
     price?: number | null;
+    sealed?: boolean | null;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
