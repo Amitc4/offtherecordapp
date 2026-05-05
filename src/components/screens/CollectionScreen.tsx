@@ -353,13 +353,16 @@ const CollectionScreen = () => {
                     {isSelected && <CheckSquare size={14} className="text-primary-foreground" />}
                   </div>
                 )}
-                {record.cover_image ? (
-                  <img src={record.cover_image} alt={record.title} className="h-12 w-12 rounded-lg object-cover" />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/15">
-                    <Disc3 size={24} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
-                  </div>
-                )}
+                <div className="relative h-12 w-12 shrink-0">
+                  {record.cover_image ? (
+                    <img src={record.cover_image} alt={record.title} className="h-12 w-12 rounded-lg object-cover" />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/15">
+                      <Disc3 size={24} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
+                    </div>
+                  )}
+                  {perfectIds.has(record.id) && <PerfectStar small />}
+                </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-display text-base font-semibold text-foreground truncate">{record.title}</h3>
                   <p className="font-display text-sm text-muted-foreground truncate">{record.artist}{record.year ? ` · ${record.year}` : ""}</p>
