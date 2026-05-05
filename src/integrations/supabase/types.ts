@@ -191,6 +191,7 @@ export type Database = {
           record_artist: string | null
           record_id: string | null
           record_title: string | null
+          score: number | null
           summary: string | null
           user_id: string
         }
@@ -207,6 +208,7 @@ export type Database = {
           record_artist?: string | null
           record_id?: string | null
           record_title?: string | null
+          score?: number | null
           summary?: string | null
           user_id: string
         }
@@ -223,6 +225,7 @@ export type Database = {
           record_artist?: string | null
           record_id?: string | null
           record_title?: string | null
+          score?: number | null
           summary?: string | null
           user_id?: string
         }

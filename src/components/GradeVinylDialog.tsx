@@ -34,8 +34,8 @@ interface GradeVinylDialogProps {
 
 /** Shape of the grading payload returned by the `grade-vinyl` edge function. */
 interface GradingResult {
-  grade: string | null;
-  grade_label: string;
+  /** Decimal condition score from 0.0 (damaged) to 10.0 (perfect), or null if undecidable. */
+  score: number | null;
   confidence: number;
   summary: string;
   details: {
@@ -66,24 +66,38 @@ const SLOT_LABELS = [
   "Side B · Q4 (top-left)",
 ];
 
-/** Tailwind text color per grade — mirrors the scale in the AI prompt. */
-const gradeColors: Record<string, string> = {
-  GEM: "text-emerald-500",
-  M: "text-emerald-400",
-  NM: "text-green-500",
-  G: "text-amber-500",
-  OK: "text-orange-500",
-  F: "text-destructive",
+/** Score-to-Tailwind-color mapping for the displayed decimal score. */
+const scoreColor = (score: number | null): string => {
+  if (score === null) return "text-foreground";
+  if (score >= 9.5) return "text-emerald-500";
+  if (score >= 9.0) return "text-emerald-400";
+  if (score >= 8.0) return "text-green-500";
+  if (score >= 7.0) return "text-amber-500";
+  if (score >= 5.5) return "text-orange-500";
+  return "text-destructive";
 };
 
-/** Tinted backgrounds per grade — used behind the large grade badge. */
-const gradeBackgrounds: Record<string, string> = {
-  GEM: "bg-emerald-500/15",
-  M: "bg-emerald-400/15",
-  NM: "bg-green-500/15",
-  G: "bg-amber-500/15",
-  OK: "bg-orange-500/15",
-  F: "bg-destructive/15",
+/** Background tint behind the score badge. */
+const scoreBackground = (score: number | null): string => {
+  if (score === null) return "bg-muted";
+  if (score >= 9.5) return "bg-emerald-500/15";
+  if (score >= 9.0) return "bg-emerald-400/15";
+  if (score >= 8.0) return "bg-green-500/15";
+  if (score >= 7.0) return "bg-amber-500/15";
+  if (score >= 5.5) return "bg-orange-500/15";
+  return "bg-destructive/15";
+};
+
+/** Short label describing what the numeric score means. */
+const scoreLabel = (score: number | null): string => {
+  if (score === null) return "Unknown";
+  if (score >= 9.5) return "Perfect";
+  if (score >= 9.0) return "Excellent";
+  if (score >= 8.0) return "Very Good";
+  if (score >= 7.0) return "Good";
+  if (score >= 5.5) return "Okay";
+  if (score >= 3.5) return "Poor";
+  return "Damaged";
 };
 
 /** Map a severity word from the AI breakdown to a Tailwind text color. */
@@ -262,8 +276,8 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
         record_id: recordId || null,
         record_title: recordTitle || null,
         record_artist: recordArtist || null,
-        grade: data.grading.grade,
-        grade_label: data.grading.grade_label,
+        score: data.grading.score,
+        grade_label: scoreLabel(data.grading.score),
         confidence: data.grading.confidence,
         summary: data.grading.summary,
         details: data.grading.details,
@@ -416,11 +430,12 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                 exit={{ opacity: 0 }}
                 className="flex flex-col gap-4 pb-2"
               >
-                <div className={`rounded-xl p-5 text-center ${gradeBackgrounds[grading.grade || ""] || "bg-muted"}`}>
-                  <p className={`font-display text-4xl font-black ${gradeColors[grading.grade || ""] || "text-foreground"}`}>
-                    {grading.grade || "?"}
+                <div className={`rounded-xl p-5 text-center ${scoreBackground(grading.score)}`}>
+                  <p className={`font-display text-5xl font-black ${scoreColor(grading.score)}`}>
+                    {grading.score !== null ? grading.score.toFixed(1) : "?"}
+                    <span className="font-display text-2xl font-bold opacity-60">/10</span>
                   </p>
-                  <p className="font-display text-sm font-semibold text-foreground mt-1">{grading.grade_label}</p>
+                  <p className="font-display text-sm font-semibold text-foreground mt-1">{scoreLabel(grading.score)}</p>
                   <p className="font-body text-xs text-muted-foreground mt-1">
                     {grading.confidence}% confidence
                   </p>

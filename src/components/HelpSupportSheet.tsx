@@ -28,7 +28,7 @@ const faqs = [
   },
   {
     q: "How does the AI vinyl grading work?",
-    a: "Take a close-up photo of your vinyl surface. Our AI analyzes scratches, scuffs, warping, and chips to assign a condition grade from GEM (best) to F (worst).",
+    a: "Take 8 high-quality photos (4 quarters of each side) of your vinyl. Our AI analyzes scratches, scuffs, warping, and chips and gives a precise condition score from 0.0 (damaged) to 10.0 (perfect).",
   },
   {
     q: "How do I trade records with someone?",
