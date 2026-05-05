@@ -413,6 +413,7 @@ const CollectionScreen = () => {
                     <Disc3 size={36} className="text-primary transition-transform group-hover:rotate-45" />
                   )}
                   {perfectIds.has(record.id) && <PerfectStar />}
+                  {(record as any).sealed && <SealedDiamond offset={perfectIds.has(record.id)} />}
                 </div>
                 <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{record.title}</h3>
                 <p className="mt-0.5 font-display text-xs text-muted-foreground truncate">{record.artist}</p>
