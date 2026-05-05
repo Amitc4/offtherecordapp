@@ -516,6 +516,7 @@ export type Database = {
           id: string
           notes: string | null
           price: number | null
+          sealed: boolean
           status: string
           title: string
           user_id: string
@@ -532,6 +533,7 @@ export type Database = {
           id?: string
           notes?: string | null
           price?: number | null
+          sealed?: boolean
           status?: string
           title: string
           user_id: string
@@ -548,6 +550,7 @@ export type Database = {
           id?: string
           notes?: string | null
           price?: number | null
+          sealed?: boolean
           status?: string
           title?: string
           user_id?: string

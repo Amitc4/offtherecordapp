@@ -1,0 +1,1 @@
+ALTER TABLE public.user_records ADD COLUMN IF NOT EXISTS sealed boolean NOT NULL DEFAULT false;
