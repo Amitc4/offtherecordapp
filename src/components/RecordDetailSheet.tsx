@@ -76,6 +76,8 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const [photos, setPhotos] = useState<{ id: string; photo_url: string }[]>([]);
   const [gradingPhotos, setGradingPhotos] = useState<string[]>([]);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [sealed, setSealed] = useState(false);
+  const [sealedSaving, setSealedSaving] = useState(false);
 
   // Fetch existing photos & latest grading photos when record opens
   useEffect(() => {
