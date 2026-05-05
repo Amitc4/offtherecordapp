@@ -160,7 +160,7 @@ Be honest and accurate. Use the worst-affected area to anchor the grade.`,
             ],
           },
         ],
-        max_tokens: 500,
+        max_tokens: 800,
         temperature: 0.1,
       }),
     });
