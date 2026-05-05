@@ -63,11 +63,11 @@ const GradingHistorySheet = ({ open, onOpenChange }: GradingHistorySheetProps) =
       setLoading(true);
       supabase
         .from("grading_history")
-        .select("id, record_title, record_artist, grade, grade_label, confidence, summary, created_at")
+        .select("id, record_title, record_artist, score, grade_label, confidence, summary, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .then(({ data, error }) => {
-          if (!error) setEntries(data || []);
+          if (!error) setEntries((data as any) || []);
           setLoading(false);
         });
     }
@@ -115,11 +115,12 @@ const GradingHistorySheet = ({ open, onOpenChange }: GradingHistorySheetProps) =
             entries.map((entry) => (
               <div key={entry.id} className="rounded-xl bg-card p-4 vinyl-shadow">
                 <div className="flex items-start gap-3">
-                  {/* Grade badge */}
-                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${gradeBackgrounds[entry.grade || ""] || "bg-muted"}`}>
-                    <span className={`font-display text-lg font-black ${gradeColors[entry.grade || ""] || "text-foreground"}`}>
-                      {entry.grade || "?"}
+                  {/* Score badge */}
+                  <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl ${scoreBackground(entry.score)}`}>
+                    <span className={`font-display text-base font-black leading-none ${scoreColor(entry.score)}`}>
+                      {entry.score !== null ? entry.score.toFixed(1) : "?"}
                     </span>
+                    <span className="font-body text-[8px] text-muted-foreground mt-0.5">/ 10</span>
                   </div>
 
                   <div className="min-w-0 flex-1">
