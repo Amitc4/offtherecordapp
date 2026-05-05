@@ -105,6 +105,8 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
   const [grading, setGrading] = useState<GradingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [tutorialSlot, setTutorialSlot] = useState<number>(0);
 
   const filledCount = slots.filter(Boolean).length;
 
@@ -124,7 +126,14 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
 
   const handleSlotClick = (idx: number) => {
     activeSlotRef.current = idx;
-    fileInputRef.current?.click();
+    setTutorialSlot(idx);
+    setTutorialOpen(true);
+  };
+
+  const handleTutorialConfirm = () => {
+    setTutorialOpen(false);
+    // Wait for dialog close animation before opening the camera so iOS picks it up reliably
+    setTimeout(() => fileInputRef.current?.click(), 150);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
