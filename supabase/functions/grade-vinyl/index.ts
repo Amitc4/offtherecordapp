@@ -116,9 +116,11 @@ Deno.serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a professional vinyl record condition grader. Analyze the photo of a vinyl record's playing surface and assess its physical condition.
+            content: `You are a professional vinyl record condition grader. You will receive up to 8 high-quality photos of a single vinyl record: 4 quarters of Side A and 4 quarters of Side B. Each quarter photo includes the center label so you can confirm all photos are of the SAME physical record.
 
-Grade using this scale:
+First, verify all photos depict the same record (matching center label, color, pressing). If they clearly show different records or the photos are not of a vinyl playing surface, set grade to null and explain in the summary.
+
+Otherwise, analyze the combined surface condition across all quarters and grade using this scale:
 - GEM (Gem Mint): Absolutely perfect, no flaws whatsoever
 - M (Mint): Near perfect, may have very minor manufacturing marks
 - NM (Near Mint): Nearly perfect, minimal signs of handling, no scratches
@@ -131,7 +133,7 @@ Respond ONLY with valid JSON in this exact format:
   "grade": "NM",
   "grade_label": "Near Mint",
   "confidence": 85,
-  "summary": "Brief 1-2 sentence summary of condition",
+  "summary": "Brief 1-2 sentence summary of condition across both sides",
   "details": {
     "scratches": "none/light/moderate/heavy",
     "scuffs": "none/light/moderate/heavy",
@@ -139,22 +141,22 @@ Respond ONLY with valid JSON in this exact format:
     "chips": "none/minor/significant",
     "surface_noise_estimate": "none/minimal/moderate/heavy"
   },
-  "notes": "Any additional observations about the vinyl's condition"
+  "notes": "Any additional observations, including any difference between Side A and Side B"
 }
 
-Be honest and accurate. If the photo doesn't clearly show a vinyl record surface, set grade to null and explain in the summary.`,
+Be honest and accurate. Use the worst-affected area to anchor the grade.`,
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: "Analyze and grade the condition of this vinyl record based on visible scratches, chips, scuffs, warping, and overall surface condition.",
+                text: `Analyze and grade this vinyl. ${signedUrls.length} photo(s) provided. Confirm all show the same record (center label) before grading.`,
               },
-              {
-                type: "image_url",
-                image_url: { url: image_url },
-              },
+              ...signedUrls.flatMap((url, i) => ([
+                { type: "text", text: quarterLabels[i] || `Photo ${i + 1}` },
+                { type: "image_url", image_url: { url } },
+              ])),
             ],
           },
         ],
