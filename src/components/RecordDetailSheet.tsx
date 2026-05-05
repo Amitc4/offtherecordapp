@@ -280,8 +280,16 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
 
           {/* Sealed toggle */}
           <label className="flex w-full cursor-pointer items-center gap-3 rounded-xl bg-background p-4 transition-colors active:bg-accent">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-500/15 text-blue-500">
-              <Diamond size={20} fill="currentColor" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-blue-500/20">
+              {/* Round brilliant-cut diamond, side profile (matches collection badge) */}
+              <svg width={22} height={22} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <g stroke="hsl(217 91% 40%)" strokeWidth="0.8" strokeLinejoin="round" strokeLinecap="round">
+                  <path d="M1 9 L6 4 L18 4 L23 9 Z" fill="hsl(210 100% 75%)" />
+                  <path d="M1 9 L12 22 L23 9 Z" fill="hsl(217 91% 60%)" />
+                  <path d="M6 4 L8 9 M18 4 L16 9 M8 9 L16 9" strokeWidth="0.6" fill="none" />
+                  <path d="M1 9 L12 9 L23 9 M6 9 L12 22 M18 9 L12 22 M12 9 L12 22" strokeWidth="0.6" fill="none" />
+                </g>
+              </svg>
             </div>
             <div className="flex-1">
               <p className="font-body text-sm font-semibold text-foreground">Sealed Record</p>
