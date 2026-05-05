@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import QuarterTutorial from "@/components/QuarterTutorial";
 
+/** Props — `recordId/title/artist` are stored on the resulting history row. */
 interface GradeVinylDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -31,6 +32,7 @@ interface GradeVinylDialogProps {
   recordArtist?: string;
 }
 
+/** Shape of the grading payload returned by the `grade-vinyl` edge function. */
 interface GradingResult {
   grade: string | null;
   grade_label: string;
@@ -46,6 +48,7 @@ interface GradingResult {
   notes: string;
 }
 
+/** UI state machine: photo capture → upload → AI grading → results display. */
 type Stage = "capture" | "uploading" | "grading" | "results";
 
 const REQUIRED_PHOTOS = 8;
@@ -61,6 +64,7 @@ const SLOT_LABELS = [
   "Side B · Q4 (top-left)",
 ];
 
+/** Tailwind text color per grade — mirrors the scale in the AI prompt. */
 const gradeColors: Record<string, string> = {
   GEM: "text-emerald-500",
   M: "text-emerald-400",
@@ -70,6 +74,7 @@ const gradeColors: Record<string, string> = {
   F: "text-destructive",
 };
 
+/** Tinted backgrounds per grade — used behind the large grade badge. */
 const gradeBackgrounds: Record<string, string> = {
   GEM: "bg-emerald-500/15",
   M: "bg-emerald-400/15",
@@ -79,6 +84,7 @@ const gradeBackgrounds: Record<string, string> = {
   F: "bg-destructive/15",
 };
 
+/** Map a severity word from the AI breakdown to a Tailwind text color. */
 const severityColor = (level: string) => {
   switch (level) {
     case "none": return "text-emerald-500";
@@ -91,6 +97,7 @@ const severityColor = (level: string) => {
   }
 };
 
+/** A photo placed into one of the 8 grid slots, plus its blob preview URL. */
 interface SlotPhoto {
   file: File;
   previewUrl: string;
@@ -110,6 +117,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
 
   const filledCount = slots.filter(Boolean).length;
 
+  /** Reset all state and revoke any blob URLs to avoid memory leaks. */
   const reset = () => {
     slots.forEach((s) => s && URL.revokeObjectURL(s.previewUrl));
     setStage("capture");
@@ -119,23 +127,30 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     setProgress(0);
   };
 
+  /** When the dialog is closed, reset state so the next open starts fresh. */
   const handleOpenChange = (o: boolean) => {
     if (!o) reset();
     onOpenChange(o);
   };
 
+  /** Tap a slot → open the animated tutorial for that quarter. */
   const handleSlotClick = (idx: number) => {
     activeSlotRef.current = idx;
     setTutorialSlot(idx);
     setTutorialOpen(true);
   };
 
+  /** Tutorial confirmed → close it and trigger the camera input. */
   const handleTutorialConfirm = () => {
     setTutorialOpen(false);
     // Wait for dialog close animation before opening the camera so iOS picks it up reliably
     setTimeout(() => fileInputRef.current?.click(), 150);
   };
 
+  /**
+   * File input change — validate quality (min ~150KB), max size (10MB),
+   * then place the file in the currently active slot.
+   */
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -162,6 +177,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     e.target.value = "";
   };
 
+  /** Remove a photo from a single slot and revoke its blob URL. */
   const handleRemoveSlot = (idx: number) => {
     setSlots((prev) => {
       const next = [...prev];
@@ -171,6 +187,13 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     });
   };
 
+  /**
+   * Submit flow:
+   * 1. Upload all 8 photos to `record-photos/<userId>/grading/<sessionId>/`.
+   *    On any upload failure, already-uploaded photos are removed.
+   * 2. Invoke the `grade-vinyl` edge function with the file paths.
+   * 3. Persist the AI result + photo URLs to `grading_history` for later viewing.
+   */
   const handleSubmit = async () => {
     if (!user || !session) return;
     if (filledCount < REQUIRED_PHOTOS) {
@@ -454,6 +477,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
   );
 };
 
+/** One cell in the 4×2 quarter grid — empty placeholder or filled thumbnail. */
 interface SlotButtonProps {
   index: number;
   slot: SlotPhoto | null;
