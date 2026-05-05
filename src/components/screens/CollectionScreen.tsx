@@ -571,17 +571,20 @@ const SealedDiamond = ({ small = false, offset = false }: { small?: boolean; off
       }`}
       title="Sealed record"
     >
-      {/* Brilliant-cut (wedding ring) diamond */}
-      <svg width={s} height={s} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path
-          d="M5 9 L12 2 L19 9 L12 22 Z M5 9 H19 M9 9 L12 22 M15 9 L12 22 M8 5.5 L9 9 M16 5.5 L15 9 M12 2 L12 9"
-          stroke="hsl(217 91% 50%)"
-          strokeWidth="1.4"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          fill="hsl(217 91% 60% / 0.85)"
-        />
+      {/* Round brilliant-cut diamond, side profile (wedding ring style) */}
+      <svg width={s} height={s} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="hsl(217 91% 40%)" strokeWidth="0.8" strokeLinejoin="round" strokeLinecap="round">
+          {/* Crown (top) */}
+          <path d="M4 9 L8 5 L16 5 L20 9 Z" fill="hsl(210 100% 75%)" />
+          {/* Pavilion (V cone) */}
+          <path d="M4 9 L12 22 L20 9 Z" fill="hsl(217 91% 60%)" />
+          {/* Crown facets */}
+          <path d="M8 5 L9.5 9 M16 5 L14.5 9 M9.5 9 L14.5 9" strokeWidth="0.6" fill="none" />
+          {/* Pavilion facets */}
+          <path d="M4 9 L12 9 L20 9 M8 9 L12 22 M16 9 L12 22 M12 9 L12 22" strokeWidth="0.6" fill="none" />
+        </g>
       </svg>
+
     </div>
   );
 };
