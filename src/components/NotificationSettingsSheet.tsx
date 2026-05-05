@@ -64,6 +64,7 @@ const NotificationSettingsSheet = ({ open, onOpenChange }: NotificationSettingsS
     if (open) setPrefs(loadPrefs());
   }, [open]);
 
+  /** Merge a partial change into prefs and persist immediately. */
   const update = (patch: Partial<NotificationPrefs>) => {
     const next = { ...prefs, ...patch };
     setPrefs(next);
