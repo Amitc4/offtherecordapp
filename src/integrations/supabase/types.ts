@@ -187,6 +187,7 @@ export type Database = {
           id: string
           notes: string | null
           photo_url: string | null
+          photo_urls: string[] | null
           record_artist: string | null
           record_id: string | null
           record_title: string | null
@@ -202,6 +203,7 @@ export type Database = {
           id?: string
           notes?: string | null
           photo_url?: string | null
+          photo_urls?: string[] | null
           record_artist?: string | null
           record_id?: string | null
           record_title?: string | null
@@ -217,6 +219,7 @@ export type Database = {
           id?: string
           notes?: string | null
           photo_url?: string | null
+          photo_urls?: string[] | null
           record_artist?: string | null
           record_id?: string | null
           record_title?: string | null
