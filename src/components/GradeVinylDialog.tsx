@@ -51,8 +51,10 @@ interface GradingResult {
 /** UI state machine: photo capture → upload → AI grading → results display. */
 type Stage = "capture" | "uploading" | "grading" | "results";
 
+/** Exact number of photos required before grading can be submitted. */
 const REQUIRED_PHOTOS = 8;
 
+/** Human-readable slot labels — index matches the slot grid order. */
 const SLOT_LABELS = [
   "Side A · Q1 (top-right)",
   "Side A · Q2 (bottom-right)",
