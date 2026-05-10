@@ -27,7 +27,7 @@
  * @see ReportBlockDialog   – Report or block a user.
  */
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive, Eye, Flag, Search } from "lucide-react";
+import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive, ArchiveRestore, Eye, Flag, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -111,8 +111,10 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     }
   }, [initialChatId, initialDraft, onChatOpened]);
 
-  // Fetch all chats
-  const { data: chats = [], refetch: refetchChats } = useQuery({
+  const [showArchived, setShowArchived] = useState(false);
+
+  // Fetch all chats (including archived). Partition client-side.
+  const { data: allChats = [], refetch: refetchChats } = useQuery({
     queryKey: ["chats"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -120,16 +122,24 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
         .select("*")
         .order("updated_at", { ascending: false });
       if (error) throw error;
-      // Filter out archived chats client-side (archived_by contains current user id)
-      return (data as ChatRow[]).filter((c) => !c.archived_by?.includes(user!.id));
+      return data as ChatRow[];
     },
     enabled: !!user,
   });
 
-  // Fetch participant display names
+  const chats = useMemo(
+    () => allChats.filter((c) => !c.archived_by?.includes(user!.id)),
+    [allChats, user]
+  );
+  const archivedChats = useMemo(
+    () => allChats.filter((c) => c.archived_by?.includes(user!.id)),
+    [allChats, user]
+  );
+
+  // Fetch participant display names (for both active and archived chats)
   useEffect(() => {
-    if (!chats.length || !user) return;
-    const otherIds = [...new Set(chats.map((c) => (c.participant_1 === user.id ? c.participant_2 : c.participant_1)))];
+    if (!allChats.length || !user) return;
+    const otherIds = [...new Set(allChats.map((c) => (c.participant_1 === user.id ? c.participant_2 : c.participant_1)))];
     if (!otherIds.length) return;
 
     supabase
@@ -143,7 +153,7 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
           setParticipantNames(map);
         }
       });
-  }, [chats, user]);
+  }, [allChats, user]);
 
   // Fetch messages for active chat
   const { data: messages = [] } = useQuery({
@@ -160,13 +170,12 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     enabled: !!activeChat,
   });
 
-  // Fetch last message per chat for preview
+  // Fetch last message per chat for preview (including archived)
   const { data: lastMessages = {} } = useQuery({
-    queryKey: ["last_messages", chats.map((c) => c.id).join(",")],
+    queryKey: ["last_messages", allChats.map((c) => c.id).join(",")],
     queryFn: async () => {
       const map: Record<number, ChatMessage> = {};
-      // Fetch last message for each chat
-      for (const chat of chats) {
+      for (const chat of allChats) {
         const { data } = await supabase
           .from("chat_messages")
           .select("*")
@@ -179,7 +188,7 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
       }
       return map;
     },
-    enabled: chats.length > 0,
+    enabled: allChats.length > 0,
   });
 
   // Scroll to bottom on new messages
@@ -247,29 +256,40 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
 
   const handleArchiveChat = async (chatId: number) => {
     if (!user) return;
-    const chat = chats.find((c) => c.id === chatId);
+    const chat = allChats.find((c) => c.id === chatId);
     if (!chat) return;
-    const newArchivedBy = [...(chat.archived_by || []), user.id];
+    const newArchivedBy = Array.from(new Set([...(chat.archived_by || []), user.id]));
     await supabase.from("chats").update({ archived_by: newArchivedBy } as any).eq("id", chatId);
     refetchChats();
     toast.success("Chat archived");
   };
 
-  const activeChatData = chats.find((c) => c.id === activeChat);
+  const handleUnarchiveChat = async (chatId: number) => {
+    if (!user) return;
+    const chat = allChats.find((c) => c.id === chatId);
+    if (!chat) return;
+    const newArchivedBy = (chat.archived_by || []).filter((id) => id !== user.id);
+    await supabase.from("chats").update({ archived_by: newArchivedBy } as any).eq("id", chatId);
+    refetchChats();
+    toast.success("Chat unarchived");
+  };
+
+  const activeChatData = allChats.find((c) => c.id === activeChat);
   const getOtherUserId = (chat: ChatRow) => chat.participant_1 === user?.id ? chat.participant_2 : chat.participant_1;
   const getOtherName = (chat: ChatRow) => participantNames[getOtherUserId(chat)] || "User";
 
   const [chatSearch, setChatSearch] = useState("");
 
+  const sourceChats = showArchived ? archivedChats : chats;
   const filteredChats = useMemo(() => {
-    if (!chatSearch.trim()) return chats;
+    if (!chatSearch.trim()) return sourceChats;
     const q = chatSearch.trim().toLowerCase();
-    return chats.filter((chat) => {
+    return sourceChats.filter((chat) => {
       const name = getOtherName(chat).toLowerCase();
       const recordTitle = (chat.record_title || "").toLowerCase();
       return name.includes(q) || recordTitle.includes(q);
     });
-  }, [chats, chatSearch, participantNames]);
+  }, [sourceChats, chatSearch, participantNames]);
 
   // Active chat view
   if (activeChat && activeChatData) {
@@ -428,9 +448,20 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
   // Chat list view
   return (
     <div className="px-4 pt-4 pb-2">
-      <h1 className="mb-3 font-display text-3xl font-bold text-foreground">Chats</h1>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h1 className="font-display text-3xl font-bold text-foreground">
+          {showArchived ? "Archived" : "Chats"}
+        </h1>
+        <button
+          onClick={() => { setShowArchived((v) => !v); setChatSearch(""); }}
+          className="flex h-9 items-center gap-1.5 rounded-full bg-primary/15 px-3 font-body text-xs font-semibold text-primary transition-colors hover:bg-primary/25 active:scale-95"
+        >
+          {showArchived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+          <span>{showArchived ? "Back to Chats" : `Archived${archivedChats.length ? ` (${archivedChats.length})` : ""}`}</span>
+        </button>
+      </div>
 
-      {chats.length > 0 && (
+      {sourceChats.length > 0 && (
         <div className="relative mb-3">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -442,11 +473,21 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
         </div>
       )}
 
-      {chats.length === 0 ? (
+      {sourceChats.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-center">
-          <MessageCircle size={48} className="mb-4 text-muted-foreground/40" />
-          <p className="font-display text-base font-semibold text-muted-foreground">No conversations yet</p>
-          <p className="mt-1 font-body text-sm text-muted-foreground">Find a record in Discover and contact the seller</p>
+          {showArchived ? (
+            <>
+              <Archive size={48} className="mb-4 text-muted-foreground/40" />
+              <p className="font-display text-base font-semibold text-muted-foreground">No archived chats</p>
+              <p className="mt-1 font-body text-sm text-muted-foreground">Completed trades with mutual reviews land here</p>
+            </>
+          ) : (
+            <>
+              <MessageCircle size={48} className="mb-4 text-muted-foreground/40" />
+              <p className="font-display text-base font-semibold text-muted-foreground">No conversations yet</p>
+              <p className="mt-1 font-body text-sm text-muted-foreground">Find a record in Discover and contact the seller</p>
+            </>
+          )}
         </div>
       ) : filteredChats.length === 0 ? (
         <div className="flex flex-col items-center py-12 text-center">
@@ -463,10 +504,10 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
                 {/* Archive button behind */}
                 <div className="absolute right-0 top-0 bottom-0 flex items-center">
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleArchiveChat(chat.id); }}
-                    className="flex h-full w-16 items-center justify-center bg-destructive text-destructive-foreground"
+                    onClick={(e) => { e.stopPropagation(); showArchived ? handleUnarchiveChat(chat.id) : handleArchiveChat(chat.id); }}
+                    className={`flex h-full w-16 items-center justify-center ${showArchived ? "bg-primary text-primary-foreground" : "bg-destructive text-destructive-foreground"}`}
                   >
-                    <Archive size={18} />
+                    {showArchived ? <ArchiveRestore size={18} /> : <Archive size={18} />}
                   </button>
                 </div>
                 {/* Chat row */}
@@ -494,11 +535,11 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
                     )}
                   </div>
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleArchiveChat(chat.id); }}
-                    className="ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                    title="Archive chat"
+                    onClick={(e) => { e.stopPropagation(); showArchived ? handleUnarchiveChat(chat.id) : handleArchiveChat(chat.id); }}
+                    className={`ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${showArchived ? "text-muted-foreground hover:bg-primary/10 hover:text-primary" : "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"}`}
+                    title={showArchived ? "Unarchive chat" : "Archive chat"}
                   >
-                    <Archive size={14} />
+                    {showArchived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
                   </button>
                 </div>
               </div>

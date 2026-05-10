@@ -130,6 +130,34 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate, onCounterOffer }
       rating,
       review_text: reviewText || null,
     });
+
+    // If both participants have now reviewed each other, auto-archive the chat for both.
+    const { data: allReviews } = await supabase
+      .from("user_reviews")
+      .select("reviewer_id")
+      .eq("offer_id", offer.id);
+    const reviewerIds = new Set((allReviews || []).map((r: any) => r.reviewer_id));
+    if (reviewerIds.has(offer.sender_id) && reviewerIds.has(offer.receiver_id)) {
+      const { data: offerRow } = await supabase
+        .from("trade_offers")
+        .select("chat_id")
+        .eq("id", offer.id)
+        .single();
+      if (offerRow?.chat_id) {
+        const { data: chatRow } = await supabase
+          .from("chats")
+          .select("archived_by")
+          .eq("id", offerRow.chat_id)
+          .single();
+        const existing: string[] = (chatRow as any)?.archived_by || [];
+        const merged = Array.from(new Set([...existing, offer.sender_id, offer.receiver_id]));
+        await supabase
+          .from("chats")
+          .update({ archived_by: merged } as any)
+          .eq("id", offerRow.chat_id);
+      }
+    }
+
     setSubmittingReview(false);
     setHasReviewed(true);
     setShowReview(false);
