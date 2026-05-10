@@ -33,6 +33,7 @@ import NotificationSettingsSheet from "@/components/NotificationSettingsSheet";
 import HelpSupportSheet from "@/components/HelpSupportSheet";
 import SettingsSheet from "@/components/SettingsSheet";
 import SpotifyRecommendationsSheet from "@/components/SpotifyRecommendationsSheet";
+import UserReviewsSheet from "@/components/UserReviewsSheet";
 
 interface FriendRow {
   id: string;
