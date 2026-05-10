@@ -16,12 +16,13 @@
 import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Camera, Loader2, Star, X, ImagePlus, CheckCircle2 } from "lucide-react";
+import { Camera, Loader2, Star, X, ImagePlus, CheckCircle2, Images } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import QuarterTutorial from "@/components/QuarterTutorial";
+import GradingPhotosViewer, { type PhotoDefect } from "@/components/GradingPhotosViewer";
 
 /** Props — `recordId/title/artist` are stored on the resulting history row. */
 interface GradeVinylDialogProps {
@@ -130,6 +131,9 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
   const [progress, setProgress] = useState(0);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [tutorialSlot, setTutorialSlot] = useState<number>(0);
+  const [resultPhotoUrls, setResultPhotoUrls] = useState<string[]>([]);
+  const [resultDefects, setResultDefects] = useState<PhotoDefect[][]>([]);
+  const [photosViewerOpen, setPhotosViewerOpen] = useState(false);
 
   const filledCount = slots.filter(Boolean).length;
 
@@ -141,6 +145,8 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     setGrading(null);
     setError(null);
     setProgress(0);
+    setResultPhotoUrls([]);
+    setResultDefects([]);
   };
 
   /** When the dialog is closed, reset state so the next open starts fresh. */
@@ -269,6 +275,11 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
       }
 
       setGrading(data.grading);
+      const defects: PhotoDefect[][] = Array.isArray(data.grading?.defects_per_photo)
+        ? data.grading.defects_per_photo
+        : [];
+      setResultPhotoUrls(publicUrls);
+      setResultDefects(defects);
       setStage("results");
 
       await supabase.from("grading_history").insert({
@@ -283,6 +294,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
         details: data.grading.details,
         notes: data.grading.notes,
         photo_urls: publicUrls,
+        defects: defects,
       } as any);
     } catch {
       setError("Something went wrong. Please try again.");
@@ -475,6 +487,17 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                   </div>
                 )}
 
+                {resultPhotoUrls.length > 0 && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => setPhotosViewerOpen(true)}
+                    className="gap-2"
+                  >
+                    <Images size={16} />
+                    View Photos & Imperfections
+                  </Button>
+                )}
+
                 <Button variant="outline" onClick={reset} className="mt-1">
                   Grade Another Record
                 </Button>
@@ -483,6 +506,13 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
           </AnimatePresence>
         </div>
       </DialogContent>
+
+      <GradingPhotosViewer
+        open={photosViewerOpen}
+        onOpenChange={setPhotosViewerOpen}
+        photoUrls={resultPhotoUrls}
+        defectsPerPhoto={resultDefects}
+      />
 
       <QuarterTutorial
         open={tutorialOpen}

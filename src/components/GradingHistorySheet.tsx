@@ -6,11 +6,11 @@
  */
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Star, Trash2, Clock } from "lucide-react";
+import { Star, Trash2, Clock, Images } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import GradingPhotosViewer, { type PhotoDefect } from "@/components/GradingPhotosViewer";
 
 /** Props for the bottom-sheet that lists past gradings. */
 interface GradingHistorySheetProps {
@@ -29,6 +29,8 @@ interface GradingEntry {
   confidence: number | null;
   summary: string | null;
   created_at: string;
+  photo_urls: string[] | null;
+  defects: PhotoDefect[][] | null;
 }
 
 /** Tailwind text color for the decimal score (best → worst). */
@@ -57,13 +59,14 @@ const GradingHistorySheet = ({ open, onOpenChange }: GradingHistorySheetProps) =
   const { user } = useAuth();
   const [entries, setEntries] = useState<GradingEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [viewerEntry, setViewerEntry] = useState<GradingEntry | null>(null);
 
   useEffect(() => {
     if (open && user) {
       setLoading(true);
       supabase
         .from("grading_history")
-        .select("id, record_title, record_artist, score, grade_label, confidence, summary, created_at")
+        .select("id, record_title, record_artist, score, grade_label, confidence, summary, created_at, photo_urls, defects")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .then(({ data, error }) => {
@@ -155,15 +158,33 @@ const GradingHistorySheet = ({ open, onOpenChange }: GradingHistorySheetProps) =
                   </button>
                 </div>
 
-                <div className="mt-2 flex items-center gap-1 text-muted-foreground">
-                  <Clock size={10} />
-                  <span className="font-body text-[10px]">{formatDate(entry.created_at)}</span>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Clock size={10} />
+                    <span className="font-body text-[10px]">{formatDate(entry.created_at)}</span>
+                  </div>
+                  {entry.photo_urls && entry.photo_urls.length > 0 && (
+                    <button
+                      onClick={() => setViewerEntry(entry)}
+                      className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 font-body text-[10px] font-semibold text-primary hover:bg-primary/15"
+                    >
+                      <Images size={11} />
+                      View photos
+                    </button>
+                  )}
                 </div>
               </div>
             ))
           )}
         </div>
       </SheetContent>
+
+      <GradingPhotosViewer
+        open={viewerEntry !== null}
+        onOpenChange={(o) => !o && setViewerEntry(null)}
+        photoUrls={viewerEntry?.photo_urls || []}
+        defectsPerPhoto={viewerEntry?.defects || undefined}
+      />
     </Sheet>
   );
 };

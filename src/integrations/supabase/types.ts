@@ -181,6 +181,7 @@ export type Database = {
         Row: {
           confidence: number | null
           created_at: string
+          defects: Json | null
           details: Json | null
           grade: string | null
           grade_label: string | null
@@ -198,6 +199,7 @@ export type Database = {
         Insert: {
           confidence?: number | null
           created_at?: string
+          defects?: Json | null
           details?: Json | null
           grade?: string | null
           grade_label?: string | null
@@ -215,6 +217,7 @@ export type Database = {
         Update: {
           confidence?: number | null
           created_at?: string
+          defects?: Json | null
           details?: Json | null
           grade?: string | null
           grade_label?: string | null

@@ -132,6 +132,8 @@ Otherwise, analyze the combined surface condition across all quarters and grade 
 
 Use the worst-affected area to anchor the score; be honest and accurate.
 
+For EACH photo, identify visible imperfections (scratches, scuffs, chips, warps, marks). For each defect, return its location as NORMALIZED coordinates relative to that photo's bounding box (x and y between 0.0 and 1.0, where 0,0 is top-left and 1,1 is bottom-right), plus a small bounding circle radius (0.02–0.15 of image width). Only mark genuinely visible defects — do NOT invent flaws. If a photo has no visible defects, return an empty array for that photo.
+
 Respond ONLY with valid JSON in this exact format:
 {
   "score": 8.7,
@@ -144,8 +146,14 @@ Respond ONLY with valid JSON in this exact format:
     "chips": "none/minor/significant",
     "surface_noise_estimate": "none/minimal/moderate/heavy"
   },
-  "notes": "Any additional observations, including any difference between Side A and Side B"
-}`,
+  "notes": "Any additional observations, including any difference between Side A and Side B",
+  "defects_per_photo": [
+    [ { "x": 0.42, "y": 0.31, "radius": 0.05, "type": "scratch", "severity": "light", "description": "Short hairline scratch near outer groove" } ],
+    [],
+    ...
+  ]
+}
+The "defects_per_photo" array MUST have exactly one entry per provided photo, in the same order as the photos were given.`,
           },
           {
             role: "user",
