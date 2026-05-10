@@ -80,6 +80,10 @@ const ProfileScreen = () => {
   const [myProfile, setMyProfile] = useState<ProfileRow | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [completedCount, setCompletedCount] = useState(0);
+  const [spotifyConnected, setSpotifyConnected] = useState(false);
+  const [spotifyUsername, setSpotifyUsername] = useState<string | null>(null);
+  const [spotifyConnecting, setSpotifyConnecting] = useState(false);
+  const [spotifyRecsOpen, setSpotifyRecsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
