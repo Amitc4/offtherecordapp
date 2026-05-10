@@ -88,10 +88,12 @@ const ProfileScreen = () => {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("user_id, short_id, display_name, avatar_url, nickname, first_name, last_name").eq("user_id", user.id).single()
+    supabase.from("profiles").select("user_id, short_id, display_name, avatar_url, nickname, first_name, last_name, spotify_connected, spotify_username").eq("user_id", user.id).single()
       .then(({ data }) => {
         setMyShortId(data?.short_id || null);
         setMyProfile(data as ProfileRow | null);
+        setSpotifyConnected(!!(data as any)?.spotify_connected);
+        setSpotifyUsername((data as any)?.spotify_username ?? null);
       });
     supabase
       .from("trade_offers")
