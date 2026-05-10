@@ -1,0 +1,1 @@
+CREATE POLICY "Authenticated users can read record photos" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'record-photos');
