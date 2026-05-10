@@ -624,6 +624,11 @@ const ProfileScreen = () => {
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
       />
+
+      <SpotifyRecommendationsSheet
+        open={spotifyRecsOpen}
+        onOpenChange={setSpotifyRecsOpen}
+      />
     </div>
   );
 };
