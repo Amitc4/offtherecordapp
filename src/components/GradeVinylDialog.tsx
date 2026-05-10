@@ -148,6 +148,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     setProgress(0);
     setResultPhotoUrls([]);
     setResultDefects([]);
+    setBadIndices([]);
   };
 
   /** When the dialog is closed, reset state so the next open starts fresh. */
