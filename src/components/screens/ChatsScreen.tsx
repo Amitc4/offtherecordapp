@@ -170,13 +170,12 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     enabled: !!activeChat,
   });
 
-  // Fetch last message per chat for preview
+  // Fetch last message per chat for preview (including archived)
   const { data: lastMessages = {} } = useQuery({
-    queryKey: ["last_messages", chats.map((c) => c.id).join(",")],
+    queryKey: ["last_messages", allChats.map((c) => c.id).join(",")],
     queryFn: async () => {
       const map: Record<number, ChatMessage> = {};
-      // Fetch last message for each chat
-      for (const chat of chats) {
+      for (const chat of allChats) {
         const { data } = await supabase
           .from("chat_messages")
           .select("*")
@@ -189,7 +188,7 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
       }
       return map;
     },
-    enabled: chats.length > 0,
+    enabled: allChats.length > 0,
   });
 
   // Scroll to bottom on new messages
