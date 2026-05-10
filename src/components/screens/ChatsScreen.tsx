@@ -256,29 +256,40 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
 
   const handleArchiveChat = async (chatId: number) => {
     if (!user) return;
-    const chat = chats.find((c) => c.id === chatId);
+    const chat = allChats.find((c) => c.id === chatId);
     if (!chat) return;
-    const newArchivedBy = [...(chat.archived_by || []), user.id];
+    const newArchivedBy = Array.from(new Set([...(chat.archived_by || []), user.id]));
     await supabase.from("chats").update({ archived_by: newArchivedBy } as any).eq("id", chatId);
     refetchChats();
     toast.success("Chat archived");
   };
 
-  const activeChatData = chats.find((c) => c.id === activeChat);
+  const handleUnarchiveChat = async (chatId: number) => {
+    if (!user) return;
+    const chat = allChats.find((c) => c.id === chatId);
+    if (!chat) return;
+    const newArchivedBy = (chat.archived_by || []).filter((id) => id !== user.id);
+    await supabase.from("chats").update({ archived_by: newArchivedBy } as any).eq("id", chatId);
+    refetchChats();
+    toast.success("Chat unarchived");
+  };
+
+  const activeChatData = allChats.find((c) => c.id === activeChat);
   const getOtherUserId = (chat: ChatRow) => chat.participant_1 === user?.id ? chat.participant_2 : chat.participant_1;
   const getOtherName = (chat: ChatRow) => participantNames[getOtherUserId(chat)] || "User";
 
   const [chatSearch, setChatSearch] = useState("");
 
+  const sourceChats = showArchived ? archivedChats : chats;
   const filteredChats = useMemo(() => {
-    if (!chatSearch.trim()) return chats;
+    if (!chatSearch.trim()) return sourceChats;
     const q = chatSearch.trim().toLowerCase();
-    return chats.filter((chat) => {
+    return sourceChats.filter((chat) => {
       const name = getOtherName(chat).toLowerCase();
       const recordTitle = (chat.record_title || "").toLowerCase();
       return name.includes(q) || recordTitle.includes(q);
     });
-  }, [chats, chatSearch, participantNames]);
+  }, [sourceChats, chatSearch, participantNames]);
 
   // Active chat view
   if (activeChat && activeChatData) {
