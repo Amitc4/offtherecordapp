@@ -311,6 +311,32 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     toast.success("Chat unarchived");
   };
 
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+
+  const handleDeleteChat = async (chatId: number) => {
+    if (!user) return;
+    const { data: offerRows } = await supabase
+      .from("trade_offers")
+      .select("id")
+      .eq("chat_id", chatId);
+    const offerIds = (offerRows || []).map((o: any) => o.id);
+    if (offerIds.length) {
+      await supabase.from("trade_offer_items").delete().in("offer_id", offerIds);
+      await supabase.from("trade_offers").delete().in("id", offerIds);
+    }
+    await supabase.from("chat_messages").delete().eq("chat_id", chatId);
+    const { error } = await supabase.from("chats").delete().eq("id", chatId);
+    if (error) {
+      toast.error("Couldn't delete chat");
+      return;
+    }
+    if (activeChat === chatId) setActiveChat(null);
+    setDeleteTarget(null);
+    refetchChats();
+    queryClient.invalidateQueries({ queryKey: ["unread-chats", user.id] });
+    toast.success("Chat deleted");
+  };
+
   const activeChatData = allChats.find((c) => c.id === activeChat);
   const getOtherUserId = (chat: ChatRow) => chat.participant_1 === user?.id ? chat.participant_2 : chat.participant_1;
   const getOtherName = (chat: ChatRow) => participantNames[getOtherUserId(chat)] || "User";
