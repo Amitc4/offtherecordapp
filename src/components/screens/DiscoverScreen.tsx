@@ -108,7 +108,7 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const useSpotifyRecs = activeGenre === "All" && spotifyConnected && spotifyRecs.length > 0;
+  const useSpotifyRecs = activeGenre === "All" && spotifyConnected;
 
   const filtered = useMemo(() => {
     const base = useSpotifyRecs ? spotifyRecs : records;
