@@ -529,6 +529,7 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
           {filteredChats.map((chat) => {
             const otherName = getOtherName(chat);
             const last = lastMessages[chat.id];
+            const isUnread = unreadIds.has(chat.id);
             return (
               <div key={chat.id} className="relative overflow-hidden rounded-xl">
                 {/* Archive button behind */}
@@ -543,16 +544,21 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
                 {/* Chat row */}
                 <div
                   onClick={() => setActiveChat(chat.id)}
-                  className="relative flex cursor-pointer items-center gap-3 bg-background p-3 transition-colors hover:bg-card"
+                  className={`relative flex cursor-pointer items-center gap-3 p-3 transition-colors hover:bg-card ${
+                    isUnread ? "bg-primary/10 border-l-4 border-primary pl-2" : "bg-background"
+                  }`}
                 >
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
+                  <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
                     {otherName.charAt(0)}
+                    {isUnread && (
+                      <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-primary ring-2 ring-background" />
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-body text-sm font-semibold text-foreground">{otherName}</h3>
+                      <h3 className={`font-body text-sm ${isUnread ? "font-bold text-foreground" : "font-semibold text-foreground"}`}>{otherName}</h3>
                       {last && (
-                        <span className="font-body text-[10px] text-muted-foreground">
+                        <span className={`font-body text-[10px] ${isUnread ? "font-semibold text-primary" : "text-muted-foreground"}`}>
                           {new Date(last.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </span>
                       )}
@@ -561,7 +567,7 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
                       <p className="font-body text-[10px] font-medium text-primary">{chat.record_title}</p>
                     )}
                     {last && (
-                      <p className="truncate font-body text-xs text-muted-foreground">{last.text}</p>
+                      <p className={`truncate font-body text-xs ${isUnread ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{last.text}</p>
                     )}
                   </div>
                   <button
