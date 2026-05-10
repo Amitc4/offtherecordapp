@@ -278,10 +278,10 @@ const ProfileScreen = () => {
   const avatarUrl = myProfile?.avatar_url;
 
   const stats = [
-    { icon: Disc3, value: records.length, label: "Records" },
-    { icon: Heart, value: wishlist.length, label: "Wishlist" },
-    { icon: Package, value: completedCount, label: "Sold / Swapped" },
-    { icon: Star, value: "0.0", label: "Rating" },
+    { icon: Disc3, value: records.length, label: "Records", onClick: undefined as (() => void) | undefined },
+    { icon: Heart, value: wishlist.length, label: "Wishlist", onClick: undefined },
+    { icon: Package, value: completedCount, label: "Sold / Swapped", onClick: undefined },
+    { icon: Star, value: reviewCount > 0 ? avgRating.toFixed(1) : "0.0", label: "Rating", onClick: () => setReviewsOpen(true) },
   ];
 
   const menuItems = [
