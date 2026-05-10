@@ -90,6 +90,8 @@ export type Database = {
           archived_by: string[]
           created_at: string
           id: number
+          last_read_p1: string
+          last_read_p2: string
           participant_1: string
           participant_2: string
           record_id: string | null
@@ -100,6 +102,8 @@ export type Database = {
           archived_by?: string[]
           created_at?: string
           id?: number
+          last_read_p1?: string
+          last_read_p2?: string
           participant_1: string
           participant_2: string
           record_id?: string | null
@@ -110,6 +114,8 @@ export type Database = {
           archived_by?: string[]
           created_at?: string
           id?: number
+          last_read_p1?: string
+          last_read_p2?: string
           participant_1?: string
           participant_2?: string
           record_id?: string | null
