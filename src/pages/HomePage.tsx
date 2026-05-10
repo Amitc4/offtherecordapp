@@ -51,6 +51,7 @@ const HomePage = () => {
   const [openChatId, setOpenChatId] = useState<number | null>(null);
   const [draftMessage, setDraftMessage] = useState<string>("");
   const { user } = useAuth();
+  const { total: unreadTotal } = useUnreadChats();
   const mainRef = useRef<HTMLElement>(null);
   const scrollTimer = useRef<ReturnType<typeof setTimeout>>();
 
