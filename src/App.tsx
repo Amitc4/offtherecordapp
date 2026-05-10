@@ -45,6 +45,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/discogs/callback" element={<DiscogsCallback />} />
+              <Route path="/spotify/callback" element={<SpotifyCallback />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
