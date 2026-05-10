@@ -32,6 +32,7 @@ import ChatsScreen from "@/components/screens/ChatsScreen";
 import ProfileScreen from "@/components/screens/ProfileScreen";
 import AdminScreen from "@/components/screens/AdminScreen";
 import { useAuth } from "@/hooks/useAuth";
+import { useUnreadChats } from "@/hooks/useUnreadChats";
 import { supabase } from "@/integrations/supabase/client";
 
 type Tab = "collection" | "wishlist" | "discover" | "chats" | "profile" | "admin";
