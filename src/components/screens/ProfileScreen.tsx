@@ -85,6 +85,9 @@ const ProfileScreen = () => {
   const [spotifyUsername, setSpotifyUsername] = useState<string | null>(null);
   const [spotifyConnecting, setSpotifyConnecting] = useState(false);
   const [spotifyRecsOpen, setSpotifyRecsOpen] = useState(false);
+  const [reviewsOpen, setReviewsOpen] = useState(false);
+  const [avgRating, setAvgRating] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
