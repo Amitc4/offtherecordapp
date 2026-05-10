@@ -535,11 +535,11 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
                     )}
                   </div>
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleArchiveChat(chat.id); }}
-                    className="ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                    title="Archive chat"
+                    onClick={(e) => { e.stopPropagation(); showArchived ? handleUnarchiveChat(chat.id) : handleArchiveChat(chat.id); }}
+                    className={`ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${showArchived ? "text-muted-foreground hover:bg-primary/10 hover:text-primary" : "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"}`}
+                    title={showArchived ? "Unarchive chat" : "Archive chat"}
                   >
-                    <Archive size={14} />
+                    {showArchived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
                   </button>
                 </div>
               </div>
