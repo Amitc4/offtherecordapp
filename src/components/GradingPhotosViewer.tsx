@@ -147,17 +147,17 @@ const GradingPhotosViewer = ({ open, onOpenChange, photoUrls, defectsPerPhoto }:
               <PhotoSection
                 title="Side A"
                 offset={0}
-                photos={photoUrls.slice(0, 4)}
+                photos={displayUrls.slice(0, 4)}
                 defects={defectsPerPhoto?.slice(0, 4)}
                 showMarkers={showMarkers}
                 onTile={(i) => setZoomIdx(i)}
               />
 
-              {photoUrls.length > 4 && (
+              {displayUrls.length > 4 && (
                 <PhotoSection
                   title="Side B"
                   offset={4}
-                  photos={photoUrls.slice(4, 8)}
+                  photos={displayUrls.slice(4, 8)}
                   defects={defectsPerPhoto?.slice(4, 8)}
                   showMarkers={showMarkers}
                   onTile={(i) => setZoomIdx(i + 4)}
@@ -174,9 +174,9 @@ const GradingPhotosViewer = ({ open, onOpenChange, photoUrls, defectsPerPhoto }:
         </DialogContent>
       </Dialog>
 
-      {zoomIdx !== null && photoUrls[zoomIdx] && (
+      {zoomIdx !== null && displayUrls[zoomIdx] && (
         <Lightbox
-          url={photoUrls[zoomIdx]}
+          url={displayUrls[zoomIdx]}
           label={SLOT_LABELS[zoomIdx]}
           defects={showMarkers ? defectsPerPhoto?.[zoomIdx] : undefined}
           onClose={() => setZoomIdx(null)}
