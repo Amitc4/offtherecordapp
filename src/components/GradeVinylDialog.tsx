@@ -131,6 +131,9 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
   const [progress, setProgress] = useState(0);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [tutorialSlot, setTutorialSlot] = useState<number>(0);
+  const [resultPhotoUrls, setResultPhotoUrls] = useState<string[]>([]);
+  const [resultDefects, setResultDefects] = useState<PhotoDefect[][]>([]);
+  const [photosViewerOpen, setPhotosViewerOpen] = useState(false);
 
   const filledCount = slots.filter(Boolean).length;
 
