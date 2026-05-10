@@ -16,7 +16,7 @@
  * @see DiscoverRecordSheet – Bottom sheet shown when a record card is tapped.
  */
 import { useState, useMemo, useEffect } from "react";
-import { Disc3, Search, MapPin } from "lucide-react";
+import { Disc3, Search, MapPin, Sparkles } from "lucide-react";
 import ViewToggle from "@/components/ViewToggle";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
