@@ -332,12 +332,17 @@ const ProfileScreen = () => {
       <div className="mb-6 grid grid-cols-4 gap-2">
         {stats.map((stat) => {
           const Icon = stat.icon;
+          const Tag = stat.onClick ? "button" : "div";
           return (
-            <div key={stat.label} className="flex flex-col items-center rounded-xl bg-card p-3 vinyl-shadow">
+            <Tag
+              key={stat.label}
+              onClick={stat.onClick}
+              className={`flex flex-col items-center rounded-xl bg-card p-3 vinyl-shadow ${stat.onClick ? "transition-transform active:scale-95 hover:bg-card/80" : ""}`}
+            >
               <Icon size={22} className="mb-1.5 text-primary" fill={stat.icon === Heart ? "hsl(var(--primary))" : "none"} />
               <span className="font-display text-base font-bold text-foreground">{stat.value}</span>
               <span className="font-body text-[9px] text-muted-foreground text-center leading-tight">{stat.label}</span>
-            </div>
+            </Tag>
           );
         })}
       </div>
