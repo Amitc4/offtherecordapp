@@ -27,7 +27,17 @@
  * @see ReportBlockDialog   – Report or block a user.
  */
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive, ArchiveRestore, Eye, Flag, Search } from "lucide-react";
+import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive, ArchiveRestore, Eye, Flag, Search, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -136,6 +146,21 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     },
     enabled: !!user,
   });
+
+  // Refresh chat list whenever a new message arrives or the chats row changes
+  // (e.g., the unarchive-on-message trigger updates archived_by).
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel("chats-list-global")
+      .on("postgres_changes", { event: "*", schema: "public", table: "chats" }, () => refetchChats())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, () => {
+        refetchChats();
+        queryClient.invalidateQueries({ queryKey: ["last_messages"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, refetchChats, queryClient]);
 
   const chats = useMemo(
     () => allChats.filter((c) => !c.archived_by?.includes(user!.id)),
@@ -299,6 +324,32 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     await supabase.from("chats").update({ archived_by: newArchivedBy } as any).eq("id", chatId);
     refetchChats();
     toast.success("Chat unarchived");
+  };
+
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+
+  const handleDeleteChat = async (chatId: number) => {
+    if (!user) return;
+    const { data: offerRows } = await supabase
+      .from("trade_offers")
+      .select("id")
+      .eq("chat_id", chatId);
+    const offerIds = (offerRows || []).map((o: any) => o.id);
+    if (offerIds.length) {
+      await supabase.from("trade_offer_items").delete().in("offer_id", offerIds);
+      await supabase.from("trade_offers").delete().in("id", offerIds);
+    }
+    await supabase.from("chat_messages").delete().eq("chat_id", chatId);
+    const { error } = await supabase.from("chats").delete().eq("id", chatId);
+    if (error) {
+      toast.error("Couldn't delete chat");
+      return;
+    }
+    if (activeChat === chatId) setActiveChat(null);
+    setDeleteTarget(null);
+    refetchChats();
+    queryClient.invalidateQueries({ queryKey: ["unread-chats", user.id] });
+    toast.success("Chat deleted");
   };
 
   const activeChatData = allChats.find((c) => c.id === activeChat);
@@ -572,10 +623,17 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); showArchived ? handleUnarchiveChat(chat.id) : handleArchiveChat(chat.id); }}
-                    className={`ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${showArchived ? "text-muted-foreground hover:bg-primary/10 hover:text-primary" : "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"}`}
+                    className={`ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${showArchived ? "text-muted-foreground hover:bg-primary/10 hover:text-primary" : "text-muted-foreground hover:bg-primary/10 hover:text-primary"}`}
                     title={showArchived ? "Unarchive chat" : "Archive chat"}
                   >
                     {showArchived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeleteTarget(chat.id); }}
+                    className="ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    title="Delete chat"
+                  >
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </div>
@@ -583,6 +641,26 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
           })}
         </div>
       )}
+
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this chat?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the conversation, all messages, and any trade offers for both you and the other user. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteTarget !== null && handleDeleteChat(deleteTarget)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
