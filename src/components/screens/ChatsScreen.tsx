@@ -89,6 +89,15 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
   const [viewingCollection, setViewingCollection] = useState(false);
   const [viewingReviews, setViewingReviews] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { unreadIds } = useUnreadChats();
+
+  // Mark chat as read whenever it's opened or new messages arrive while open.
+  useEffect(() => {
+    if (!activeChat || !user) return;
+    markChatRead(activeChat, user.id).then(() => {
+      queryClient.invalidateQueries({ queryKey: ["unread-chats", user.id] });
+    });
+  }, [activeChat, user, queryClient]);
 
   // Toggle a body class while a chat is open so global floating buttons
   // (notifications bell, accessibility menu) can hide and not cover the Send button.
