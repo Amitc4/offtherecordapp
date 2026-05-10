@@ -157,13 +157,14 @@ Respond ONLY with valid JSON in this exact format:
     "surface_noise_estimate": "none/minimal/moderate/heavy"
   },
   "notes": "Any additional observations, including any difference between Side A and Side B",
+  "bad_photo_indices": [],
   "defects_per_photo": [
     [ { "x": 0.42, "y": 0.31, "radius": 0.05, "type": "scratch", "severity": "light", "description": "Short hairline scratch near outer groove" } ],
     [],
     ...
   ]
 }
-The "defects_per_photo" array MUST have exactly one entry per provided photo, in the same order as the photos were given.`,
+The "defects_per_photo" array MUST have exactly one entry per provided photo, in the same order as the photos were given. "bad_photo_indices" MUST be an array (empty when all photos are usable).`,
           },
           {
             role: "user",
