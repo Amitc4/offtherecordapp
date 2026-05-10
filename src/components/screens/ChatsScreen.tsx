@@ -87,6 +87,17 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
   const [viewingCollection, setViewingCollection] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Toggle a body class while a chat is open so global floating buttons
+  // (notifications bell, accessibility menu) can hide and not cover the Send button.
+  useEffect(() => {
+    if (activeChat) {
+      document.body.classList.add("chat-open");
+    } else {
+      document.body.classList.remove("chat-open");
+    }
+    return () => document.body.classList.remove("chat-open");
+  }, [activeChat]);
+
   // Handle initial chat navigation from Discover
   useEffect(() => {
     if (initialChatId) {
