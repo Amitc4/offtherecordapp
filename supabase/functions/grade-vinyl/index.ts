@@ -120,6 +120,8 @@ Deno.serve(async (req) => {
 
 First, verify all photos depict the same record (matching center label, color, pressing). If they clearly show different records or the photos are not of a vinyl playing surface, set score to null and explain in the summary.
 
+If you cannot grade because one or more specific photos are unusable (blurry, too dark, severe glare covering most of the surface, wrong subject, missing center label, finger covering the disc, or duplicates of another quarter), list those photo indices (0-based, in the order provided) in "bad_photo_indices" so the user can retake them. If grading succeeds normally, return an empty array for "bad_photo_indices". If you must set score to null because photos are unusable, "bad_photo_indices" MUST list every problematic photo.
+
 Otherwise, analyze the combined surface condition across all quarters and grade with a precise DECIMAL SCORE from 0.0 to 10.0 (one decimal place), where:
 - 10.0 = absolutely perfect, no flaws whatsoever
 - 9.5–9.9 = nearly perfect, only the most minor manufacturing marks
