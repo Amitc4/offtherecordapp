@@ -120,6 +120,8 @@ Deno.serve(async (req) => {
 
 First, verify all photos depict the same record (matching center label, color, pressing). If they clearly show different records or the photos are not of a vinyl playing surface, set score to null and explain in the summary.
 
+If you cannot grade because one or more specific photos are unusable (blurry, too dark, severe glare covering most of the surface, wrong subject, missing center label, finger covering the disc, or duplicates of another quarter), list those photo indices (0-based, in the order provided) in "bad_photo_indices" so the user can retake them. If grading succeeds normally, return an empty array for "bad_photo_indices". If you must set score to null because photos are unusable, "bad_photo_indices" MUST list every problematic photo.
+
 Otherwise, analyze the combined surface condition across all quarters and grade with a precise DECIMAL SCORE from 0.0 to 10.0 (one decimal place), where:
 - 10.0 = absolutely perfect, no flaws whatsoever
 - 9.5–9.9 = nearly perfect, only the most minor manufacturing marks
@@ -155,13 +157,14 @@ Respond ONLY with valid JSON in this exact format:
     "surface_noise_estimate": "none/minimal/moderate/heavy"
   },
   "notes": "Any additional observations, including any difference between Side A and Side B",
+  "bad_photo_indices": [],
   "defects_per_photo": [
     [ { "x": 0.42, "y": 0.31, "radius": 0.05, "type": "scratch", "severity": "light", "description": "Short hairline scratch near outer groove" } ],
     [],
     ...
   ]
 }
-The "defects_per_photo" array MUST have exactly one entry per provided photo, in the same order as the photos were given.`,
+The "defects_per_photo" array MUST have exactly one entry per provided photo, in the same order as the photos were given. "bad_photo_indices" MUST be an array (empty when all photos are usable).`,
           },
           {
             role: "user",
@@ -177,7 +180,7 @@ The "defects_per_photo" array MUST have exactly one entry per provided photo, in
             ],
           },
         ],
-        max_tokens: 800,
+        max_tokens: 4000,
         temperature: 0.1,
       }),
     });
@@ -220,11 +223,23 @@ The "defects_per_photo" array MUST have exactly one entry per provided photo, in
     } catch {
       console.error("Failed to parse AI grading response:", aiContent);
       return new Response(JSON.stringify({
-        error: "Could not grade the record from this photo. Make sure you're photographing the vinyl surface clearly.",
+        error: "Could not grade the record from these photos. Please retake the highlighted photos with clearer focus and lighting.",
+        bad_photo_indices: filePaths.map((_, i) => i),
       }), {
         status: 200,
         headers: { ...cors, "Content-Type": "application/json" },
       });
+    }
+
+    // Normalize bad_photo_indices and ensure score=null cases include them
+    if (!Array.isArray(grading.bad_photo_indices)) {
+      grading.bad_photo_indices = [];
+    }
+    grading.bad_photo_indices = grading.bad_photo_indices
+      .filter((n: unknown) => typeof n === "number" && n >= 0 && n < filePaths.length)
+      .map((n: number) => Math.floor(n));
+    if (grading.score === null && grading.bad_photo_indices.length === 0) {
+      grading.bad_photo_indices = filePaths.map((_, i) => i);
     }
 
     return new Response(JSON.stringify({ grading }), {

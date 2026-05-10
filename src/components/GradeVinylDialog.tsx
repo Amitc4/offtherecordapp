@@ -134,6 +134,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
   const [resultPhotoUrls, setResultPhotoUrls] = useState<string[]>([]);
   const [resultDefects, setResultDefects] = useState<PhotoDefect[][]>([]);
   const [photosViewerOpen, setPhotosViewerOpen] = useState(false);
+  const [badIndices, setBadIndices] = useState<number[]>([]);
 
   const filledCount = slots.filter(Boolean).length;
 
@@ -147,6 +148,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     setProgress(0);
     setResultPhotoUrls([]);
     setResultDefects([]);
+    setBadIndices([]);
   };
 
   /** When the dialog is closed, reset state so the next open starts fresh. */
@@ -196,6 +198,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
       next[idx] = { file, previewUrl: URL.createObjectURL(file) };
       return next;
     });
+    setBadIndices((prev) => prev.filter((i) => i !== idx));
     e.target.value = "";
   };
 
@@ -224,6 +227,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     }
 
     setError(null);
+    setBadIndices([]);
     setStage("uploading");
     setProgress(0);
 
@@ -270,6 +274,22 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
       const data = resp.data;
       if (data.error) {
         setError(data.error);
+        if (Array.isArray(data.bad_photo_indices)) {
+          setBadIndices(data.bad_photo_indices);
+        }
+        setStage("capture");
+        return;
+      }
+
+      const bad: number[] = Array.isArray(data.grading?.bad_photo_indices)
+        ? data.grading.bad_photo_indices
+        : [];
+      if (data.grading?.score === null || bad.length > 0) {
+        setBadIndices(bad.length > 0 ? bad : slots.map((_, i) => i));
+        setError(
+          data.grading?.summary ||
+            "Some photos couldn't be used. Please retake the highlighted ones."
+        );
         setStage("capture");
         return;
       }
@@ -339,7 +359,14 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                 </div>
 
                 {error && (
-                  <p className="text-center font-body text-sm text-destructive px-1">{error}</p>
+                  <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2">
+                    <p className="font-body text-xs text-destructive">{error}</p>
+                    {badIndices.length > 0 && (
+                      <p className="font-body text-[11px] text-destructive/80 mt-1">
+                        Tap the highlighted {badIndices.length === 1 ? "photo" : "photos"} to retake.
+                      </p>
+                    )}
+                  </div>
                 )}
 
                 {/* Side A */}
@@ -352,6 +379,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                         index={i}
                         slot={slot}
                         label={SLOT_LABELS[i]}
+                        needsRetake={badIndices.includes(i)}
                         onClick={() => handleSlotClick(i)}
                         onRemove={() => handleRemoveSlot(i)}
                       />
@@ -369,6 +397,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                         index={i + 4}
                         slot={slot}
                         label={SLOT_LABELS[i + 4]}
+                        needsRetake={badIndices.includes(i + 4)}
                         onClick={() => handleSlotClick(i + 4)}
                         onRemove={() => handleRemoveSlot(i + 4)}
                       />
@@ -529,20 +558,26 @@ interface SlotButtonProps {
   index: number;
   slot: SlotPhoto | null;
   label: string;
+  needsRetake?: boolean;
   onClick: () => void;
   onRemove: () => void;
 }
 
-const SlotButton = ({ index, slot, label, onClick, onRemove }: SlotButtonProps) => {
+const SlotButton = ({ index, slot, label, needsRetake, onClick, onRemove }: SlotButtonProps) => {
   return (
     <div className="relative aspect-square">
       {slot ? (
         <>
-          <img
-            src={slot.previewUrl}
-            alt={label}
-            className="h-full w-full rounded-lg object-cover"
-          />
+          <button
+            type="button"
+            onClick={needsRetake ? onClick : undefined}
+            className={`block h-full w-full overflow-hidden rounded-lg ${
+              needsRetake ? "ring-2 ring-destructive ring-offset-1 ring-offset-background animate-pulse" : ""
+            }`}
+            aria-label={needsRetake ? `Retake ${label}` : label}
+          >
+            <img src={slot.previewUrl} alt={label} className="h-full w-full object-cover" />
+          </button>
           <button
             onClick={onRemove}
             type="button"
@@ -551,9 +586,15 @@ const SlotButton = ({ index, slot, label, onClick, onRemove }: SlotButtonProps) 
           >
             <X size={10} />
           </button>
-          <div className="absolute bottom-0.5 right-0.5 rounded-full bg-emerald-500 p-0.5">
-            <CheckCircle2 size={10} className="text-white" />
-          </div>
+          {needsRetake ? (
+            <div className="absolute inset-x-0 bottom-0 rounded-b-lg bg-destructive/90 py-0.5 text-center">
+              <span className="font-body text-[9px] font-semibold text-destructive-foreground">Retake</span>
+            </div>
+          ) : (
+            <div className="absolute bottom-0.5 right-0.5 rounded-full bg-emerald-500 p-0.5">
+              <CheckCircle2 size={10} className="text-white" />
+            </div>
+          )}
         </>
       ) : (
         <button
