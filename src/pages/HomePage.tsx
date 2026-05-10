@@ -138,6 +138,11 @@ const HomePage = () => {
                     className={`transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`}
                     fill={isActive && tab.id === "wishlist" ? "hsl(var(--primary))" : "none"}
                   />
+                  {tab.id === "chats" && unreadTotal > 0 && (
+                    <span className="absolute -right-2 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 font-body text-[10px] font-bold text-primary-foreground shadow-md">
+                      {unreadTotal > 9 ? "9+" : unreadTotal}
+                    </span>
+                  )}
                 </div>
                 <span className={`font-body text-xs transition-colors ${isActive ? "font-semibold text-primary" : "text-muted-foreground"}`}>
                   {tab.label}
