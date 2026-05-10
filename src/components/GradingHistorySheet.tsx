@@ -59,13 +59,14 @@ const GradingHistorySheet = ({ open, onOpenChange }: GradingHistorySheetProps) =
   const { user } = useAuth();
   const [entries, setEntries] = useState<GradingEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [viewerEntry, setViewerEntry] = useState<GradingEntry | null>(null);
 
   useEffect(() => {
     if (open && user) {
       setLoading(true);
       supabase
         .from("grading_history")
-        .select("id, record_title, record_artist, score, grade_label, confidence, summary, created_at")
+        .select("id, record_title, record_artist, score, grade_label, confidence, summary, created_at, photo_urls, defects")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .then(({ data, error }) => {
