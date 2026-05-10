@@ -27,7 +27,17 @@
  * @see ReportBlockDialog   – Report or block a user.
  */
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive, ArchiveRestore, Eye, Flag, Search } from "lucide-react";
+import { ArrowLeft, Send, HandshakeIcon, MessageCircle, Archive, ArchiveRestore, Eye, Flag, Search, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/useAuth";
