@@ -583,15 +583,6 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
             const isUnread = unreadIds.has(chat.id);
             return (
               <div key={chat.id} className="relative overflow-hidden rounded-xl">
-                {/* Archive button behind */}
-                <div className="absolute right-0 top-0 bottom-0 flex items-center">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); showArchived ? handleUnarchiveChat(chat.id) : handleArchiveChat(chat.id); }}
-                    className={`flex h-full w-16 items-center justify-center ${showArchived ? "bg-primary text-primary-foreground" : "bg-destructive text-destructive-foreground"}`}
-                  >
-                    {showArchived ? <ArchiveRestore size={18} /> : <Archive size={18} />}
-                  </button>
-                </div>
                 {/* Chat row */}
                 <div
                   onClick={() => setActiveChat(chat.id)}
