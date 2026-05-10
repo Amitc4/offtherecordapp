@@ -519,6 +519,40 @@ const ProfileScreen = () => {
         )}
       </div>
 
+      {/* Spotify Connection */}
+      <div className="mb-6 rounded-xl bg-card p-4 vinyl-shadow">
+        <div className="mb-3 flex items-center gap-2">
+          <Music size={18} className="text-primary" />
+          <h3 className="font-display text-sm font-semibold text-foreground">Spotify</h3>
+        </div>
+
+        {spotifyConnected ? (
+          <div className="space-y-3">
+            <p className="font-body text-xs text-muted-foreground">
+              Connected{spotifyUsername ? <> as <span className="font-semibold text-primary">{spotifyUsername}</span></> : ""}
+            </p>
+            <Button size="sm" onClick={() => setSpotifyRecsOpen(true)} className="w-full bg-primary font-body text-xs font-semibold text-primary-foreground">
+              <Sparkles size={14} className="mr-1" />
+              See Recommended Records
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleDisconnectSpotify} className="w-full border-border font-body text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+              <Unlink size={14} className="mr-1" />
+              Disconnect Spotify
+            </Button>
+          </div>
+        ) : (
+          <div>
+            <p className="mb-3 font-body text-xs text-muted-foreground">
+              Connect your Spotify account so we can suggest records that match your taste in music.
+            </p>
+            <Button size="sm" onClick={handleConnectSpotify} disabled={spotifyConnecting} className="w-full bg-primary font-body text-xs font-semibold text-primary-foreground">
+              <Music size={14} className={`mr-1 ${spotifyConnecting ? "animate-spin" : ""}`} />
+              {spotifyConnecting ? "Connecting..." : "Connect Spotify Account"}
+            </Button>
+          </div>
+        )}
+      </div>
+
       {/* Menu items */}
       <div className="space-y-1">
         {menuItems.map((item) => (
