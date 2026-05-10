@@ -487,6 +487,17 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                   </div>
                 )}
 
+                {resultPhotoUrls.length > 0 && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => setPhotosViewerOpen(true)}
+                    className="gap-2"
+                  >
+                    <Images size={16} />
+                    View Photos & Imperfections
+                  </Button>
+                )}
+
                 <Button variant="outline" onClick={reset} className="mt-1">
                   Grade Another Record
                 </Button>
@@ -495,6 +506,13 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
           </AnimatePresence>
         </div>
       </DialogContent>
+
+      <GradingPhotosViewer
+        open={photosViewerOpen}
+        onOpenChange={setPhotosViewerOpen}
+        photoUrls={resultPhotoUrls}
+        defectsPerPhoto={resultDefects}
+      />
 
       <QuarterTutorial
         open={tutorialOpen}
