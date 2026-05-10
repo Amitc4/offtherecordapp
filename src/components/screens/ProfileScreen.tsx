@@ -88,6 +88,7 @@ const ProfileScreen = () => {
   const [reviewsOpen, setReviewsOpen] = useState(false);
   const [avgRating, setAvgRating] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
+  const [viewingReviewsOf, setViewingReviewsOf] = useState<{ id: string; name: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
