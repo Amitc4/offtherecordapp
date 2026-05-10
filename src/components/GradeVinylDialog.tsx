@@ -359,7 +359,14 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                 </div>
 
                 {error && (
-                  <p className="text-center font-body text-sm text-destructive px-1">{error}</p>
+                  <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2">
+                    <p className="font-body text-xs text-destructive">{error}</p>
+                    {badIndices.length > 0 && (
+                      <p className="font-body text-[11px] text-destructive/80 mt-1">
+                        Tap the highlighted {badIndices.length === 1 ? "photo" : "photos"} to retake.
+                      </p>
+                    )}
+                  </div>
                 )}
 
                 {/* Side A */}
@@ -372,6 +379,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                         index={i}
                         slot={slot}
                         label={SLOT_LABELS[i]}
+                        needsRetake={badIndices.includes(i)}
                         onClick={() => handleSlotClick(i)}
                         onRemove={() => handleRemoveSlot(i)}
                       />
@@ -389,6 +397,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                         index={i + 4}
                         slot={slot}
                         label={SLOT_LABELS[i + 4]}
+                        needsRetake={badIndices.includes(i + 4)}
                         onClick={() => handleSlotClick(i + 4)}
                         onRemove={() => handleRemoveSlot(i + 4)}
                       />
