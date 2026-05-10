@@ -647,6 +647,16 @@ const ProfileScreen = () => {
         open={spotifyRecsOpen}
         onOpenChange={setSpotifyRecsOpen}
       />
+
+      {user && (
+        <UserReviewsSheet
+          open={reviewsOpen}
+          onOpenChange={setReviewsOpen}
+          userId={user.id}
+          averageRating={avgRating}
+          totalReviews={reviewCount}
+        />
+      )}
     </div>
   );
 };
