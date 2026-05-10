@@ -68,6 +68,20 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
     enabled: !!user,
   });
 
+  // Check if the current user has Spotify connected
+  const { data: spotifyConnected = false } = useQuery({
+    queryKey: ["spotify_connected", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("spotify_connected")
+        .eq("user_id", user!.id)
+        .single();
+      return !!(data as any)?.spotify_connected;
+    },
+    enabled: !!user,
+  });
+
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["discover_records"],
     queryFn: async () => {
@@ -81,6 +95,20 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
     },
     enabled: !!user,
   });
+
+  // Spotify-personalized recommendations (only loaded when connected & on "All" tab)
+  const { data: spotifyRecs = [], isLoading: spotifyLoading } = useQuery({
+    queryKey: ["discover_spotify_recs", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("spotify-recommendations", { body: {} });
+      if (error || data?.error) throw new Error(data?.error || error?.message);
+      return (data?.recommendations || []) as any[];
+    },
+    enabled: !!user && spotifyConnected,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const useSpotifyRecs = activeGenre === "All" && spotifyConnected && spotifyRecs.length > 0;
 
   const filtered = useMemo(() => {
     let items = records.filter((r) => r.user_id !== user?.id && !blockedUserIds.includes(r.user_id));
