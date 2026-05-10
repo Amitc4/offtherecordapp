@@ -227,6 +227,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     }
 
     setError(null);
+    setBadIndices([]);
     setStage("uploading");
     setProgress(0);
 
