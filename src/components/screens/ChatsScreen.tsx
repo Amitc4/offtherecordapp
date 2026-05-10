@@ -196,7 +196,10 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Realtime subscription for messages in the active chat
+  // Realtime subscription for messages in the active chat.
+  // Note: there is a window between the initial useQuery fetch and the channel
+  // becoming SUBSCRIBED where INSERTs can be missed. We refetch once on
+  // subscribe (and on reconnect) to backfill any gaps.
   useEffect(() => {
     if (!user || !activeChat) return;
     const channel = supabase
@@ -214,7 +217,12 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
           queryClient.invalidateQueries({ queryKey: ["chats"] });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          // Backfill any messages that arrived between initial fetch and subscribe
+          queryClient.invalidateQueries({ queryKey: ["chat_messages", activeChat] });
+        }
+      });
     return () => { supabase.removeChannel(channel); };
   }, [activeChat, user, queryClient]);
 
@@ -238,7 +246,11 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
       .on("postgres_changes", { event: "*", schema: "public", table: "trade_offers", filter: `chat_id=eq.${activeChat}` }, () => {
         fetchOffers();
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          fetchOffers();
+        }
+      });
     return () => { supabase.removeChannel(channel); };
   }, [activeChat, fetchOffers]);
 
