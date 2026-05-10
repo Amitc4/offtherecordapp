@@ -33,6 +33,7 @@ import NotificationSettingsSheet from "@/components/NotificationSettingsSheet";
 import HelpSupportSheet from "@/components/HelpSupportSheet";
 import SettingsSheet from "@/components/SettingsSheet";
 import SpotifyRecommendationsSheet from "@/components/SpotifyRecommendationsSheet";
+import UserReviewsSheet from "@/components/UserReviewsSheet";
 
 interface FriendRow {
   id: string;
@@ -84,6 +85,9 @@ const ProfileScreen = () => {
   const [spotifyUsername, setSpotifyUsername] = useState<string | null>(null);
   const [spotifyConnecting, setSpotifyConnecting] = useState(false);
   const [spotifyRecsOpen, setSpotifyRecsOpen] = useState(false);
+  const [reviewsOpen, setReviewsOpen] = useState(false);
+  const [avgRating, setAvgRating] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -101,6 +105,15 @@ const ProfileScreen = () => {
       .eq("status", "completed")
       .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
       .then(({ count }) => setCompletedCount(count || 0));
+    supabase
+      .from("user_reviews")
+      .select("rating")
+      .eq("reviewed_id", user.id)
+      .then(({ data }) => {
+        const rows = data || [];
+        setReviewCount(rows.length);
+        setAvgRating(rows.length ? rows.reduce((s, r: any) => s + (r.rating || 0), 0) / rows.length : 0);
+      });
     loadFriends();
   }, [user]);
 
@@ -265,10 +278,10 @@ const ProfileScreen = () => {
   const avatarUrl = myProfile?.avatar_url;
 
   const stats = [
-    { icon: Disc3, value: records.length, label: "Records" },
-    { icon: Heart, value: wishlist.length, label: "Wishlist" },
-    { icon: Package, value: completedCount, label: "Sold / Swapped" },
-    { icon: Star, value: "0.0", label: "Rating" },
+    { icon: Disc3, value: records.length, label: "Records", onClick: undefined as (() => void) | undefined },
+    { icon: Heart, value: wishlist.length, label: "Wishlist", onClick: undefined },
+    { icon: Package, value: completedCount, label: "Sold / Swapped", onClick: undefined },
+    { icon: Star, value: reviewCount > 0 ? avgRating.toFixed(1) : "0.0", label: "Rating", onClick: () => setReviewsOpen(true) },
   ];
 
   const menuItems = [
@@ -319,12 +332,17 @@ const ProfileScreen = () => {
       <div className="mb-6 grid grid-cols-4 gap-2">
         {stats.map((stat) => {
           const Icon = stat.icon;
+          const Tag = stat.onClick ? "button" : "div";
           return (
-            <div key={stat.label} className="flex flex-col items-center rounded-xl bg-card p-3 vinyl-shadow">
+            <Tag
+              key={stat.label}
+              onClick={stat.onClick}
+              className={`flex flex-col items-center rounded-xl bg-card p-3 vinyl-shadow ${stat.onClick ? "transition-transform active:scale-95 hover:bg-card/80" : ""}`}
+            >
               <Icon size={22} className="mb-1.5 text-primary" fill={stat.icon === Heart ? "hsl(var(--primary))" : "none"} />
               <span className="font-display text-base font-bold text-foreground">{stat.value}</span>
               <span className="font-body text-[9px] text-muted-foreground text-center leading-tight">{stat.label}</span>
-            </div>
+            </Tag>
           );
         })}
       </div>
@@ -629,6 +647,16 @@ const ProfileScreen = () => {
         open={spotifyRecsOpen}
         onOpenChange={setSpotifyRecsOpen}
       />
+
+      {user && (
+        <UserReviewsSheet
+          open={reviewsOpen}
+          onOpenChange={setReviewsOpen}
+          userId={user.id}
+          averageRating={avgRating}
+          totalReviews={reviewCount}
+        />
+      )}
     </div>
   );
 };
