@@ -323,17 +323,20 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     const otherName = getOtherName(activeChatData);
     const otherUserId = getOtherUserId(activeChatData);
 
+    // Only the latest offer is displayed in the timeline; older offers are
+    // superseded as soon as a new one is created or one is countered.
+    const latestOffer = offers.length > 0 ? offers[offers.length - 1] : null;
     type TimelineItem = { type: "message"; data: ChatMessage } | { type: "offer"; data: TradeOffer };
     const timeline: TimelineItem[] = [
       ...messages.map((m) => ({ type: "message" as const, data: m })),
-      ...offers.map((o) => ({ type: "offer" as const, data: o })),
+      ...(latestOffer ? [{ type: "offer" as const, data: latestOffer }] : []),
     ];
     timeline.sort((a, b) => new Date(a.data.created_at).getTime() - new Date(b.data.created_at).getTime());
 
     return (
-      <div className="flex h-full flex-col">
-        {/* Header */}
-        <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+      <div className="relative min-h-full">
+        {/* Pinned header — stays in view while only the chat scrolls */}
+        <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md">
           <button onClick={() => setActiveChat(null)} className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-card active:bg-card/80">
             <ArrowLeft size={20} className="text-foreground" />
           </button>
@@ -372,8 +375,8 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
           </button>
         </div>
 
-        {/* Messages + Offers */}
-        <div className="flex-1 overflow-y-auto px-4 py-3 pb-20 space-y-3">
+        {/* Messages + latest offer */}
+        <div className="px-4 py-3 pb-32 space-y-3">
           {timeline.map((item) => {
             if (item.type === "message") {
               const msg = item.data;
