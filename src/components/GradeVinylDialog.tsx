@@ -16,12 +16,13 @@
 import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Camera, Loader2, Star, X, ImagePlus, CheckCircle2 } from "lucide-react";
+import { Camera, Loader2, Star, X, ImagePlus, CheckCircle2, Images } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import QuarterTutorial from "@/components/QuarterTutorial";
+import GradingPhotosViewer, { type PhotoDefect } from "@/components/GradingPhotosViewer";
 
 /** Props — `recordId/title/artist` are stored on the resulting history row. */
 interface GradeVinylDialogProps {
