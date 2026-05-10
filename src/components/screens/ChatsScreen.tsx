@@ -201,10 +201,15 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     enabled: allChats.length > 0,
   });
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom on new messages, and mark active chat as read
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (activeChat && user && messages.length > 0) {
+      markChatRead(activeChat, user.id).then(() => {
+        queryClient.invalidateQueries({ queryKey: ["unread-chats", user.id] });
+      });
+    }
+  }, [messages, activeChat, user, queryClient]);
 
   // Realtime subscription for messages in the active chat.
   // Note: there is a window between the initial useQuery fetch and the channel
