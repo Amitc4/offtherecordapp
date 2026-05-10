@@ -29,6 +29,7 @@ import AccessibilityMenu from "@/components/AccessibilityMenu";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import DiscogsCallback from "./pages/DiscogsCallback";
+import SpotifyCallback from "./pages/SpotifyCallback";
 
 /** Shared React Query client – used for caching API / Supabase data. */
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/discogs/callback" element={<DiscogsCallback />} />
+              <Route path="/spotify/callback" element={<SpotifyCallback />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

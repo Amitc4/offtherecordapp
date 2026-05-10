@@ -18,7 +18,7 @@
  * @see UserCollectionSheet       – View another user's collection (from friends list).
  */
 import { useState, useEffect, useRef } from "react";
-import { User, Settings, LogOut, ChevronRight, Disc3, Heart, Package, Star, RefreshCw, Unlink, Clock, Bell, HelpCircle, Pencil, Users, UserPlus, Search, Check, X, Copy, Eye, Camera } from "lucide-react";
+import { User, Settings, LogOut, ChevronRight, Disc3, Heart, Package, Star, RefreshCw, Unlink, Clock, Bell, HelpCircle, Pencil, Users, UserPlus, Search, Check, X, Copy, Eye, Camera, Music, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,6 +32,7 @@ import GradingHistorySheet from "@/components/GradingHistorySheet";
 import NotificationSettingsSheet from "@/components/NotificationSettingsSheet";
 import HelpSupportSheet from "@/components/HelpSupportSheet";
 import SettingsSheet from "@/components/SettingsSheet";
+import SpotifyRecommendationsSheet from "@/components/SpotifyRecommendationsSheet";
 
 interface FriendRow {
   id: string;
@@ -79,14 +80,20 @@ const ProfileScreen = () => {
   const [myProfile, setMyProfile] = useState<ProfileRow | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [completedCount, setCompletedCount] = useState(0);
+  const [spotifyConnected, setSpotifyConnected] = useState(false);
+  const [spotifyUsername, setSpotifyUsername] = useState<string | null>(null);
+  const [spotifyConnecting, setSpotifyConnecting] = useState(false);
+  const [spotifyRecsOpen, setSpotifyRecsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("user_id, short_id, display_name, avatar_url, nickname, first_name, last_name").eq("user_id", user.id).single()
+    supabase.from("profiles").select("user_id, short_id, display_name, avatar_url, nickname, first_name, last_name, spotify_connected, spotify_username").eq("user_id", user.id).single()
       .then(({ data }) => {
         setMyShortId(data?.short_id || null);
         setMyProfile(data as ProfileRow | null);
+        setSpotifyConnected(!!(data as any)?.spotify_connected);
+        setSpotifyUsername((data as any)?.spotify_username ?? null);
       });
     supabase
       .from("trade_offers")
@@ -197,6 +204,35 @@ const ProfileScreen = () => {
     } catch (err: any) {
       toast.error(err.message || "Failed to start Discogs connection");
       setConnecting(false);
+    }
+  };
+
+  const handleConnectSpotify = async () => {
+    setSpotifyConnecting(true);
+    try {
+      const redirectUri = `${window.location.origin}/spotify/callback`;
+      const { data, error } = await supabase.functions.invoke("spotify-auth", {
+        body: { action: "authorize", redirect_uri: redirectUri },
+      });
+      if (error || data?.error) throw new Error(data?.error || error?.message);
+      sessionStorage.setItem("spotify_oauth_state", data.state);
+      window.location.href = data.url;
+    } catch (err: any) {
+      toast.error(err.message || "Failed to start Spotify connection");
+      setSpotifyConnecting(false);
+    }
+  };
+
+  const handleDisconnectSpotify = async () => {
+    const { data, error } = await supabase.functions.invoke("spotify-auth", {
+      body: { action: "disconnect" },
+    });
+    if (error || data?.error) {
+      toast.error(data?.error || error?.message || "Failed to disconnect");
+    } else {
+      setSpotifyConnected(false);
+      setSpotifyUsername(null);
+      toast.success("Spotify disconnected");
     }
   };
 
@@ -483,6 +519,40 @@ const ProfileScreen = () => {
         )}
       </div>
 
+      {/* Spotify Connection */}
+      <div className="mb-6 rounded-xl bg-card p-4 vinyl-shadow">
+        <div className="mb-3 flex items-center gap-2">
+          <Music size={18} className="text-primary" />
+          <h3 className="font-display text-sm font-semibold text-foreground">Spotify</h3>
+        </div>
+
+        {spotifyConnected ? (
+          <div className="space-y-3">
+            <p className="font-body text-xs text-muted-foreground">
+              Connected{spotifyUsername ? <> as <span className="font-semibold text-primary">{spotifyUsername}</span></> : ""}
+            </p>
+            <Button size="sm" onClick={() => setSpotifyRecsOpen(true)} className="w-full bg-primary font-body text-xs font-semibold text-primary-foreground">
+              <Sparkles size={14} className="mr-1" />
+              See Recommended Records
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleDisconnectSpotify} className="w-full border-border font-body text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+              <Unlink size={14} className="mr-1" />
+              Disconnect Spotify
+            </Button>
+          </div>
+        ) : (
+          <div>
+            <p className="mb-3 font-body text-xs text-muted-foreground">
+              Connect your Spotify account so we can suggest records that match your taste in music.
+            </p>
+            <Button size="sm" onClick={handleConnectSpotify} disabled={spotifyConnecting} className="w-full bg-primary font-body text-xs font-semibold text-primary-foreground">
+              <Music size={14} className={`mr-1 ${spotifyConnecting ? "animate-spin" : ""}`} />
+              {spotifyConnecting ? "Connecting..." : "Connect Spotify Account"}
+            </Button>
+          </div>
+        )}
+      </div>
+
       {/* Menu items */}
       <div className="space-y-1">
         {menuItems.map((item) => (
@@ -553,6 +623,11 @@ const ProfileScreen = () => {
       <SettingsSheet
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
+      />
+
+      <SpotifyRecommendationsSheet
+        open={spotifyRecsOpen}
+        onOpenChange={setSpotifyRecsOpen}
       />
     </div>
   );
