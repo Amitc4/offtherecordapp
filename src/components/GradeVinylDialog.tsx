@@ -198,6 +198,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
       next[idx] = { file, previewUrl: URL.createObjectURL(file) };
       return next;
     });
+    setBadIndices((prev) => prev.filter((i) => i !== idx));
     e.target.value = "";
   };
 
