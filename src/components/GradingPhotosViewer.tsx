@@ -7,9 +7,61 @@
  * top. A toggle lets the user show/hide markers. Tapping a marker reveals a tooltip
  * with the defect's description and severity.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Disc3, X, Eye, EyeOff } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+/**
+ * The grading photos are stored in the private `record-photos` bucket. The
+ * URLs persisted in `grading_history.photo_urls` are the (non-working) public
+ * URLs returned by `getPublicUrl`. To actually display them we extract the
+ * object path and request short-lived signed URLs.
+ */
+const BUCKET = "record-photos";
+const extractPath = (url: string): string | null => {
+  const marker = `/storage/v1/object/public/${BUCKET}/`;
+  const i = url.indexOf(marker);
+  if (i === -1) return null;
+  return decodeURIComponent(url.slice(i + marker.length).split("?")[0]);
+};
+
+const useSignedPhotoUrls = (urls: string[], open: boolean): string[] => {
+  const [signed, setSigned] = useState<string[]>(urls);
+  useEffect(() => {
+    if (!open || urls.length === 0) {
+      setSigned(urls);
+      return;
+    }
+    const paths = urls.map(extractPath);
+    if (paths.every((p) => p === null)) {
+      setSigned(urls);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const validPaths = paths.filter((p): p is string => !!p);
+      const { data } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrls(validPaths, 3600);
+      if (cancelled) return;
+      const map = new Map<string, string>();
+      data?.forEach((d, i) => {
+        if (d.signedUrl) map.set(validPaths[i], d.signedUrl);
+      });
+      setSigned(
+        urls.map((u, i) => {
+          const p = paths[i];
+          return (p && map.get(p)) || u;
+        })
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, urls.join("|")]);
+  return signed;
+};
 
 /** Single AI-detected defect on a photo. Coordinates are normalized 0–1. */
 export interface PhotoDefect {
@@ -57,6 +109,7 @@ const GradingPhotosViewer = ({ open, onOpenChange, photoUrls, defectsPerPhoto }:
   const [showMarkers, setShowMarkers] = useState(true);
 
   const totalDefects = (defectsPerPhoto || []).reduce((n, arr) => n + (arr?.length || 0), 0);
+  const displayUrls = useSignedPhotoUrls(photoUrls, open);
 
   return (
     <>
@@ -94,17 +147,17 @@ const GradingPhotosViewer = ({ open, onOpenChange, photoUrls, defectsPerPhoto }:
               <PhotoSection
                 title="Side A"
                 offset={0}
-                photos={photoUrls.slice(0, 4)}
+                photos={displayUrls.slice(0, 4)}
                 defects={defectsPerPhoto?.slice(0, 4)}
                 showMarkers={showMarkers}
                 onTile={(i) => setZoomIdx(i)}
               />
 
-              {photoUrls.length > 4 && (
+              {displayUrls.length > 4 && (
                 <PhotoSection
                   title="Side B"
                   offset={4}
-                  photos={photoUrls.slice(4, 8)}
+                  photos={displayUrls.slice(4, 8)}
                   defects={defectsPerPhoto?.slice(4, 8)}
                   showMarkers={showMarkers}
                   onTile={(i) => setZoomIdx(i + 4)}
@@ -121,9 +174,9 @@ const GradingPhotosViewer = ({ open, onOpenChange, photoUrls, defectsPerPhoto }:
         </DialogContent>
       </Dialog>
 
-      {zoomIdx !== null && photoUrls[zoomIdx] && (
+      {zoomIdx !== null && displayUrls[zoomIdx] && (
         <Lightbox
-          url={photoUrls[zoomIdx]}
+          url={displayUrls[zoomIdx]}
           label={SLOT_LABELS[zoomIdx]}
           defects={showMarkers ? defectsPerPhoto?.[zoomIdx] : undefined}
           onClose={() => setZoomIdx(null)}
