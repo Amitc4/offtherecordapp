@@ -66,26 +66,28 @@ const UserReviewsSheet = ({ open, onOpenChange, userId, averageRating, totalRevi
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl">
         <SheetHeader>
-          <SheetTitle className="font-display text-xl text-foreground">Reviews</SheetTitle>
+          <SheetTitle className="font-display text-xl text-foreground">
+            {userName ? `${userName}'s Reviews` : "Reviews"}
+          </SheetTitle>
         </SheetHeader>
 
         <div className="mt-4 mb-4 flex items-center gap-3 rounded-xl bg-card p-4 vinyl-shadow">
           <div className="flex flex-col items-center">
             <span className="font-display text-3xl font-bold text-foreground">
-              {totalReviews > 0 ? averageRating.toFixed(1) : "—"}
+              {total > 0 ? avg.toFixed(1) : "—"}
             </span>
             <div className="flex gap-0.5">
               {[1, 2, 3, 4, 5].map((s) => (
                 <Star
                   key={s}
                   size={12}
-                  className={s <= Math.round(averageRating) ? "fill-primary text-primary" : "text-muted-foreground"}
+                  className={s <= Math.round(avg) ? "fill-primary text-primary" : "text-muted-foreground"}
                 />
               ))}
             </div>
           </div>
           <p className="font-body text-sm text-muted-foreground">
-            Based on {totalReviews} {totalReviews === 1 ? "review" : "reviews"}
+            Based on {total} {total === 1 ? "review" : "reviews"}
           </p>
         </div>
 
