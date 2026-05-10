@@ -37,6 +37,7 @@ import CreateOfferDialog from "@/components/CreateOfferDialog";
 import OfferCard from "@/components/OfferCard";
 import UserCollectionSheet from "@/components/UserCollectionSheet";
 import ReportBlockDialog from "@/components/ReportBlockDialog";
+import UserReviewsSheet from "@/components/UserReviewsSheet";
 
 interface ChatRow {
   id: number;
