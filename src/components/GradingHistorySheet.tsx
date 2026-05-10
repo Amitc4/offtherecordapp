@@ -158,15 +158,33 @@ const GradingHistorySheet = ({ open, onOpenChange }: GradingHistorySheetProps) =
                   </button>
                 </div>
 
-                <div className="mt-2 flex items-center gap-1 text-muted-foreground">
-                  <Clock size={10} />
-                  <span className="font-body text-[10px]">{formatDate(entry.created_at)}</span>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Clock size={10} />
+                    <span className="font-body text-[10px]">{formatDate(entry.created_at)}</span>
+                  </div>
+                  {entry.photo_urls && entry.photo_urls.length > 0 && (
+                    <button
+                      onClick={() => setViewerEntry(entry)}
+                      className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 font-body text-[10px] font-semibold text-primary hover:bg-primary/15"
+                    >
+                      <Images size={11} />
+                      View photos
+                    </button>
+                  )}
                 </div>
               </div>
             ))
           )}
         </div>
       </SheetContent>
+
+      <GradingPhotosViewer
+        open={viewerEntry !== null}
+        onOpenChange={(o) => !o && setViewerEntry(null)}
+        photoUrls={viewerEntry?.photo_urls || []}
+        defectsPerPhoto={viewerEntry?.defects || undefined}
+      />
     </Sheet>
   );
 };
