@@ -16,7 +16,7 @@
  * @see DiscoverRecordSheet – Bottom sheet shown when a record card is tapped.
  */
 import { useState, useMemo, useEffect } from "react";
-import { Disc3, Search, MapPin } from "lucide-react";
+import { Disc3, Search, MapPin, Sparkles } from "lucide-react";
 import ViewToggle from "@/components/ViewToggle";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,6 +68,20 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
     enabled: !!user,
   });
 
+  // Check if the current user has Spotify connected
+  const { data: spotifyConnected = false } = useQuery({
+    queryKey: ["spotify_connected", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("spotify_connected")
+        .eq("user_id", user!.id)
+        .single();
+      return !!(data as any)?.spotify_connected;
+    },
+    enabled: !!user,
+  });
+
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["discover_records"],
     queryFn: async () => {
@@ -82,12 +96,27 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
     enabled: !!user,
   });
 
-  const filtered = useMemo(() => {
-    let items = records.filter((r) => r.user_id !== user?.id && !blockedUserIds.includes(r.user_id));
+  // Spotify-personalized recommendations (only loaded when connected & on "All" tab)
+  const { data: spotifyRecs = [], isLoading: spotifyLoading } = useQuery({
+    queryKey: ["discover_spotify_recs", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("spotify-recommendations", { body: {} });
+      if (error || data?.error) throw new Error(data?.error || error?.message);
+      return (data?.recommendations || []) as any[];
+    },
+    enabled: !!user && spotifyConnected,
+    staleTime: 5 * 60 * 1000,
+  });
 
-    if (activeGenre !== "All") {
-      items = items.filter((r) => {
-        const genre = ((r as any).genre || "").toLowerCase();
+  const useSpotifyRecs = activeGenre === "All" && spotifyConnected;
+
+  const filtered = useMemo(() => {
+    const base = useSpotifyRecs ? spotifyRecs : records;
+    let items = base.filter((r: any) => r.user_id !== user?.id && !blockedUserIds.includes(r.user_id));
+
+    if (!useSpotifyRecs && activeGenre !== "All") {
+      items = items.filter((r: any) => {
+        const genre = (r.genre || "").toLowerCase();
         return genre.includes(activeGenre.toLowerCase());
       });
     }
@@ -95,14 +124,14 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
     if (searchText.trim()) {
       const q = searchText.trim().toLowerCase();
       items = items.filter(
-        (r) =>
+        (r: any) =>
           r.title.toLowerCase().includes(q) ||
           r.artist.toLowerCase().includes(q)
       );
     }
 
     return items;
-  }, [records, user?.id, activeGenre, searchText, blockedUserIds]);
+  }, [records, spotifyRecs, useSpotifyRecs, user?.id, activeGenre, searchText, blockedUserIds]);
 
   const getDistance = (sellerId: string): string | null => {
     if (!latitude || !longitude || !permissionGranted) return null;
@@ -157,7 +186,11 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
       <div className="mb-1 flex items-center justify-between">
         <h1 className="font-display text-3xl font-bold text-foreground">Discover</h1>
       </div>
-      <p className="mb-3 font-body text-sm text-muted-foreground">Find your next favourite record</p>
+      <p className="mb-3 font-body text-sm text-muted-foreground">
+        {useSpotifyRecs
+          ? <span className="inline-flex items-center gap-1"><Sparkles size={13} className="text-primary" /> Picked for you based on your Spotify taste</span>
+          : "Find your next favourite record"}
+      </p>
 
       <div className="mb-3 flex items-center justify-between">
         <button
@@ -202,7 +235,7 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
         ))}
       </div>
 
-      {isLoading ? (
+      {isLoading || (useSpotifyRecs && spotifyLoading) ? (
         <div className="flex justify-center py-12">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
