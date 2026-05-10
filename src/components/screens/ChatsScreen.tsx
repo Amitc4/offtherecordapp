@@ -136,10 +136,10 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     [allChats, user]
   );
 
-  // Fetch participant display names
+  // Fetch participant display names (for both active and archived chats)
   useEffect(() => {
-    if (!chats.length || !user) return;
-    const otherIds = [...new Set(chats.map((c) => (c.participant_1 === user.id ? c.participant_2 : c.participant_1)))];
+    if (!allChats.length || !user) return;
+    const otherIds = [...new Set(allChats.map((c) => (c.participant_1 === user.id ? c.participant_2 : c.participant_1)))];
     if (!otherIds.length) return;
 
     supabase
@@ -153,7 +153,7 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
           setParticipantNames(map);
         }
       });
-  }, [chats, user]);
+  }, [allChats, user]);
 
   // Fetch messages for active chat
   const { data: messages = [] } = useQuery({
