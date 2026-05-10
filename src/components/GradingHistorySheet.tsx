@@ -29,6 +29,8 @@ interface GradingEntry {
   confidence: number | null;
   summary: string | null;
   created_at: string;
+  photo_urls: string[] | null;
+  defects: PhotoDefect[][] | null;
 }
 
 /** Tailwind text color for the decimal score (best → worst). */
