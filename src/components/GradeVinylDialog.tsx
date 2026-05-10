@@ -558,20 +558,26 @@ interface SlotButtonProps {
   index: number;
   slot: SlotPhoto | null;
   label: string;
+  needsRetake?: boolean;
   onClick: () => void;
   onRemove: () => void;
 }
 
-const SlotButton = ({ index, slot, label, onClick, onRemove }: SlotButtonProps) => {
+const SlotButton = ({ index, slot, label, needsRetake, onClick, onRemove }: SlotButtonProps) => {
   return (
     <div className="relative aspect-square">
       {slot ? (
         <>
-          <img
-            src={slot.previewUrl}
-            alt={label}
-            className="h-full w-full rounded-lg object-cover"
-          />
+          <button
+            type="button"
+            onClick={needsRetake ? onClick : undefined}
+            className={`block h-full w-full overflow-hidden rounded-lg ${
+              needsRetake ? "ring-2 ring-destructive ring-offset-1 ring-offset-background animate-pulse" : ""
+            }`}
+            aria-label={needsRetake ? `Retake ${label}` : label}
+          >
+            <img src={slot.previewUrl} alt={label} className="h-full w-full object-cover" />
+          </button>
           <button
             onClick={onRemove}
             type="button"
@@ -580,9 +586,15 @@ const SlotButton = ({ index, slot, label, onClick, onRemove }: SlotButtonProps) 
           >
             <X size={10} />
           </button>
-          <div className="absolute bottom-0.5 right-0.5 rounded-full bg-emerald-500 p-0.5">
-            <CheckCircle2 size={10} className="text-white" />
-          </div>
+          {needsRetake ? (
+            <div className="absolute inset-x-0 bottom-0 rounded-b-lg bg-destructive/90 py-0.5 text-center">
+              <span className="font-body text-[9px] font-semibold text-destructive-foreground">Retake</span>
+            </div>
+          ) : (
+            <div className="absolute bottom-0.5 right-0.5 rounded-full bg-emerald-500 p-0.5">
+              <CheckCircle2 size={10} className="text-white" />
+            </div>
+          )}
         </>
       ) : (
         <button
