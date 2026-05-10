@@ -223,11 +223,23 @@ The "defects_per_photo" array MUST have exactly one entry per provided photo, in
     } catch {
       console.error("Failed to parse AI grading response:", aiContent);
       return new Response(JSON.stringify({
-        error: "Could not grade the record from this photo. Make sure you're photographing the vinyl surface clearly.",
+        error: "Could not grade the record from these photos. Please retake the highlighted photos with clearer focus and lighting.",
+        bad_photo_indices: filePaths.map((_, i) => i),
       }), {
         status: 200,
         headers: { ...cors, "Content-Type": "application/json" },
       });
+    }
+
+    // Normalize bad_photo_indices and ensure score=null cases include them
+    if (!Array.isArray(grading.bad_photo_indices)) {
+      grading.bad_photo_indices = [];
+    }
+    grading.bad_photo_indices = grading.bad_photo_indices
+      .filter((n: unknown) => typeof n === "number" && n >= 0 && n < filePaths.length)
+      .map((n: number) => Math.floor(n));
+    if (grading.score === null && grading.bad_photo_indices.length === 0) {
+      grading.bad_photo_indices = filePaths.map((_, i) => i);
     }
 
     return new Response(JSON.stringify({ grading }), {
