@@ -177,12 +177,12 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-2xl border-t border-border bg-card px-0 pb-8">
-        <SheetHeader className="px-5 pb-2">
+      <SheetContent side="bottom" className="flex max-h-[90vh] flex-col rounded-t-2xl border-t border-border bg-card px-0 pb-0">
+        <SheetHeader className="shrink-0 px-5 pb-2">
           <SheetTitle className="font-display text-lg text-foreground">Record Details</SheetTitle>
         </SheetHeader>
 
-        <div className="px-5 space-y-5">
+        <div className="flex-1 overflow-y-auto px-5 pb-8 space-y-5">
           {/* Cover + title area */}
           <div className="flex gap-4">
             <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-primary/10">
