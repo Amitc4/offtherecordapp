@@ -132,13 +132,15 @@ Otherwise, analyze the combined surface condition across all quarters and grade 
 
 Use the worst-affected area to anchor the score; be honest and accurate.
 
-CRITICAL — IGNORE REFLECTIONS AND LIGHTING ARTIFACTS: Vinyl is a glossy black surface and will almost always show specular highlights, light glare, lamp/window reflections, the photographer's silhouette, rainbow/holographic sheens, and broad bright bands from overhead light. These are NOT defects and MUST NOT affect the grade or appear in defects_per_photo. Distinguish a real defect (a physical mark on the surface) from a reflection by these cues:
-- Reflections are bright, soft-edged, often white/blue/rainbow, and follow the curvature of the disc; they shift smoothly across the surface and have no sharp linear edge.
-- Real scratches/scuffs are usually thin, sharp-edged lines or hazy patches that follow the groove direction or cut across grooves; they remain visible inside both highlight and shadow zones.
-- If you are uncertain whether a mark is a reflection or a real defect, treat it as a reflection and omit it.
-Mentally "subtract" the reflections before grading and look for marks that persist in the darker, non-reflective regions of the disc. Grade the underlying surface, not the lighting.
+REFLECTIONS vs REAL DEFECTS — be balanced and accurate. Vinyl is glossy and will show specular highlights, lamp/window reflections, photographer silhouettes, and rainbow/holographic sheens that follow the curvature of the disc. These are NOT defects.
+However, do NOT overcorrect: real scratches, scuffs and marks are very common on used records and you MUST report them when present. Many records have visible damage and a low grade is appropriate.
+Distinguishing cues:
+- Reflections are bright, soft-edged, often white/blue/rainbow, follow the disc's curvature, and shift with the lighting; they have no sharp linear edge and disappear in shadow zones.
+- Real scratches/scuffs are thin, sharp-edged lines (often radial across grooves or along them) or hazy patches that remain visible inside both highlight and shadow zones, and frequently appear in the same location across multiple photos taken from different angles.
+- Scuff clusters, scratch sets, and rim wear are common — report them honestly.
+Grade the underlying surface, not the lighting. If a defect is clearly visible (sharp edge, persists across shadow regions, or matches typical scratch geometry), report it. Only omit marks that you are confident are reflections.
 
-For EACH photo, identify visible imperfections (scratches, scuffs, chips, warps, marks). For each defect, return its location as NORMALIZED coordinates relative to that photo's bounding box (x and y between 0.0 and 1.0, where 0,0 is top-left and 1,1 is bottom-right), plus a small bounding circle radius (0.02–0.15 of image width). Only mark genuinely visible defects — do NOT invent flaws and do NOT mark reflections, glare, or rainbow sheens. If a photo has no visible defects, return an empty array for that photo.
+For EACH photo, identify visible imperfections (scratches, scuffs, chips, warps, marks). For each defect, return its location as NORMALIZED coordinates relative to that photo's bounding box (x and y between 0.0 and 1.0, where 0,0 is top-left and 1,1 is bottom-right), plus a small bounding circle radius (0.02–0.15 of image width). Report every genuinely visible defect — do NOT invent flaws and do NOT mark obvious reflections, but do NOT suppress real damage. If a photo truly has no visible defects, return an empty array for that photo.
 
 Respond ONLY with valid JSON in this exact format:
 {
