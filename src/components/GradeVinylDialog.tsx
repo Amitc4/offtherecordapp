@@ -274,6 +274,22 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
       const data = resp.data;
       if (data.error) {
         setError(data.error);
+        if (Array.isArray(data.bad_photo_indices)) {
+          setBadIndices(data.bad_photo_indices);
+        }
+        setStage("capture");
+        return;
+      }
+
+      const bad: number[] = Array.isArray(data.grading?.bad_photo_indices)
+        ? data.grading.bad_photo_indices
+        : [];
+      if (data.grading?.score === null || bad.length > 0) {
+        setBadIndices(bad.length > 0 ? bad : slots.map((_, i) => i));
+        setError(
+          data.grading?.summary ||
+            "Some photos couldn't be used. Please retake the highlighted ones."
+        );
         setStage("capture");
         return;
       }
