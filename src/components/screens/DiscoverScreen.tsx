@@ -270,7 +270,7 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                   {price != null ? (
                     <span className="font-body text-sm font-bold text-primary">₪{price}</span>
                   ) : (
-                    <span className="font-body text-xs text-muted-foreground">{item.year || "—"}</span>
+                    <span className="rounded bg-primary/15 px-1.5 py-0.5 font-body text-[10px] font-bold text-primary">Open to trade</span>
                   )}
                   {item.condition && (
                     <span className="rounded bg-secondary px-1.5 py-0.5 font-body text-[9px] font-semibold text-secondary-foreground">
@@ -315,8 +315,10 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                   )}
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  {price != null && (
+                  {price != null ? (
                     <span className="font-body text-sm font-bold text-primary">₪{price}</span>
+                  ) : (
+                    <span className="rounded bg-primary/15 px-1.5 py-0.5 font-body text-[10px] font-bold text-primary">Open to trade</span>
                   )}
                   {item.condition && (
                     <span className="rounded bg-secondary px-1.5 py-0.5 font-body text-[9px] font-semibold text-secondary-foreground">

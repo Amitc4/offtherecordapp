@@ -97,10 +97,10 @@ const AddRecordDialog = ({ open, onOpenChange, target }: AddRecordDialogProps) =
       year: item.year,
       cover_image: item.cover_image,
       discogs_release_id: item.id,
-      genre: item.genre,
     };
     if (target === "collection") {
       record.format = item.format;
+      record.genre = item.genre;
     }
 
     const { error } = await supabase.from(tableName).insert(record);
