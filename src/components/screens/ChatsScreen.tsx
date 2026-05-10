@@ -293,12 +293,15 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
             {otherName.charAt(0)}
           </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="font-body text-sm font-semibold text-foreground">{otherName}</h3>
+          <button
+            onClick={() => setViewingReviews(true)}
+            className="min-w-0 flex-1 text-left"
+          >
+            <h3 className="font-body text-sm font-semibold text-foreground hover:text-primary truncate">{otherName}</h3>
             {activeChatData.record_title && (
-              <p className="font-body text-[10px] font-medium text-primary">{activeChatData.record_title}</p>
+              <p className="font-body text-[10px] font-medium text-primary truncate">{activeChatData.record_title}</p>
             )}
-          </div>
+          </button>
           <button
             onClick={() => setViewingCollection(true)}
             className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary"
