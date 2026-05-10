@@ -116,6 +116,23 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate, onCounterOffer }
     }
 
     await supabase.from("trade_offers").update(updates).eq("id", offer.id);
+
+    // Mark records the current user offered (and owns) as "sold" so they
+    // appear in the Sold filter of the Collection tab. RLS only permits
+    // owners to update their own records, so each side updates their own
+    // half of the trade when they confirm.
+    if (user) {
+      const myRecordIds = items
+        .filter((i) => i.owner_id === user.id)
+        .map((i) => i.record_id);
+      if (myRecordIds.length > 0) {
+        await supabase
+          .from("user_records")
+          .update({ status: "sold" } as any)
+          .in("id", myRecordIds);
+      }
+    }
+
     onUpdate();
   };
 
