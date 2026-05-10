@@ -18,7 +18,7 @@
  * @see UserCollectionSheet       – View another user's collection (from friends list).
  */
 import { useState, useEffect, useRef } from "react";
-import { User, Settings, LogOut, ChevronRight, Disc3, Heart, Package, Star, RefreshCw, Unlink, Clock, Bell, HelpCircle, Pencil, Users, UserPlus, Search, Check, X, Copy, Eye, Camera } from "lucide-react";
+import { User, Settings, LogOut, ChevronRight, Disc3, Heart, Package, Star, RefreshCw, Unlink, Clock, Bell, HelpCircle, Pencil, Users, UserPlus, Search, Check, X, Copy, Eye, Camera, Music, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,6 +32,7 @@ import GradingHistorySheet from "@/components/GradingHistorySheet";
 import NotificationSettingsSheet from "@/components/NotificationSettingsSheet";
 import HelpSupportSheet from "@/components/HelpSupportSheet";
 import SettingsSheet from "@/components/SettingsSheet";
+import SpotifyRecommendationsSheet from "@/components/SpotifyRecommendationsSheet";
 
 interface FriendRow {
   id: string;
