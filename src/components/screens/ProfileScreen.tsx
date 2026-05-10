@@ -207,6 +207,35 @@ const ProfileScreen = () => {
     }
   };
 
+  const handleConnectSpotify = async () => {
+    setSpotifyConnecting(true);
+    try {
+      const redirectUri = `${window.location.origin}/spotify/callback`;
+      const { data, error } = await supabase.functions.invoke("spotify-auth", {
+        body: { action: "authorize", redirect_uri: redirectUri },
+      });
+      if (error || data?.error) throw new Error(data?.error || error?.message);
+      sessionStorage.setItem("spotify_oauth_state", data.state);
+      window.location.href = data.url;
+    } catch (err: any) {
+      toast.error(err.message || "Failed to start Spotify connection");
+      setSpotifyConnecting(false);
+    }
+  };
+
+  const handleDisconnectSpotify = async () => {
+    const { data, error } = await supabase.functions.invoke("spotify-auth", {
+      body: { action: "disconnect" },
+    });
+    if (error || data?.error) {
+      toast.error(data?.error || error?.message || "Failed to disconnect");
+    } else {
+      setSpotifyConnected(false);
+      setSpotifyUsername(null);
+      toast.success("Spotify disconnected");
+    }
+  };
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
