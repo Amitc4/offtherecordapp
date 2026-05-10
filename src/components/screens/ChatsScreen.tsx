@@ -111,8 +111,10 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     }
   }, [initialChatId, initialDraft, onChatOpened]);
 
-  // Fetch all chats
-  const { data: chats = [], refetch: refetchChats } = useQuery({
+  const [showArchived, setShowArchived] = useState(false);
+
+  // Fetch all chats (including archived). Partition client-side.
+  const { data: allChats = [], refetch: refetchChats } = useQuery({
     queryKey: ["chats"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -120,11 +122,19 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
         .select("*")
         .order("updated_at", { ascending: false });
       if (error) throw error;
-      // Filter out archived chats client-side (archived_by contains current user id)
-      return (data as ChatRow[]).filter((c) => !c.archived_by?.includes(user!.id));
+      return data as ChatRow[];
     },
     enabled: !!user,
   });
+
+  const chats = useMemo(
+    () => allChats.filter((c) => !c.archived_by?.includes(user!.id)),
+    [allChats, user]
+  );
+  const archivedChats = useMemo(
+    () => allChats.filter((c) => c.archived_by?.includes(user!.id)),
+    [allChats, user]
+  );
 
   // Fetch participant display names
   useEffect(() => {
