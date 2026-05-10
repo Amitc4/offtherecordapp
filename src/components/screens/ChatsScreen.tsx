@@ -448,9 +448,20 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
   // Chat list view
   return (
     <div className="px-4 pt-4 pb-2">
-      <h1 className="mb-3 font-display text-3xl font-bold text-foreground">Chats</h1>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h1 className="font-display text-3xl font-bold text-foreground">
+          {showArchived ? "Archived" : "Chats"}
+        </h1>
+        <button
+          onClick={() => { setShowArchived((v) => !v); setChatSearch(""); }}
+          className="flex h-9 items-center gap-1.5 rounded-full bg-primary/15 px-3 font-body text-xs font-semibold text-primary transition-colors hover:bg-primary/25 active:scale-95"
+        >
+          {showArchived ? <ArchiveRestore size={14} /> : <Archive size={14} />}
+          <span>{showArchived ? "Back to Chats" : `Archived${archivedChats.length ? ` (${archivedChats.length})` : ""}`}</span>
+        </button>
+      </div>
 
-      {chats.length > 0 && (
+      {sourceChats.length > 0 && (
         <div className="relative mb-3">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -462,11 +473,21 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
         </div>
       )}
 
-      {chats.length === 0 ? (
+      {sourceChats.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-center">
-          <MessageCircle size={48} className="mb-4 text-muted-foreground/40" />
-          <p className="font-display text-base font-semibold text-muted-foreground">No conversations yet</p>
-          <p className="mt-1 font-body text-sm text-muted-foreground">Find a record in Discover and contact the seller</p>
+          {showArchived ? (
+            <>
+              <Archive size={48} className="mb-4 text-muted-foreground/40" />
+              <p className="font-display text-base font-semibold text-muted-foreground">No archived chats</p>
+              <p className="mt-1 font-body text-sm text-muted-foreground">Completed trades with mutual reviews land here</p>
+            </>
+          ) : (
+            <>
+              <MessageCircle size={48} className="mb-4 text-muted-foreground/40" />
+              <p className="font-display text-base font-semibold text-muted-foreground">No conversations yet</p>
+              <p className="mt-1 font-body text-sm text-muted-foreground">Find a record in Discover and contact the seller</p>
+            </>
+          )}
         </div>
       ) : filteredChats.length === 0 ? (
         <div className="flex flex-col items-center py-12 text-center">
