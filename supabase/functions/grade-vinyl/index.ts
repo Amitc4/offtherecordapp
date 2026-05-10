@@ -180,7 +180,7 @@ The "defects_per_photo" array MUST have exactly one entry per provided photo, in
             ],
           },
         ],
-        max_tokens: 800,
+        max_tokens: 4000,
         temperature: 0.1,
       }),
     });
