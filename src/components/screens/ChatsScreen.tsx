@@ -38,6 +38,7 @@ import OfferCard from "@/components/OfferCard";
 import UserCollectionSheet from "@/components/UserCollectionSheet";
 import ReportBlockDialog from "@/components/ReportBlockDialog";
 import UserReviewsSheet from "@/components/UserReviewsSheet";
+import { useUnreadChats, markChatRead } from "@/hooks/useUnreadChats";
 
 interface ChatRow {
   id: number;
@@ -88,6 +89,15 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
   const [viewingCollection, setViewingCollection] = useState(false);
   const [viewingReviews, setViewingReviews] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { unreadIds } = useUnreadChats();
+
+  // Mark chat as read whenever it's opened or new messages arrive while open.
+  useEffect(() => {
+    if (!activeChat || !user) return;
+    markChatRead(activeChat, user.id).then(() => {
+      queryClient.invalidateQueries({ queryKey: ["unread-chats", user.id] });
+    });
+  }, [activeChat, user, queryClient]);
 
   // Toggle a body class while a chat is open so global floating buttons
   // (notifications bell, accessibility menu) can hide and not cover the Send button.
@@ -191,10 +201,15 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     enabled: allChats.length > 0,
   });
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom on new messages, and mark active chat as read
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (activeChat && user && messages.length > 0) {
+      markChatRead(activeChat, user.id).then(() => {
+        queryClient.invalidateQueries({ queryKey: ["unread-chats", user.id] });
+      });
+    }
+  }, [messages, activeChat, user, queryClient]);
 
   // Realtime subscription for messages in the active chat.
   // Note: there is a window between the initial useQuery fetch and the channel
@@ -308,17 +323,20 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     const otherName = getOtherName(activeChatData);
     const otherUserId = getOtherUserId(activeChatData);
 
+    // Only the latest offer is displayed in the timeline; older offers are
+    // superseded as soon as a new one is created or one is countered.
+    const latestOffer = offers.length > 0 ? offers[offers.length - 1] : null;
     type TimelineItem = { type: "message"; data: ChatMessage } | { type: "offer"; data: TradeOffer };
     const timeline: TimelineItem[] = [
       ...messages.map((m) => ({ type: "message" as const, data: m })),
-      ...offers.map((o) => ({ type: "offer" as const, data: o })),
+      ...(latestOffer ? [{ type: "offer" as const, data: latestOffer }] : []),
     ];
     timeline.sort((a, b) => new Date(a.data.created_at).getTime() - new Date(b.data.created_at).getTime());
 
     return (
-      <div className="flex h-full flex-col">
-        {/* Header */}
-        <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+      <div className="relative min-h-full">
+        {/* Pinned header — stays in view while only the chat scrolls */}
+        <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md">
           <button onClick={() => setActiveChat(null)} className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-card active:bg-card/80">
             <ArrowLeft size={20} className="text-foreground" />
           </button>
@@ -357,8 +375,8 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
           </button>
         </div>
 
-        {/* Messages + Offers */}
-        <div className="flex-1 overflow-y-auto px-4 py-3 pb-20 space-y-3">
+        {/* Messages + latest offer */}
+        <div className="px-4 py-3 pb-32 space-y-3">
           {timeline.map((item) => {
             if (item.type === "message") {
               const msg = item.data;
@@ -511,6 +529,7 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
           {filteredChats.map((chat) => {
             const otherName = getOtherName(chat);
             const last = lastMessages[chat.id];
+            const isUnread = unreadIds.has(chat.id);
             return (
               <div key={chat.id} className="relative overflow-hidden rounded-xl">
                 {/* Archive button behind */}
@@ -525,16 +544,21 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
                 {/* Chat row */}
                 <div
                   onClick={() => setActiveChat(chat.id)}
-                  className="relative flex cursor-pointer items-center gap-3 bg-background p-3 transition-colors hover:bg-card"
+                  className={`relative flex cursor-pointer items-center gap-3 p-3 transition-colors hover:bg-card ${
+                    isUnread ? "bg-primary/10 border-l-4 border-primary pl-2" : "bg-background"
+                  }`}
                 >
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
+                  <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
                     {otherName.charAt(0)}
+                    {isUnread && (
+                      <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-primary ring-2 ring-background" />
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-body text-sm font-semibold text-foreground">{otherName}</h3>
+                      <h3 className={`font-body text-sm ${isUnread ? "font-bold text-foreground" : "font-semibold text-foreground"}`}>{otherName}</h3>
                       {last && (
-                        <span className="font-body text-[10px] text-muted-foreground">
+                        <span className={`font-body text-[10px] ${isUnread ? "font-semibold text-primary" : "text-muted-foreground"}`}>
                           {new Date(last.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </span>
                       )}
@@ -543,7 +567,7 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
                       <p className="font-body text-[10px] font-medium text-primary">{chat.record_title}</p>
                     )}
                     {last && (
-                      <p className="truncate font-body text-xs text-muted-foreground">{last.text}</p>
+                      <p className={`truncate font-body text-xs ${isUnread ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{last.text}</p>
                     )}
                   </div>
                   <button

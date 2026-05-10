@@ -32,6 +32,7 @@ import ChatsScreen from "@/components/screens/ChatsScreen";
 import ProfileScreen from "@/components/screens/ProfileScreen";
 import AdminScreen from "@/components/screens/AdminScreen";
 import { useAuth } from "@/hooks/useAuth";
+import { useUnreadChats } from "@/hooks/useUnreadChats";
 import { supabase } from "@/integrations/supabase/client";
 
 type Tab = "collection" | "wishlist" | "discover" | "chats" | "profile" | "admin";
@@ -50,6 +51,7 @@ const HomePage = () => {
   const [openChatId, setOpenChatId] = useState<number | null>(null);
   const [draftMessage, setDraftMessage] = useState<string>("");
   const { user } = useAuth();
+  const { total: unreadTotal } = useUnreadChats();
   const mainRef = useRef<HTMLElement>(null);
   const scrollTimer = useRef<ReturnType<typeof setTimeout>>();
 
@@ -136,6 +138,11 @@ const HomePage = () => {
                     className={`transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`}
                     fill={isActive && tab.id === "wishlist" ? "hsl(var(--primary))" : "none"}
                   />
+                  {tab.id === "chats" && unreadTotal > 0 && (
+                    <span className="absolute -right-2 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 font-body text-[10px] font-bold text-primary-foreground shadow-md">
+                      {unreadTotal > 9 ? "9+" : unreadTotal}
+                    </span>
+                  )}
                 </div>
                 <span className={`font-body text-xs transition-colors ${isActive ? "font-semibold text-primary" : "text-muted-foreground"}`}>
                   {tab.label}
