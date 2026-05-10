@@ -185,19 +185,24 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Realtime subscription for messages
+  // Realtime subscription for messages in the active chat
   useEffect(() => {
-    if (!user) return;
+    if (!user || !activeChat) return;
     const channel = supabase
-      .channel("chat-messages-realtime")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, (payload) => {
-        const msg = payload.new as ChatMessage;
-        if (msg.chat_id === activeChat) {
-          queryClient.invalidateQueries({ queryKey: ["chat_messages", activeChat] });
+      .channel(`chat-messages-${activeChat}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "chat_messages", filter: `chat_id=eq.${activeChat}` },
+        (payload) => {
+          const msg = payload.new as ChatMessage;
+          queryClient.setQueryData<ChatMessage[]>(["chat_messages", activeChat], (old = []) => {
+            if (old.some((m) => m.id === msg.id)) return old;
+            return [...old, msg];
+          });
+          queryClient.invalidateQueries({ queryKey: ["last_messages"] });
+          queryClient.invalidateQueries({ queryKey: ["chats"] });
         }
-        queryClient.invalidateQueries({ queryKey: ["last_messages"] });
-        queryClient.invalidateQueries({ queryKey: ["chats"] });
-      })
+      )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [activeChat, user, queryClient]);
