@@ -86,6 +86,7 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
   const [offers, setOffers] = useState<TradeOffer[]>([]);
   const [participantNames, setParticipantNames] = useState<Record<string, string>>({});
   const [viewingCollection, setViewingCollection] = useState(false);
+  const [viewingReviews, setViewingReviews] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Toggle a body class while a chat is open so global floating buttons
