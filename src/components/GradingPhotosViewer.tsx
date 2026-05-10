@@ -109,6 +109,7 @@ const GradingPhotosViewer = ({ open, onOpenChange, photoUrls, defectsPerPhoto }:
   const [showMarkers, setShowMarkers] = useState(true);
 
   const totalDefects = (defectsPerPhoto || []).reduce((n, arr) => n + (arr?.length || 0), 0);
+  const displayUrls = useSignedPhotoUrls(photoUrls, open);
 
   return (
     <>
