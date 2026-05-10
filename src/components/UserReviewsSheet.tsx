@@ -20,13 +20,21 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userId: string;
-  averageRating: number;
-  totalReviews: number;
+  /** Optional pre-computed values (used on own-profile to skip a roundtrip). */
+  averageRating?: number;
+  totalReviews?: number;
+  /** Display name shown in the sheet title (e.g. "Reviews of Jane"). */
+  userName?: string;
 }
 
-const UserReviewsSheet = ({ open, onOpenChange, userId, averageRating, totalReviews }: Props) => {
+const UserReviewsSheet = ({ open, onOpenChange, userId, averageRating, totalReviews, userName }: Props) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Derived values (fall back to props if provided, else compute from fetched reviews).
+  const computedAvg = reviews.length ? reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length : 0;
+  const avg = averageRating ?? computedAvg;
+  const total = totalReviews ?? reviews.length;
 
   useEffect(() => {
     if (!open || !userId) return;
