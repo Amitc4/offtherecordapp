@@ -414,6 +414,13 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
           targetUserId={otherUserId}
           targetUserName={otherName}
         />
+
+        <UserReviewsSheet
+          open={viewingReviews}
+          onOpenChange={setViewingReviews}
+          userId={otherUserId}
+          userName={otherName}
+        />
       </div>
     );
   }
