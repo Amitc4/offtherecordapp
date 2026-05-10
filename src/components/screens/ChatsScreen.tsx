@@ -147,6 +147,21 @@ const ChatsScreen = ({ initialChatId, initialDraft, onChatOpened }: ChatsScreenP
     enabled: !!user,
   });
 
+  // Refresh chat list whenever a new message arrives or the chats row changes
+  // (e.g., the unarchive-on-message trigger updates archived_by).
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel("chats-list-global")
+      .on("postgres_changes", { event: "*", schema: "public", table: "chats" }, () => refetchChats())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, () => {
+        refetchChats();
+        queryClient.invalidateQueries({ queryKey: ["last_messages"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, refetchChats, queryClient]);
+
   const chats = useMemo(
     () => allChats.filter((c) => !c.archived_by?.includes(user!.id)),
     [allChats, user]
