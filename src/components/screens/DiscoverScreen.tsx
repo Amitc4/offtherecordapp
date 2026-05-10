@@ -111,11 +111,12 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
   const useSpotifyRecs = activeGenre === "All" && spotifyConnected && spotifyRecs.length > 0;
 
   const filtered = useMemo(() => {
-    let items = records.filter((r) => r.user_id !== user?.id && !blockedUserIds.includes(r.user_id));
+    const base = useSpotifyRecs ? spotifyRecs : records;
+    let items = base.filter((r: any) => r.user_id !== user?.id && !blockedUserIds.includes(r.user_id));
 
-    if (activeGenre !== "All") {
-      items = items.filter((r) => {
-        const genre = ((r as any).genre || "").toLowerCase();
+    if (!useSpotifyRecs && activeGenre !== "All") {
+      items = items.filter((r: any) => {
+        const genre = (r.genre || "").toLowerCase();
         return genre.includes(activeGenre.toLowerCase());
       });
     }
@@ -123,14 +124,14 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
     if (searchText.trim()) {
       const q = searchText.trim().toLowerCase();
       items = items.filter(
-        (r) =>
+        (r: any) =>
           r.title.toLowerCase().includes(q) ||
           r.artist.toLowerCase().includes(q)
       );
     }
 
     return items;
-  }, [records, user?.id, activeGenre, searchText, blockedUserIds]);
+  }, [records, spotifyRecs, useSpotifyRecs, user?.id, activeGenre, searchText, blockedUserIds]);
 
   const getDistance = (sellerId: string): string | null => {
     if (!latitude || !longitude || !permissionGranted) return null;
