@@ -105,6 +105,15 @@ const ProfileScreen = () => {
       .eq("status", "completed")
       .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
       .then(({ count }) => setCompletedCount(count || 0));
+    supabase
+      .from("user_reviews")
+      .select("rating")
+      .eq("reviewed_id", user.id)
+      .then(({ data }) => {
+        const rows = data || [];
+        setReviewCount(rows.length);
+        setAvgRating(rows.length ? rows.reduce((s, r: any) => s + (r.rating || 0), 0) / rows.length : 0);
+      });
     loadFriends();
   }, [user]);
 
