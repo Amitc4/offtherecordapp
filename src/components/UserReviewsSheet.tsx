@@ -20,13 +20,21 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userId: string;
-  averageRating: number;
-  totalReviews: number;
+  /** Optional pre-computed values (used on own-profile to skip a roundtrip). */
+  averageRating?: number;
+  totalReviews?: number;
+  /** Display name shown in the sheet title (e.g. "Reviews of Jane"). */
+  userName?: string;
 }
 
-const UserReviewsSheet = ({ open, onOpenChange, userId, averageRating, totalReviews }: Props) => {
+const UserReviewsSheet = ({ open, onOpenChange, userId, averageRating, totalReviews, userName }: Props) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Derived values (fall back to props if provided, else compute from fetched reviews).
+  const computedAvg = reviews.length ? reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length : 0;
+  const avg = averageRating ?? computedAvg;
+  const total = totalReviews ?? reviews.length;
 
   useEffect(() => {
     if (!open || !userId) return;
@@ -58,26 +66,28 @@ const UserReviewsSheet = ({ open, onOpenChange, userId, averageRating, totalRevi
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl">
         <SheetHeader>
-          <SheetTitle className="font-display text-xl text-foreground">Reviews</SheetTitle>
+          <SheetTitle className="font-display text-xl text-foreground">
+            {userName ? `${userName}'s Reviews` : "Reviews"}
+          </SheetTitle>
         </SheetHeader>
 
         <div className="mt-4 mb-4 flex items-center gap-3 rounded-xl bg-card p-4 vinyl-shadow">
           <div className="flex flex-col items-center">
             <span className="font-display text-3xl font-bold text-foreground">
-              {totalReviews > 0 ? averageRating.toFixed(1) : "—"}
+              {total > 0 ? avg.toFixed(1) : "—"}
             </span>
             <div className="flex gap-0.5">
               {[1, 2, 3, 4, 5].map((s) => (
                 <Star
                   key={s}
                   size={12}
-                  className={s <= Math.round(averageRating) ? "fill-primary text-primary" : "text-muted-foreground"}
+                  className={s <= Math.round(avg) ? "fill-primary text-primary" : "text-muted-foreground"}
                 />
               ))}
             </div>
           </div>
           <p className="font-body text-sm text-muted-foreground">
-            Based on {totalReviews} {totalReviews === 1 ? "review" : "reviews"}
+            Based on {total} {total === 1 ? "review" : "reviews"}
           </p>
         </div>
 

@@ -88,6 +88,7 @@ const ProfileScreen = () => {
   const [reviewsOpen, setReviewsOpen] = useState(false);
   const [avgRating, setAvgRating] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
+  const [viewingReviewsOf, setViewingReviewsOf] = useState<{ id: string; name: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -474,9 +475,17 @@ const ProfileScreen = () => {
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-bold text-primary">
                       {(f.profile?.display_name || "?").charAt(0).toUpperCase()}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-body text-sm font-medium text-foreground">{f.profile?.display_name || "Unknown"}</p>
-                    </div>
+                    <button
+                      onClick={() => {
+                        const otherId = f.user_id === user?.id ? f.friend_id : f.user_id;
+                        setViewingReviewsOf({ id: otherId, name: f.profile?.display_name || "Unknown" });
+                      }}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <p className="font-body text-sm font-medium text-foreground hover:text-primary truncate">
+                        {f.profile?.display_name || "Unknown"}
+                      </p>
+                    </button>
                     <button
                       onClick={() => setViewingUser({ id: f.user_id === user?.id ? f.friend_id : f.user_id, name: f.profile?.display_name || "Unknown" })}
                       className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary"
@@ -657,6 +666,13 @@ const ProfileScreen = () => {
           totalReviews={reviewCount}
         />
       )}
+
+      <UserReviewsSheet
+        open={!!viewingReviewsOf}
+        onOpenChange={(o) => !o && setViewingReviewsOf(null)}
+        userId={viewingReviewsOf?.id || ""}
+        userName={viewingReviewsOf?.name}
+      />
     </div>
   );
 };
