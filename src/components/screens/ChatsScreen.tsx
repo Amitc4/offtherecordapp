@@ -38,6 +38,7 @@ import OfferCard from "@/components/OfferCard";
 import UserCollectionSheet from "@/components/UserCollectionSheet";
 import ReportBlockDialog from "@/components/ReportBlockDialog";
 import UserReviewsSheet from "@/components/UserReviewsSheet";
+import { useUnreadChats, markChatRead } from "@/hooks/useUnreadChats";
 
 interface ChatRow {
   id: number;
