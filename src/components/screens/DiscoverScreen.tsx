@@ -186,7 +186,11 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
       <div className="mb-1 flex items-center justify-between">
         <h1 className="font-display text-3xl font-bold text-foreground">Discover</h1>
       </div>
-      <p className="mb-3 font-body text-sm text-muted-foreground">Find your next favourite record</p>
+      <p className="mb-3 font-body text-sm text-muted-foreground">
+        {useSpotifyRecs
+          ? <span className="inline-flex items-center gap-1"><Sparkles size={13} className="text-primary" /> Picked for you based on your Spotify taste</span>
+          : "Find your next favourite record"}
+      </p>
 
       <div className="mb-3 flex items-center justify-between">
         <button
