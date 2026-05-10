@@ -666,6 +666,13 @@ const ProfileScreen = () => {
           totalReviews={reviewCount}
         />
       )}
+
+      <UserReviewsSheet
+        open={!!viewingReviewsOf}
+        onOpenChange={(o) => !o && setViewingReviewsOf(null)}
+        userId={viewingReviewsOf?.id || ""}
+        userName={viewingReviewsOf?.name}
+      />
     </div>
   );
 };
