@@ -275,6 +275,11 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
       }
 
       setGrading(data.grading);
+      const defects: PhotoDefect[][] = Array.isArray(data.grading?.defects_per_photo)
+        ? data.grading.defects_per_photo
+        : [];
+      setResultPhotoUrls(publicUrls);
+      setResultDefects(defects);
       setStage("results");
 
       await supabase.from("grading_history").insert({
@@ -289,6 +294,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
         details: data.grading.details,
         notes: data.grading.notes,
         photo_urls: publicUrls,
+        defects: defects,
       } as any);
     } catch {
       setError("Something went wrong. Please try again.");
