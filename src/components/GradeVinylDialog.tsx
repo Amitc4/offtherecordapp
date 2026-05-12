@@ -484,11 +484,16 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                 className="flex flex-col gap-4 pb-2"
               >
                 <div className={`rounded-xl p-5 text-center ${scoreBackground(grading.score)}`}>
-                  <p className={`font-display text-5xl font-black ${scoreColor(grading.score)}`}>
-                    {grading.score !== null ? grading.score.toFixed(1) : "?"}
-                    <span className="font-display text-2xl font-bold opacity-60">/10</span>
+                  <p className={`font-display text-6xl font-black leading-none ${scoreColor(grading.score)}`}>
+                    {goldmineGrade(grading.score)}
                   </p>
-                  <p className="font-display text-sm font-semibold text-foreground mt-1">{scoreLabel(grading.score)}</p>
+                  <p className="font-display text-sm font-semibold text-foreground mt-2">
+                    {scoreLabel(grading.score)}
+                  </p>
+                  <p className={`font-display text-2xl font-bold mt-2 ${scoreColor(grading.score)}`}>
+                    {grading.score !== null ? grading.score.toFixed(1) : "?"}
+                    <span className="text-base font-bold opacity-60">/10</span>
+                  </p>
                   <p className="font-body text-xs text-muted-foreground mt-1">
                     {grading.confidence}% confidence
                   </p>
