@@ -104,19 +104,14 @@ Deno.serve(async (req) => {
       "Side B — Quarter 4 (top-left, including center)",
     ];
 
-    // Ask AI to grade the vinyl condition
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
-        messages: [
-          {
-            role: "system",
-            content: `You are a professional vinyl record condition grader. You will receive up to 8 high-quality photos of a single vinyl record: 4 quarters of Side A and 4 quarters of Side B. Each quarter photo includes the center label so you can confirm all photos are of the SAME physical record.
+    // ============================================================
+    // DUAL-PASS GRADING
+    // Pass 1 (balanced): Gemini 2.5 Pro — primary grader, reflection-aware.
+    // Pass 2 (harsh inspector): GPT-5 — adversarial QC, assumes flaws exist.
+    // We then reconcile: take the LOWER (harsher) score, union defects.
+    // ============================================================
+
+    const balancedSystemPrompt = `You are a professional vinyl record condition grader. You will receive up to 8 high-quality photos of a single vinyl record: 4 quarters of Side A and 4 quarters of Side B. Each quarter photo includes the center label so you can confirm all photos are of the SAME physical record.
 
 First, verify all photos depict the same record (matching center label, color, pressing). If they clearly show different records or the photos are not of a vinyl playing surface, set score to null and explain in the summary.
 
@@ -134,15 +129,11 @@ Otherwise, analyze the combined surface condition across all quarters and grade 
 
 Use the worst-affected area to anchor the score; be honest and accurate.
 
-REFLECTIONS vs REAL DEFECTS — be balanced and accurate. Vinyl is glossy and will show specular highlights, lamp/window reflections, photographer silhouettes, and rainbow/holographic sheens that follow the curvature of the disc. These are NOT defects.
-However, do NOT overcorrect: real scratches, scuffs and marks are very common on used records and you MUST report them when present. Many records have visible damage and a low grade is appropriate.
-Distinguishing cues:
-- Reflections are bright, soft-edged, often white/blue/rainbow, follow the disc's curvature, and shift with the lighting; they have no sharp linear edge and disappear in shadow zones.
-- Real scratches/scuffs are thin, sharp-edged lines (often radial across grooves or along them) or hazy patches that remain visible inside both highlight and shadow zones, and frequently appear in the same location across multiple photos taken from different angles.
-- Scuff clusters, scratch sets, and rim wear are common — report them honestly.
-Grade the underlying surface, not the lighting. If a defect is clearly visible (sharp edge, persists across shadow regions, or matches typical scratch geometry), report it. Only omit marks that you are confident are reflections.
+REFLECTIONS vs REAL DEFECTS — be balanced. Vinyl is glossy and shows specular highlights, lamp/window reflections, and rainbow sheens that follow the disc curvature. These are NOT defects. But do NOT overcorrect: real scratches/scuffs are common and MUST be reported.
+- Reflections: bright, soft-edged, follow curvature, shift with lighting, no sharp linear edge.
+- Real scratches: thin, sharp-edged lines (radial or circumferential) visible in BOTH highlights and shadows, often appearing in the same spot across angles.
 
-For EACH photo, identify visible imperfections (scratches, scuffs, chips, warps, marks). For each defect, return its location as NORMALIZED coordinates relative to that photo's bounding box (x and y between 0.0 and 1.0, where 0,0 is top-left and 1,1 is bottom-right), plus a small bounding circle radius (0.02–0.15 of image width). Report every genuinely visible defect — do NOT invent flaws and do NOT mark obvious reflections, but do NOT suppress real damage. If a photo truly has no visible defects, return an empty array for that photo.
+For EACH photo, identify visible imperfections. For each defect, return its location as NORMALIZED coordinates (x,y in 0..1, top-left origin), plus radius (0.02–0.15). If a photo has no defects, return an empty array for that photo.
 
 Respond ONLY with valid JSON in this exact format:
 {
@@ -160,86 +151,206 @@ Respond ONLY with valid JSON in this exact format:
   "bad_photo_indices": [],
   "defects_per_photo": [
     [ { "x": 0.42, "y": 0.31, "radius": 0.05, "type": "scratch", "severity": "light", "description": "Short hairline scratch near outer groove" } ],
-    [],
-    ...
+    []
   ]
 }
-The "defects_per_photo" array MUST have exactly one entry per provided photo, in the same order as the photos were given. "bad_photo_indices" MUST be an array (empty when all photos are usable).`,
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: `Analyze and grade this vinyl. ${signedUrls.length} photo(s) provided. Confirm all show the same record (center label) before grading.`,
-              },
-              ...signedUrls.flatMap((url, i) => ([
-                { type: "text", text: quarterLabels[i] || `Photo ${i + 1}` },
-                { type: "image_url", image_url: { url } },
-              ])),
-            ],
-          },
-        ],
-        max_tokens: 4000,
-        temperature: 0.1,
-      }),
-    });
+The "defects_per_photo" array MUST have exactly one entry per provided photo. "bad_photo_indices" MUST be an array.`;
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error("AI gateway error:", errText);
+    const harshSystemPrompt = `You are a HARSH, adversarial vinyl record QC inspector working on behalf of a buyer. Your job is to find every single imperfection a seller might be hiding. Assume the record HAS flaws until proven otherwise. You will receive up to 8 photos: 4 quarters of Side A and 4 quarters of Side B.
 
-      if (aiResponse.status === 429) {
+Your bias: when uncertain whether a mark is a reflection or a real scratch, lean toward CALLING IT A DEFECT. It is far worse to miss a scratch than to over-report one. Examine grooves carefully for hairlines, spider-web scuffs, fingerprint smudges, pressing flaws, edge wear, label damage, and any haziness that dulls the gloss.
+
+Use this STRICTER scoring scale (be tougher than a typical grader):
+- 10.0 = literally flawless, sealed-grade
+- 9.0–9.9 = near mint, only the faintest manufacturing marks
+- 8.0–8.9 = very good, clearly visible light scuffs
+- 7.0–7.9 = good, multiple visible scratches/scuffs
+- 5.5–6.9 = okay, moderate to heavy wear
+- 3.5–5.4 = poor
+- 0.0–3.4 = damaged
+
+Anchor your score to the WORST quarter. Round DOWN when between two grades.
+
+If photos are unusable (blurry, dark, heavy glare, wrong subject), set score to null and list the bad indices in "bad_photo_indices".
+
+For EACH photo, mark every flaw you can see with normalized coords (x,y 0..1, radius 0.02–0.15). Be exhaustive.
+
+Respond ONLY with valid JSON in this format:
+{
+  "score": 7.5,
+  "confidence": 80,
+  "summary": "Harsh QC summary",
+  "details": {
+    "scratches": "none/light/moderate/heavy",
+    "scuffs": "none/light/moderate/heavy",
+    "warping": "none/slight/moderate/severe",
+    "chips": "none/minor/significant",
+    "surface_noise_estimate": "none/minimal/moderate/heavy"
+  },
+  "notes": "Specific concerns a buyer should know about",
+  "bad_photo_indices": [],
+  "defects_per_photo": [ [], [] ]
+}
+"defects_per_photo" MUST have exactly one entry per provided photo.`;
+
+    const userContent = [
+      {
+        type: "text",
+        text: `Analyze and grade this vinyl. ${signedUrls.length} photo(s) provided. Confirm all show the same record (center label) before grading.`,
+      },
+      ...signedUrls.flatMap((url, i) => ([
+        { type: "text", text: quarterLabels[i] || `Photo ${i + 1}` },
+        { type: "image_url", image_url: { url } },
+      ])),
+    ];
+
+    async function callGrader(model: string, systemPrompt: string) {
+      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userContent },
+          ],
+          max_tokens: 4000,
+          temperature: 0.1,
+        }),
+      });
+      return resp;
+    }
+
+    // Run both graders in parallel
+    const [balancedResp, harshResp] = await Promise.all([
+      callGrader("google/gemini-2.5-pro", balancedSystemPrompt),
+      callGrader("openai/gpt-5", harshSystemPrompt),
+    ]);
+
+    // If the primary balanced grader fails hard, surface the error.
+    if (!balancedResp.ok) {
+      const errText = await balancedResp.text();
+      console.error("Balanced grader error:", errText);
+
+      if (balancedResp.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
-          status: 429,
-          headers: { ...cors, "Content-Type": "application/json" },
+          status: 429, headers: { ...cors, "Content-Type": "application/json" },
         });
       }
-      if (aiResponse.status === 402) {
+      if (balancedResp.status === 402) {
         return new Response(JSON.stringify({ error: "AI service unavailable. Please try again later." }), {
-          status: 402,
-          headers: { ...cors, "Content-Type": "application/json" },
+          status: 402, headers: { ...cors, "Content-Type": "application/json" },
         });
       }
-
       return new Response(JSON.stringify({ error: "AI grading failed" }), {
-        status: 500,
-        headers: { ...cors, "Content-Type": "application/json" },
+        status: 500, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
-    const aiData = await aiResponse.json();
-    const aiContent = aiData.choices?.[0]?.message?.content || "";
-
-    // Parse AI response
-    let cleanContent = aiContent.trim();
-    if (cleanContent.startsWith("```")) {
-      cleanContent = cleanContent.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
+    function parseGrading(content: string): any | null {
+      let clean = content.trim();
+      if (clean.startsWith("```")) {
+        clean = clean.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
+      }
+      try { return JSON.parse(clean); } catch { return null; }
     }
 
-    let grading;
-    try {
-      grading = JSON.parse(cleanContent);
-    } catch {
-      console.error("Failed to parse AI grading response:", aiContent);
+    const balancedData = await balancedResp.json();
+    const balanced = parseGrading(balancedData.choices?.[0]?.message?.content || "");
+
+    if (!balanced) {
+      console.error("Failed to parse balanced grading response");
       return new Response(JSON.stringify({
         error: "Could not grade the record from these photos. Please retake the highlighted photos with clearer focus and lighting.",
         bad_photo_indices: filePaths.map((_, i) => i),
       }), {
-        status: 200,
-        headers: { ...cors, "Content-Type": "application/json" },
+        status: 200, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
-    // Normalize bad_photo_indices and ensure score=null cases include them
-    if (!Array.isArray(grading.bad_photo_indices)) {
-      grading.bad_photo_indices = [];
+    let harsh: any | null = null;
+    if (harshResp.ok) {
+      const harshData = await harshResp.json();
+      harsh = parseGrading(harshData.choices?.[0]?.message?.content || "");
+    } else {
+      console.warn("Harsh grader unavailable, falling back to balanced only:", harshResp.status);
     }
-    grading.bad_photo_indices = grading.bad_photo_indices
-      .filter((n: unknown) => typeof n === "number" && n >= 0 && n < filePaths.length)
-      .map((n: number) => Math.floor(n));
-    if (grading.score === null && grading.bad_photo_indices.length === 0) {
-      grading.bad_photo_indices = filePaths.map((_, i) => i);
+
+    // Normalize bad_photo_indices for a grading object
+    function normalizeBadIndices(g: any) {
+      if (!Array.isArray(g.bad_photo_indices)) g.bad_photo_indices = [];
+      g.bad_photo_indices = g.bad_photo_indices
+        .filter((n: unknown) => typeof n === "number" && n >= 0 && n < filePaths.length)
+        .map((n: number) => Math.floor(n));
+      if (g.score === null && g.bad_photo_indices.length === 0) {
+        g.bad_photo_indices = filePaths.map((_, i) => i);
+      }
+    }
+    normalizeBadIndices(balanced);
+    if (harsh) normalizeBadIndices(harsh);
+
+    // ============================================================
+    // RECONCILE — favor harsher result for honest grading
+    // ============================================================
+    const sevRank: Record<string, number> = {
+      none: 0, minimal: 0, slight: 0, minor: 0,
+      light: 1,
+      moderate: 2,
+      heavy: 3, severe: 3, significant: 3,
+    };
+    function harsherSeverity(a: string, b: string): string {
+      const ra = sevRank[a?.toLowerCase()] ?? 0;
+      const rb = sevRank[b?.toLowerCase()] ?? 0;
+      return ra >= rb ? a : b;
+    }
+
+    let grading: any;
+    if (harsh && typeof harsh.score === "number" && typeof balanced.score === "number") {
+      // Weighted blend favoring the harsher pass (60% harsh, 40% balanced),
+      // and never above the harsher score.
+      const blended = Math.min(
+        harsh.score,
+        Math.round((harsh.score * 0.6 + balanced.score * 0.4) * 10) / 10
+      );
+
+      // Union defects per photo
+      const photoCount = filePaths.length;
+      const balDefects = Array.isArray(balanced.defects_per_photo) ? balanced.defects_per_photo : [];
+      const harshDefects = Array.isArray(harsh.defects_per_photo) ? harsh.defects_per_photo : [];
+      const merged: any[][] = [];
+      for (let i = 0; i < photoCount; i++) {
+        merged.push([...(balDefects[i] || []), ...(harshDefects[i] || [])]);
+      }
+
+      // Merge details (take harsher severity per category)
+      const details: any = {};
+      const keys = ["scratches", "scuffs", "warping", "chips", "surface_noise_estimate"];
+      for (const k of keys) {
+        details[k] = harsherSeverity(balanced.details?.[k] ?? "none", harsh.details?.[k] ?? "none");
+      }
+
+      // Union bad photo indices
+      const badSet = new Set<number>([...balanced.bad_photo_indices, ...harsh.bad_photo_indices]);
+
+      grading = {
+        score: blended,
+        confidence: Math.round(((balanced.confidence ?? 70) + (harsh.confidence ?? 70)) / 2),
+        summary: balanced.summary,
+        details,
+        notes: [balanced.notes, harsh.notes ? `Strict inspector: ${harsh.notes}` : null]
+          .filter(Boolean).join(" "),
+        bad_photo_indices: Array.from(badSet).sort((a, b) => a - b),
+        defects_per_photo: merged,
+        passes: {
+          balanced: { score: balanced.score, confidence: balanced.confidence },
+          harsh: { score: harsh.score, confidence: harsh.confidence },
+        },
+      };
+    } else {
+      grading = balanced;
     }
 
     return new Response(JSON.stringify({ grading }), {
