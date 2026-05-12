@@ -89,16 +89,28 @@ const scoreBackground = (score: number | null): string => {
   return "bg-destructive/15";
 };
 
-/** Short label describing what the numeric score means. */
+/** Goldmine Standard letter grade derived from decimal score. */
+const goldmineGrade = (score: number | null): string => {
+  if (score === null) return "—";
+  if (score >= 9.8) return "M";
+  if (score >= 9.0) return "NM";
+  if (score >= 7.5) return "VG+";
+  if (score >= 6.0) return "VG";
+  if (score >= 4.0) return "G+";
+  if (score >= 2.5) return "G";
+  return "F";
+};
+
+/** Long-form Goldmine label paired with the letter grade. */
 const scoreLabel = (score: number | null): string => {
   if (score === null) return "Unknown";
-  if (score >= 9.5) return "Perfect";
-  if (score >= 9.0) return "Excellent";
-  if (score >= 8.0) return "Very Good";
-  if (score >= 7.0) return "Good";
-  if (score >= 5.5) return "Okay";
-  if (score >= 3.5) return "Poor";
-  return "Damaged";
+  if (score >= 9.8) return "Mint";
+  if (score >= 9.0) return "Near Mint";
+  if (score >= 7.5) return "Very Good Plus";
+  if (score >= 6.0) return "Very Good";
+  if (score >= 4.0) return "Good Plus";
+  if (score >= 2.5) return "Good";
+  return "Fair";
 };
 
 /** Map a severity word from the AI breakdown to a Tailwind text color. */
@@ -439,17 +451,40 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center py-10 gap-5"
+                className="flex flex-col items-center py-6 gap-5"
               >
-                <Loader2 size={36} className="animate-spin text-primary" />
+                {stage === "grading" && slots[0]?.previewUrl ? (
+                  <div className="relative w-48 h-48 rounded-xl overflow-hidden border border-primary/30 shadow-lg">
+                    <img src={slots[0].previewUrl} alt="Scanning" className="h-full w-full object-cover" />
+                    {/* Scanning line */}
+                    <motion.div
+                      className="absolute inset-x-0 h-1 bg-primary shadow-[0_0_12px_3px_hsl(var(--primary))]"
+                      initial={{ top: "0%" }}
+                      animate={{ top: ["0%", "100%", "0%"] }}
+                      transition={{ duration: 2.2, repeat: Infinity, ease: "linear" }}
+                    />
+                    {/* Grid overlay */}
+                    <div
+                      className="absolute inset-0 opacity-30 pointer-events-none"
+                      style={{
+                        backgroundImage:
+                          "linear-gradient(hsl(var(--primary)/0.4) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)/0.4) 1px, transparent 1px)",
+                        backgroundSize: "20px 20px",
+                      }}
+                    />
+                    <div className="absolute inset-0 ring-1 ring-primary/50 rounded-xl" />
+                  </div>
+                ) : (
+                  <Loader2 size={36} className="animate-spin text-primary" />
+                )}
                 <div className="flex flex-col items-center gap-1">
                   <p className="font-body text-sm font-medium text-foreground">
-                    {stage === "uploading" ? `Uploading photos... ${progress}%` : "AI is grading your vinyl..."}
+                    {stage === "uploading" ? `Uploading photos... ${progress}%` : "Analyzing surface integrity..."}
                   </p>
-                  <p className="font-body text-xs text-muted-foreground">
+                  <p className="font-body text-xs text-muted-foreground text-center px-4">
                     {stage === "uploading"
                       ? "Sending high-quality images securely"
-                      : "Verifying record identity & analyzing all 8 photos"}
+                      : "Filtering reflections, mapping groove breaks across all 8 angles"}
                   </p>
                 </div>
                 {stage === "uploading" && (
@@ -472,11 +507,16 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                 className="flex flex-col gap-4 pb-2"
               >
                 <div className={`rounded-xl p-5 text-center ${scoreBackground(grading.score)}`}>
-                  <p className={`font-display text-5xl font-black ${scoreColor(grading.score)}`}>
-                    {grading.score !== null ? grading.score.toFixed(1) : "?"}
-                    <span className="font-display text-2xl font-bold opacity-60">/10</span>
+                  <p className={`font-display text-6xl font-black leading-none ${scoreColor(grading.score)}`}>
+                    {goldmineGrade(grading.score)}
                   </p>
-                  <p className="font-display text-sm font-semibold text-foreground mt-1">{scoreLabel(grading.score)}</p>
+                  <p className="font-display text-sm font-semibold text-foreground mt-2">
+                    {scoreLabel(grading.score)}
+                  </p>
+                  <p className={`font-display text-2xl font-bold mt-2 ${scoreColor(grading.score)}`}>
+                    {grading.score !== null ? grading.score.toFixed(1) : "?"}
+                    <span className="text-base font-bold opacity-60">/10</span>
+                  </p>
                   <p className="font-body text-xs text-muted-foreground mt-1">
                     {grading.confidence}% confidence
                   </p>
