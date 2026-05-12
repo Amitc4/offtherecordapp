@@ -451,17 +451,40 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col items-center py-10 gap-5"
+                className="flex flex-col items-center py-6 gap-5"
               >
-                <Loader2 size={36} className="animate-spin text-primary" />
+                {stage === "grading" && slots[0]?.previewUrl ? (
+                  <div className="relative w-48 h-48 rounded-xl overflow-hidden border border-primary/30 shadow-lg">
+                    <img src={slots[0].previewUrl} alt="Scanning" className="h-full w-full object-cover" />
+                    {/* Scanning line */}
+                    <motion.div
+                      className="absolute inset-x-0 h-1 bg-primary shadow-[0_0_12px_3px_hsl(var(--primary))]"
+                      initial={{ top: "0%" }}
+                      animate={{ top: ["0%", "100%", "0%"] }}
+                      transition={{ duration: 2.2, repeat: Infinity, ease: "linear" }}
+                    />
+                    {/* Grid overlay */}
+                    <div
+                      className="absolute inset-0 opacity-30 pointer-events-none"
+                      style={{
+                        backgroundImage:
+                          "linear-gradient(hsl(var(--primary)/0.4) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)/0.4) 1px, transparent 1px)",
+                        backgroundSize: "20px 20px",
+                      }}
+                    />
+                    <div className="absolute inset-0 ring-1 ring-primary/50 rounded-xl" />
+                  </div>
+                ) : (
+                  <Loader2 size={36} className="animate-spin text-primary" />
+                )}
                 <div className="flex flex-col items-center gap-1">
                   <p className="font-body text-sm font-medium text-foreground">
-                    {stage === "uploading" ? `Uploading photos... ${progress}%` : "AI is grading your vinyl..."}
+                    {stage === "uploading" ? `Uploading photos... ${progress}%` : "Analyzing surface integrity..."}
                   </p>
-                  <p className="font-body text-xs text-muted-foreground">
+                  <p className="font-body text-xs text-muted-foreground text-center px-4">
                     {stage === "uploading"
                       ? "Sending high-quality images securely"
-                      : "Verifying record identity & analyzing all 8 photos"}
+                      : "Filtering reflections, mapping groove breaks across all 8 angles"}
                   </p>
                 </div>
                 {stage === "uploading" && (
