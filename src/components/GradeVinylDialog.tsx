@@ -89,16 +89,28 @@ const scoreBackground = (score: number | null): string => {
   return "bg-destructive/15";
 };
 
-/** Short label describing what the numeric score means. */
+/** Goldmine Standard letter grade derived from decimal score. */
+const goldmineGrade = (score: number | null): string => {
+  if (score === null) return "—";
+  if (score >= 9.8) return "M";
+  if (score >= 9.0) return "NM";
+  if (score >= 7.5) return "VG+";
+  if (score >= 6.0) return "VG";
+  if (score >= 4.0) return "G+";
+  if (score >= 2.5) return "G";
+  return "F";
+};
+
+/** Long-form Goldmine label paired with the letter grade. */
 const scoreLabel = (score: number | null): string => {
   if (score === null) return "Unknown";
-  if (score >= 9.5) return "Perfect";
-  if (score >= 9.0) return "Excellent";
-  if (score >= 8.0) return "Very Good";
-  if (score >= 7.0) return "Good";
-  if (score >= 5.5) return "Okay";
-  if (score >= 3.5) return "Poor";
-  return "Damaged";
+  if (score >= 9.8) return "Mint";
+  if (score >= 9.0) return "Near Mint";
+  if (score >= 7.5) return "Very Good Plus";
+  if (score >= 6.0) return "Very Good";
+  if (score >= 4.0) return "Good Plus";
+  if (score >= 2.5) return "Good";
+  return "Fair";
 };
 
 /** Map a severity word from the AI breakdown to a Tailwind text color. */
