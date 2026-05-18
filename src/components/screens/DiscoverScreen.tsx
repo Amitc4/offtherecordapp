@@ -180,11 +180,8 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
     }
 
     if (searchText.trim()) {
-      const q = searchText.trim().toLowerCase();
       items = items.filter(
-        (r: any) =>
-          r.title.toLowerCase().includes(q) ||
-          r.artist.toLowerCase().includes(q)
+        (r: any) => fuzzyMatch(r.title, searchText) || fuzzyMatch(r.artist, searchText),
       );
     }
 
