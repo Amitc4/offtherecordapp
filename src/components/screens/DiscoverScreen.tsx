@@ -29,6 +29,59 @@ import { useLocation, getDistanceKm } from "@/hooks/useLocation";
 /** List of genre filter options shown as horizontal chips. */
 const GENRES = ["All", "Rock", "Jazz", "Soul", "Electronic", "Hip Hop", "Pop", "Classical", "Funk", "R&B"];
 
+/** Normalize text for fuzzy compare: lowercase, strip diacritics/punctuation, collapse spaces. */
+function normalizeText(input: string): string {
+  if (!input) return "";
+  return input
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s*\(\d+\)\s*$/g, "")
+    .replace(/\s*\*+\s*$/g, "")
+    .replace(/&/g, " and ")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  const prev: number[] = new Array(b.length + 1);
+  for (let j = 0; j <= b.length; j++) prev[j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    let curr = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      const next = Math.min(curr + 1, prev[j] + 1, prev[j - 1] + cost);
+      prev[j - 1] = curr;
+      curr = next;
+    }
+    prev[b.length] = curr;
+  }
+  return prev[b.length];
+}
+
+/** Fuzzy "contains": true if query approximately appears in haystack. */
+function fuzzyMatch(haystack: string, query: string): boolean {
+  const h = normalizeText(haystack);
+  const q = normalizeText(query);
+  if (!q) return true;
+  if (h.includes(q)) return true;
+  // Token-level fuzzy: each query token must match some haystack token within edit distance.
+  const hTokens = h.split(" ").filter(Boolean);
+  const qTokens = q.split(" ").filter(Boolean);
+  return qTokens.every((qt) =>
+    hTokens.some((ht) => {
+      if (ht.includes(qt) || qt.includes(ht)) return true;
+      const maxLen = Math.max(ht.length, qt.length);
+      const tolerance = maxLen <= 4 ? 1 : maxLen <= 8 ? 2 : 3;
+      return levenshtein(ht, qt) <= tolerance;
+    }),
+  );
+}
+
 interface DiscoverScreenProps {
   onNavigateToChat: (chatId: number, draftMessage?: string) => void;
 }
@@ -127,11 +180,8 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
     }
 
     if (searchText.trim()) {
-      const q = searchText.trim().toLowerCase();
       items = items.filter(
-        (r: any) =>
-          r.title.toLowerCase().includes(q) ||
-          r.artist.toLowerCase().includes(q)
+        (r: any) => fuzzyMatch(r.title, searchText) || fuzzyMatch(r.artist, searchText),
       );
     }
 

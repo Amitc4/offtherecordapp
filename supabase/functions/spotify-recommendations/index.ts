@@ -1,5 +1,6 @@
-// Spotify recommendations: refreshes token if needed, fetches user's top artists/genres/tracks,
-// then matches them against marketplace records (status = 'for_sale').
+// Spotify recommendations: refreshes token if needed, fetches user's top artists,
+// then fuzzy-matches them against marketplace records (status = 'for_sale').
+// Matching is normalized, accent/punctuation-insensitive, and bilingual (EN <-> HE).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -7,6 +8,103 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
+
+// ---------- Normalization ----------
+/** Lowercase, strip diacritics/punctuation/Discogs suffixes, collapse whitespace. */
+function normalize(input: string): string {
+  if (!input) return "";
+  return input
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")          // strip diacritics
+    .replace(/\s*\(\d+\)\s*$/g, "")           // Discogs "(2)" suffix
+    .replace(/\s*\*+\s*$/g, "")               // Discogs "*" suffix
+    .replace(/&/g, " and ")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")        // keep letters/numbers (any script) + spaces
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// ---------- Bilingual EN <-> HE artist mapping ----------
+// Lightweight curated list. Extend as needed.
+const BILINGUAL_ARTISTS: Array<[string, string]> = [
+  ["tuna", "טונה"],
+  ["omer adam", "עומר אדם"],
+  ["dudu tassa", "דודו טסה"],
+  ["shlomo artzi", "שלמה ארצי"],
+  ["shalom hanoch", "שלום חנוך"],
+  ["mashina", "משינה"],
+  ["berry sakharof", "ברי סחרוף"],
+  ["eviatar banai", "אביתר בנאי"],
+  ["ehud banai", "אהוד בנאי"],
+  ["meir banai", "מאיר בנאי"],
+  ["arik einstein", "אריק איינשטיין"],
+  ["ravid plotnik", "רביד פלוטניק"],
+  ["jimbo j", "ג'ימבו ג'יי"],
+  ["idan raichel", "עידן רייכל"],
+  ["aviv geffen", "אביב גפן"],
+  ["ninet tayeb", "נינט טייב"],
+  ["static and ben el", "סטטיק ובן אל"],
+  ["noa kirel", "נועה קירל"],
+  ["eyal golan", "אייל גולן"],
+  ["hadag nahash", "הדג נחש"],
+];
+
+const EN_TO_HE = new Map(BILINGUAL_ARTISTS.map(([en, he]) => [normalize(en), normalize(he)]));
+const HE_TO_EN = new Map(BILINGUAL_ARTISTS.map(([en, he]) => [normalize(he), normalize(en)]));
+
+function bilingualVariants(name: string): string[] {
+  const n = normalize(name);
+  const out = new Set<string>([n]);
+  const he = EN_TO_HE.get(n); if (he) out.add(he);
+  const en = HE_TO_EN.get(n); if (en) out.add(en);
+  return [...out].filter(Boolean);
+}
+
+// ---------- Fuzzy matching ----------
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  const prev = new Array(b.length + 1);
+  for (let j = 0; j <= b.length; j++) prev[j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    let curr = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      const next = Math.min(curr + 1, prev[j] + 1, prev[j - 1] + cost);
+      prev[j - 1] = curr;
+      curr = next;
+    }
+    prev[b.length] = curr;
+  }
+  return prev[b.length];
+}
+
+/** Similarity 0..1 using normalized Levenshtein + substring boost. */
+function similarity(a: string, b: string): number {
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  if (a.includes(b) || b.includes(a)) return 0.95;
+  const dist = levenshtein(a, b);
+  const maxLen = Math.max(a.length, b.length);
+  return 1 - dist / maxLen;
+}
+
+/** Best similarity of `candidate` against any of `targets` (already normalized). */
+function bestMatch(candidate: string, targets: string[]): number {
+  const c = normalize(candidate);
+  if (!c) return 0;
+  let best = 0;
+  for (const t of targets) {
+    const s = similarity(c, t);
+    if (s > best) best = s;
+    if (best === 1) break;
+  }
+  return best;
+}
+
+const MATCH_THRESHOLD = 0.72;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -41,9 +139,7 @@ Deno.serve(async (req) => {
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (tokenErr || !tokenRow) {
-      return json({ error: "Spotify not connected" }, 404);
-    }
+    if (tokenErr || !tokenRow) return json({ error: "Spotify not connected" }, 404);
 
     let accessToken: string = tokenRow.access_token;
     if (new Date(tokenRow.expires_at).getTime() < Date.now()) {
@@ -72,7 +168,7 @@ Deno.serve(async (req) => {
       }).eq("user_id", userId);
     }
 
-    // Fetch user's top artists (medium term)
+    // Top artists
     const topArtistsRes = await fetch(
       "https://api.spotify.com/v1/me/top/artists?limit=30&time_range=medium_term",
       { headers: { Authorization: `Bearer ${accessToken}` } },
@@ -83,77 +179,84 @@ Deno.serve(async (req) => {
       new Set((topArtists.items ?? []).flatMap((a: any) => a.genres ?? [])),
     );
 
-    // Match marketplace records: case-insensitive PARTIAL artist matches, ranked by Spotify preference.
-    // Discogs artist names often include suffixes like "*", " (2)" — wildcards make matching flexible.
-    const cleanName = (s: string) =>
-      s.toLowerCase().trim().replace(/\s*\*+\s*$/g, "").replace(/\s*\(\d+\)\s*$/g, "").trim();
-    const lowerArtists = artistNames.map(cleanName).filter(Boolean);
-    // Artist rank map: index 0 = most listened
-    const artistRank = new Map<string, number>();
-    lowerArtists.forEach((n, i) => { if (!artistRank.has(n)) artistRank.set(n, i); });
+    // Build rank map with bilingual variants
+    type ArtistEntry = { rank: number; variants: string[] };
+    const artistEntries: ArtistEntry[] = artistNames.map((name, i) => ({
+      rank: i,
+      variants: bilingualVariants(name),
+    }));
 
-    let matches: any[] = [];
-    if (lowerArtists.length) {
-      // PostgREST .or() uses commas as separators and `*` as wildcard inside ilike values.
-      const orFilter = lowerArtists
-        .map((n) => {
-          const safe = n.replace(/[,()]/g, " ").replace(/\s+/g, " ").trim();
-          return `artist.ilike.*${safe}*`;
-        })
-        .join(",");
-      const { data: records, error: recErr } = await admin
-        .from("user_records")
-        .select("id, title, artist, year, cover_image, condition, price, format, user_id, genre, created_at")
-        .eq("status", "for_sale")
-        .neq("user_id", userId)
-        .or(orFilter)
-        .limit(500);
-      if (recErr) console.error("records query error", recErr);
-      matches = records ?? [];
-      console.log(`Spotify recs: ${lowerArtists.length} top artists, ${matches.length} matching listings`);
+    // Fetch all available marketplace listings (excluding caller's own).
+    // Dataset is small; we fuzzy-match in memory for maximum flexibility.
+    const { data: allRecords, error: recErr } = await admin
+      .from("user_records")
+      .select("id, title, artist, year, cover_image, condition, price, format, user_id, genre, created_at")
+      .eq("status", "for_sale")
+      .neq("user_id", userId)
+      .limit(2000);
+    if (recErr) console.error("records query error", recErr);
+
+    type Scored = { record: any; rank: number; score: number };
+    const scored: Scored[] = [];
+    for (const rec of allRecords ?? []) {
+      const recArtist = rec.artist ?? "";
+      let bestRank = -1;
+      let bestScore = 0;
+      for (const entry of artistEntries) {
+        const s = bestMatch(recArtist, entry.variants);
+        if (s > bestScore) {
+          bestScore = s;
+          bestRank = entry.rank;
+        }
+      }
+      if (bestScore >= MATCH_THRESHOLD) {
+        scored.push({ record: rec, rank: bestRank, score: bestScore });
+      }
     }
 
-    // Group listings by album (artist + title), keep one representative per album
-    // (newest listing wins as the representative card).
-    const albumMap = new Map<string, any>();
-    for (const r of matches) {
-      const artistLower = (r.artist ?? "").toLowerCase().trim();
-      const titleLower = (r.title ?? "").toLowerCase().trim();
-      const key = `${artistLower}|||${titleLower}`;
+    console.log(
+      `Spotify recs: ${artistNames.length} top artists, ${allRecords?.length ?? 0} listings scanned, ${scored.length} fuzzy matches`,
+    );
+
+    // Group listings by album (artist + title), keep newest as representative
+    const albumMap = new Map<string, Scored & { _listing_count: number }>();
+    for (const s of scored) {
+      const key = `${normalize(s.record.artist)}|||${normalize(s.record.title)}`;
       const existing = albumMap.get(key);
       if (!existing) {
-        albumMap.set(key, { ...r, _listing_count: 1 });
+        albumMap.set(key, { ...s, _listing_count: 1 });
       } else {
         existing._listing_count += 1;
-        // Prefer the newer listing as the representative
-        if (new Date(r.created_at).getTime() > new Date(existing.created_at).getTime()) {
-          albumMap.set(key, { ...r, _listing_count: existing._listing_count });
+        if (
+          new Date(s.record.created_at).getTime() >
+          new Date(existing.record.created_at).getTime()
+        ) {
+          existing.record = s.record;
+        }
+        if (s.score > existing.score) {
+          existing.score = s.score;
+          existing.rank = s.rank;
         }
       }
     }
 
-    // Bucket albums by their artist's Spotify rank
-    const buckets = new Map<number, any[]>();
+    // Bucket albums by rank
+    const buckets = new Map<number, Array<typeof albumMap extends Map<any, infer V> ? V : never>>();
     for (const album of albumMap.values()) {
-      const artistLower = cleanName(album.artist ?? "");
-      // Find matching artist rank (use first artist whose name appears in the record artist string)
-      let rank = artistRank.get(artistLower);
-      if (rank === undefined) {
-        for (const [name, idx] of artistRank) {
-          if (artistLower.includes(name) || name.includes(artistLower)) {
-            rank = idx;
-            break;
-          }
-        }
-      }
-      if (rank === undefined) rank = lowerArtists.length; // genre-only matches go last
-      if (!buckets.has(rank)) buckets.set(rank, []);
-      buckets.get(rank)!.push(album);
+      const r = album.rank >= 0 ? album.rank : artistEntries.length;
+      if (!buckets.has(r)) buckets.set(r, []);
+      buckets.get(r)!.push(album);
     }
 
-    // Within each bucket, sort by recency so a single artist's "top" album is stable
+    // Within bucket: highest score first, then newest
     for (const list of buckets.values()) {
-      list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      list.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return (
+          new Date(b.record.created_at).getTime() -
+          new Date(a.record.created_at).getTime()
+        );
+      });
     }
 
     // Round-robin interleave across artists in Spotify preference order
@@ -166,7 +269,7 @@ Deno.serve(async (req) => {
       for (const r of sortedRanks) {
         const list = buckets.get(r)!;
         if (list[round]) {
-          interleaved.push(list[round]);
+          interleaved.push({ ...list[round].record, _match_score: list[round].score });
           added = true;
         }
       }
