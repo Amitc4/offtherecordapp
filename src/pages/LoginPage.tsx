@@ -144,23 +144,21 @@ const LoginPage = () => {
           <div className="h-px flex-1 bg-border" />
         </div>
 
-        <div className="mt-4 grid w-full grid-cols-2 gap-3">
+        <div className="mt-4 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
           <Button
             type="button"
-            variant="outline"
             disabled={socialLoading !== null || loading}
             onClick={() => handleSocial("apple")}
-            className="h-12 rounded-lg border-border bg-card font-body text-sm font-semibold tracking-wide text-foreground hover:bg-accent hover:text-accent-foreground"
+            className="h-12 rounded-lg border border-black bg-black font-body text-sm font-semibold tracking-wide text-white hover:bg-black/90"
           >
-            <Apple className="mr-2 h-4 w-4" />
+            <Apple className="mr-2 h-4 w-4 fill-white text-white" />
             {socialLoading === "apple" ? "..." : "Apple"}
           </Button>
           <Button
             type="button"
-            variant="outline"
             disabled={socialLoading !== null || loading}
             onClick={() => handleSocial("google")}
-            className="h-12 rounded-lg border-border bg-card font-body text-sm font-semibold tracking-wide text-foreground hover:bg-accent hover:text-accent-foreground"
+            className="h-12 rounded-lg border border-border bg-white font-body text-sm font-semibold tracking-wide text-neutral-800 shadow-sm hover:bg-neutral-50"
           >
             <GoogleIcon />
             <span className="ml-2">{socialLoading === "google" ? "..." : "Google"}</span>
