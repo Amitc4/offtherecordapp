@@ -12,12 +12,19 @@
  */
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Music } from "lucide-react";
+import { Mail, Music, Apple } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import VinylLogo from "@/components/VinylLogo";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { lovable } from "@/integrations/lovable";
+
+const GoogleIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+    <path fill="#EA4335" d="M12 10.2v3.9h5.45c-.24 1.4-1.7 4.1-5.45 4.1-3.28 0-5.95-2.72-5.95-6.07S8.72 6.06 12 6.06c1.87 0 3.12.8 3.84 1.48l2.62-2.52C16.82 3.55 14.62 2.6 12 2.6 6.84 2.6 2.66 6.78 2.66 12s4.18 9.4 9.34 9.4c5.39 0 8.96-3.79 8.96-9.12 0-.61-.07-1.08-.15-1.55H12z"/>
+  </svg>
+);
 
 const LoginPage = () => {
   const [isRegister, setIsRegister] = useState(false);
