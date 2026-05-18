@@ -254,11 +254,23 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center py-16 text-center">
-          <Search size={48} className="mb-4 text-muted-foreground/40" />
-          <p className="font-display text-base font-semibold text-muted-foreground">
-            No available records that match your search
-          </p>
+        <div className="flex flex-col items-center py-16 text-center px-6">
+          {useSpotifyRecs ? (
+            <>
+              <Sparkles size={48} className="mb-4 text-[#1DB954]/50" />
+              <p className="font-display text-base font-semibold text-foreground">
+                No vinyl records matching your Spotify music taste are available for trade right now.
+              </p>
+              <p className="mt-2 font-body text-sm text-muted-foreground">Check back later!</p>
+            </>
+          ) : (
+            <>
+              <Search size={48} className="mb-4 text-muted-foreground/40" />
+              <p className="font-display text-base font-semibold text-muted-foreground">
+                No available records that match your search
+              </p>
+            </>
+          )}
         </div>
       ) : view === "grid" ? (
         <div className="grid grid-cols-2 gap-2.5">
