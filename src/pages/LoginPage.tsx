@@ -138,6 +138,35 @@ const LoginPage = () => {
           </Button>
         </motion.form>
 
+        <div className="mt-6 flex w-full items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="font-body text-xs uppercase tracking-wider text-muted-foreground">or continue with</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <div className="mt-4 grid w-full grid-cols-2 gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={socialLoading !== null || loading}
+            onClick={() => handleSocial("apple")}
+            className="h-12 rounded-lg border-border bg-card font-body text-sm font-semibold tracking-wide text-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            <Apple className="mr-2 h-4 w-4" />
+            {socialLoading === "apple" ? "..." : "Apple"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={socialLoading !== null || loading}
+            onClick={() => handleSocial("google")}
+            className="h-12 rounded-lg border-border bg-card font-body text-sm font-semibold tracking-wide text-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            <GoogleIcon />
+            <span className="ml-2">{socialLoading === "google" ? "..." : "Google"}</span>
+          </Button>
+        </div>
+
         <p className="mt-8 text-center font-body text-sm text-muted-foreground">
           {isRegister ? "Already have an account?" : "New to Off The Record?"}{" "}
           <button
