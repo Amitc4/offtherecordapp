@@ -76,17 +76,31 @@ Deno.serve(async (req) => {
           redirect_uri: redirectUri,
         }),
       });
-      const tokenJson = await tokenRes.json();
+      const tokenText = await tokenRes.text();
+      let tokenJson: any = {};
+      try { tokenJson = JSON.parse(tokenText); } catch { /* non-JSON */ }
       if (!tokenRes.ok) {
-        console.error("Spotify token exchange failed", tokenJson);
-        return json({ error: "Token exchange failed", details: tokenJson }, 400);
+        console.error("Spotify token exchange failed", tokenRes.status, tokenText);
+        return json({ error: "Token exchange failed", status: tokenRes.status, details: tokenJson?.error_description || tokenText }, 400);
       }
 
       // Fetch user profile
       const meRes = await fetch("https://api.spotify.com/v1/me", {
         headers: { Authorization: `Bearer ${tokenJson.access_token}` },
       });
-      const me = await meRes.json();
+      const meText = await meRes.text();
+      let me: any = {};
+      try { me = JSON.parse(meText); } catch { /* non-JSON */ }
+      if (!meRes.ok) {
+        console.error("Spotify /me failed", meRes.status, meText);
+        return json({
+          error: meRes.status === 403
+            ? "Spotify rejected your account. If the Spotify app is in Development Mode, the user's email must be added to the app's allowlist in the Spotify Developer Dashboard."
+            : "Failed to fetch Spotify profile",
+          status: meRes.status,
+          details: meText,
+        }, 400);
+      }
 
       const expiresAt = new Date(Date.now() + (tokenJson.expires_in - 60) * 1000).toISOString();
 
