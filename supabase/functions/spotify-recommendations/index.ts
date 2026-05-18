@@ -83,25 +83,34 @@ Deno.serve(async (req) => {
       new Set((topArtists.items ?? []).flatMap((a: any) => a.genres ?? [])),
     );
 
-    // Match marketplace records: case-insensitive artist matches, ranked by Spotify preference
-    const lowerArtists = artistNames.map((n) => n.toLowerCase());
+    // Match marketplace records: case-insensitive PARTIAL artist matches, ranked by Spotify preference.
+    // Discogs artist names often include suffixes like "*", " (2)" — wildcards make matching flexible.
+    const cleanName = (s: string) =>
+      s.toLowerCase().trim().replace(/\s*\*+\s*$/g, "").replace(/\s*\(\d+\)\s*$/g, "").trim();
+    const lowerArtists = artistNames.map(cleanName).filter(Boolean);
     // Artist rank map: index 0 = most listened
     const artistRank = new Map<string, number>();
-    lowerArtists.forEach((n, i) => artistRank.set(n, i));
+    lowerArtists.forEach((n, i) => { if (!artistRank.has(n)) artistRank.set(n, i); });
 
     let matches: any[] = [];
     if (lowerArtists.length) {
+      // PostgREST .or() uses commas as separators and `*` as wildcard inside ilike values.
       const orFilter = lowerArtists
-        .map((n) => `artist.ilike.${n.replace(/,/g, "")}`)
+        .map((n) => {
+          const safe = n.replace(/[,()]/g, " ").replace(/\s+/g, " ").trim();
+          return `artist.ilike.*${safe}*`;
+        })
         .join(",");
-      const { data: records } = await admin
+      const { data: records, error: recErr } = await admin
         .from("user_records")
         .select("id, title, artist, year, cover_image, condition, price, format, user_id, genre, created_at")
         .eq("status", "for_sale")
         .neq("user_id", userId)
         .or(orFilter)
         .limit(500);
+      if (recErr) console.error("records query error", recErr);
       matches = records ?? [];
+      console.log(`Spotify recs: ${lowerArtists.length} top artists, ${matches.length} matching listings`);
     }
 
     // Group listings by album (artist + title), keep one representative per album
