@@ -108,7 +108,12 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const useSpotifyRecs = activeGenre === "All" && spotifyConnected;
+  const useSpotifyRecs = activeGenre === "Recommended" && spotifyConnected;
+
+  // Reset filter if user disconnects Spotify while "Recommended" is active
+  useEffect(() => {
+    if (activeGenre === "Recommended" && !spotifyConnected) setActiveGenre("All");
+  }, [spotifyConnected, activeGenre]);
 
   const filtered = useMemo(() => {
     const base = useSpotifyRecs ? spotifyRecs : records;
@@ -220,19 +225,28 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
 
       {/* Genre filters */}
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {GENRES.map((genre) => (
-          <button
-            key={genre}
-            onClick={() => setActiveGenre(genre)}
-            className={`shrink-0 rounded-full px-4 py-2 font-body text-xs font-medium transition-colors ${
-              activeGenre === genre
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "bg-primary/10 text-primary hover:bg-primary/20"
-            }`}
-          >
-            {genre}
-          </button>
-        ))}
+        {(spotifyConnected ? ["Recommended", ...GENRES] : GENRES).map((genre) => {
+          const isRec = genre === "Recommended";
+          const isActive = activeGenre === genre;
+          return (
+            <button
+              key={genre}
+              onClick={() => setActiveGenre(genre)}
+              className={`shrink-0 inline-flex items-center gap-1 rounded-full px-4 py-2 font-body text-xs font-medium transition-colors ${
+                isActive
+                  ? isRec
+                    ? "bg-[#1DB954] text-white shadow-md"
+                    : "bg-primary text-primary-foreground shadow-md"
+                  : isRec
+                    ? "bg-[#1DB954]/15 text-[#1DB954] hover:bg-[#1DB954]/25"
+                    : "bg-primary/10 text-primary hover:bg-primary/20"
+              }`}
+            >
+              {isRec && <Sparkles size={12} />}
+              {genre}
+            </button>
+          );
+        })}
       </div>
 
       {isLoading || (useSpotifyRecs && spotifyLoading) ? (
