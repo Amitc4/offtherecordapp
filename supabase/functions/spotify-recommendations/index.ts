@@ -83,8 +83,12 @@ Deno.serve(async (req) => {
       new Set((topArtists.items ?? []).flatMap((a: any) => a.genres ?? [])),
     );
 
-    // Match marketplace records: case-insensitive artist matches
+    // Match marketplace records: case-insensitive artist matches, ranked by Spotify preference
     const lowerArtists = artistNames.map((n) => n.toLowerCase());
+    // Artist rank map: index 0 = most listened
+    const artistRank = new Map<string, number>();
+    lowerArtists.forEach((n, i) => artistRank.set(n, i));
+
     let matches: any[] = [];
     if (lowerArtists.length) {
       const orFilter = lowerArtists
@@ -92,27 +96,78 @@ Deno.serve(async (req) => {
         .join(",");
       const { data: records } = await admin
         .from("user_records")
-        .select("id, title, artist, year, cover_image, condition, price, format, user_id, genre")
+        .select("id, title, artist, year, cover_image, condition, price, format, user_id, genre, created_at")
         .eq("status", "for_sale")
         .neq("user_id", userId)
         .or(orFilter)
-        .limit(50);
+        .limit(500);
       matches = records ?? [];
     }
 
-    // Score: exact artist match = strong, genre overlap = weak
-    const scored = matches.map((r) => {
-      let score = 0;
-      const artistLower = (r.artist ?? "").toLowerCase();
-      if (lowerArtists.includes(artistLower)) score += 10;
-      if (r.genre && genres.some((g) => r.genre.toLowerCase().includes(g.toLowerCase()))) score += 2;
-      return { ...r, _score: score };
-    }).sort((a, b) => b._score - a._score);
+    // Group listings by album (artist + title), keep one representative per album
+    // (newest listing wins as the representative card).
+    const albumMap = new Map<string, any>();
+    for (const r of matches) {
+      const artistLower = (r.artist ?? "").toLowerCase().trim();
+      const titleLower = (r.title ?? "").toLowerCase().trim();
+      const key = `${artistLower}|||${titleLower}`;
+      const existing = albumMap.get(key);
+      if (!existing) {
+        albumMap.set(key, { ...r, _listing_count: 1 });
+      } else {
+        existing._listing_count += 1;
+        // Prefer the newer listing as the representative
+        if (new Date(r.created_at).getTime() > new Date(existing.created_at).getTime()) {
+          albumMap.set(key, { ...r, _listing_count: existing._listing_count });
+        }
+      }
+    }
+
+    // Bucket albums by their artist's Spotify rank
+    const buckets = new Map<number, any[]>();
+    for (const album of albumMap.values()) {
+      const artistLower = (album.artist ?? "").toLowerCase().trim();
+      // Find matching artist rank (use first artist whose name appears in the record artist string)
+      let rank = artistRank.get(artistLower);
+      if (rank === undefined) {
+        for (const [name, idx] of artistRank) {
+          if (artistLower.includes(name) || name.includes(artistLower)) {
+            rank = idx;
+            break;
+          }
+        }
+      }
+      if (rank === undefined) rank = lowerArtists.length; // genre-only matches go last
+      if (!buckets.has(rank)) buckets.set(rank, []);
+      buckets.get(rank)!.push(album);
+    }
+
+    // Within each bucket, sort by recency so a single artist's "top" album is stable
+    for (const list of buckets.values()) {
+      list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+
+    // Round-robin interleave across artists in Spotify preference order
+    const sortedRanks = [...buckets.keys()].sort((a, b) => a - b);
+    const interleaved: any[] = [];
+    let added = true;
+    let round = 0;
+    while (added) {
+      added = false;
+      for (const r of sortedRanks) {
+        const list = buckets.get(r)!;
+        if (list[round]) {
+          interleaved.push(list[round]);
+          added = true;
+        }
+      }
+      round += 1;
+    }
 
     return json({
       top_artists: artistNames.slice(0, 10),
       top_genres: genres.slice(0, 10),
-      recommendations: scored,
+      recommendations: interleaved,
     });
   } catch (e) {
     console.error("spotify-recommendations error", e);
