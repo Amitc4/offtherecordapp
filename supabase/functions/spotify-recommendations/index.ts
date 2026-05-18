@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
     // Bucket albums by their artist's Spotify rank
     const buckets = new Map<number, any[]>();
     for (const album of albumMap.values()) {
-      const artistLower = (album.artist ?? "").toLowerCase().trim();
+      const artistLower = cleanName(album.artist ?? "");
       // Find matching artist rank (use first artist whose name appears in the record artist string)
       let rank = artistRank.get(artistLower);
       if (rank === undefined) {
