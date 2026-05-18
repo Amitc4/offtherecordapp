@@ -108,7 +108,12 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const useSpotifyRecs = activeGenre === "All" && spotifyConnected;
+  const useSpotifyRecs = activeGenre === "Recommended" && spotifyConnected;
+
+  // Reset filter if user disconnects Spotify while "Recommended" is active
+  useEffect(() => {
+    if (activeGenre === "Recommended" && !spotifyConnected) setActiveGenre("All");
+  }, [spotifyConnected, activeGenre]);
 
   const filtered = useMemo(() => {
     const base = useSpotifyRecs ? spotifyRecs : records;
