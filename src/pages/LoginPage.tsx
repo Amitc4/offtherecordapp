@@ -55,6 +55,24 @@ const LoginPage = () => {
     }
   };
 
+  const handleSocial = async (provider: "google" | "apple") => {
+    setSocialLoading(provider);
+    try {
+      const result = await lovable.auth.signInWithOAuth(provider, {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        toast.error(result.error.message ?? `Could not sign in with ${provider}`);
+        setSocialLoading(null);
+        return;
+      }
+      // On redirect, browser navigates away — leave loading state.
+    } catch (err: any) {
+      toast.error(err?.message ?? `Could not sign in with ${provider}`);
+      setSocialLoading(null);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
       <div className="pointer-events-none fixed inset-0 opacity-[0.03]" style={{
