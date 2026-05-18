@@ -12,12 +12,19 @@
  */
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Music } from "lucide-react";
+import { Mail, Music, Apple } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import VinylLogo from "@/components/VinylLogo";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { lovable } from "@/integrations/lovable";
+
+const GoogleIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+    <path fill="#EA4335" d="M12 10.2v3.9h5.45c-.24 1.4-1.7 4.1-5.45 4.1-3.28 0-5.95-2.72-5.95-6.07S8.72 6.06 12 6.06c1.87 0 3.12.8 3.84 1.48l2.62-2.52C16.82 3.55 14.62 2.6 12 2.6 6.84 2.6 2.66 6.78 2.66 12s4.18 9.4 9.34 9.4c5.39 0 8.96-3.79 8.96-9.12 0-.61-.07-1.08-.15-1.55H12z"/>
+  </svg>
+);
 
 const LoginPage = () => {
   const [isRegister, setIsRegister] = useState(false);
@@ -25,6 +32,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState<"google" | "apple" | null>(null);
   const { signIn, signUp } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,6 +52,24 @@ const LoginPage = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSocial = async (provider: "google" | "apple") => {
+    setSocialLoading(provider);
+    try {
+      const result = await lovable.auth.signInWithOAuth(provider, {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        toast.error(result.error.message ?? `Could not sign in with ${provider}`);
+        setSocialLoading(null);
+        return;
+      }
+      // On redirect, browser navigates away — leave loading state.
+    } catch (err: any) {
+      toast.error(err?.message ?? `Could not sign in with ${provider}`);
+      setSocialLoading(null);
     }
   };
 
@@ -111,6 +137,35 @@ const LoginPage = () => {
             {loading ? "Please wait..." : isRegister ? "Create Account" : "Sign In with Email"}
           </Button>
         </motion.form>
+
+        <div className="mt-6 flex w-full items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="font-body text-xs uppercase tracking-wider text-muted-foreground">or continue with</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <div className="mt-4 grid w-full grid-cols-2 gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={socialLoading !== null || loading}
+            onClick={() => handleSocial("apple")}
+            className="h-12 rounded-lg border-border bg-card font-body text-sm font-semibold tracking-wide text-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            <Apple className="mr-2 h-4 w-4" />
+            {socialLoading === "apple" ? "..." : "Apple"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={socialLoading !== null || loading}
+            onClick={() => handleSocial("google")}
+            className="h-12 rounded-lg border-border bg-card font-body text-sm font-semibold tracking-wide text-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            <GoogleIcon />
+            <span className="ml-2">{socialLoading === "google" ? "..." : "Google"}</span>
+          </Button>
+        </div>
 
         <p className="mt-8 text-center font-body text-sm text-muted-foreground">
           {isRegister ? "Already have an account?" : "New to Off The Record?"}{" "}
