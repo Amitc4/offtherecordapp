@@ -549,15 +549,20 @@ const ProfileScreen = () => {
       {/* Spotify Connection */}
       <div className="mb-6 rounded-xl bg-card p-4 vinyl-shadow">
         <div className="mb-3 flex items-center gap-2">
-          <Music size={18} className="text-primary" />
+          <SpotifyIcon className="h-[18px] w-[18px]" />
           <h3 className="font-display text-sm font-semibold text-foreground">Spotify</h3>
         </div>
 
         {spotifyConnected ? (
           <div className="space-y-3">
-            <p className="font-body text-xs text-muted-foreground">
-              Connected{spotifyUsername ? <> as <span className="font-semibold text-primary">{spotifyUsername}</span></> : ""}
-            </p>
+            <div className="flex items-center gap-2 rounded-lg border border-[#1DB954]/30 bg-[#1DB954]/10 px-3 py-2">
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1DB954] text-white">
+                <Check size={12} strokeWidth={3} />
+              </div>
+              <p className="font-body text-xs text-foreground">
+                Spotify Connected{spotifyUsername ? <> · <span className="font-semibold">{spotifyUsername}</span></> : ""}
+              </p>
+            </div>
             <Button size="sm" onClick={() => setSpotifyRecsOpen(true)} className="w-full bg-primary font-body text-xs font-semibold text-primary-foreground">
               <Sparkles size={14} className="mr-1" />
               See Recommended Records
@@ -572,9 +577,15 @@ const ProfileScreen = () => {
             <p className="mb-3 font-body text-xs text-muted-foreground">
               Connect your Spotify account so we can suggest records that match your taste in music.
             </p>
-            <Button size="sm" onClick={handleConnectSpotify} disabled={spotifyConnecting} className="w-full bg-primary font-body text-xs font-semibold text-primary-foreground">
-              <Music size={14} className={`mr-1 ${spotifyConnecting ? "animate-spin" : ""}`} />
-              {spotifyConnecting ? "Connecting..." : "Connect Spotify Account"}
+            <Button
+              size="sm"
+              onClick={handleConnectSpotify}
+              disabled={spotifyConnecting}
+              style={{ backgroundColor: "#1DB954" }}
+              className="w-full font-body text-xs font-semibold text-white hover:opacity-90 hover:bg-[#1DB954]"
+            >
+              <SpotifyIcon className="mr-1.5 h-4 w-4 text-white" />
+              {spotifyConnecting ? "Connecting..." : "Connect Spotify"}
             </Button>
           </div>
         )}
