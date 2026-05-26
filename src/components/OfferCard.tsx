@@ -226,13 +226,13 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate, onCounterOffer }
       </div>
 
       <SideSection
-        label={isSender ? "You offer" : `${senderName} offers`}
+        label={isSender ? "You will give" : `You will receive from ${senderName}`}
         sideItems={senderItems}
         cash={offer.sender_cash}
       />
 
       <SideSection
-        label={isReceiver ? "You offer" : `${receiverName} offers`}
+        label={isReceiver ? "You will give" : `You will receive from ${receiverName}`}
         sideItems={receiverItems}
         cash={offer.receiver_cash}
       />
