@@ -1,3 +1,17 @@
+/**
+ * @file grade-vinyl edge function — AI-powered record condition grading.
+ *
+ * Accepts one or more photos of a vinyl record (cover and/or disc surface)
+ * from an authenticated user and sends them to Google Gemini 2.5 Flash via
+ * the Lovable AI Gateway. The model inspects the images for scratches,
+ * scuffs, ring-wear, seam splits, and other visible defects, then returns
+ * a structured grade on the project's condition scale (GEM / M / NM / G /
+ * OK / F) together with a short rationale. Results are persisted to the
+ * `grading_history` table for the user's records.
+ *
+ * Images are sent inline as base64 data-URLs and are never stored by this
+ * function — only the resulting grade and notes are kept.
+ */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.3";
 
 const allowedOrigins = [

@@ -1,3 +1,19 @@
+/**
+ * @file discogs edge function — Discogs OAuth 1.0a + API proxy.
+ *
+ * Centralizes all Discogs interactions so the consumer secret never reaches
+ * the client. Supported `?action=` values include:
+ *  - `request_token`  — Step 1 of OAuth 1.0a; returns an auth URL the user
+ *                       is redirected to and a token_secret to stash.
+ *  - `access_token`   — Step 2; exchanges the verifier for a permanent token
+ *                       which is stored server-side in `discogs_tokens`.
+ *  - `search` / `release` / `collection` / `wantlist` — authenticated
+ *                       passthroughs that sign requests with HMAC-SHA1 using
+ *                       the stored per-user token.
+ *
+ * Signature helpers below implement the OAuth 1.0a spec (percent-encoding,
+ * parameter sorting, base-string construction, HMAC-SHA1).
+ */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.3";
 
 const allowedOrigins = [

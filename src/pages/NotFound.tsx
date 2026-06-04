@@ -1,3 +1,10 @@
+/**
+ * @file NotFound.tsx — 404 fallback page (route: `*`).
+ *
+ * Rendered when the user navigates to an unknown URL. Logs the attempted
+ * path to the console for debugging and shows a simple message with a link
+ * back to the home page.
+ */
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 

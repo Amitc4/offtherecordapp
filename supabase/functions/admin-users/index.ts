@@ -1,3 +1,12 @@
+/**
+ * @file admin-users edge function — Privileged user-management endpoint.
+ *
+ * Used by the AdminScreen. Requires the caller to be an authenticated user
+ * with the `admin` or `main_admin` role (checked via `has_role`). Uses the
+ * service-role client to perform actions that bypass RLS, such as listing
+ * all users, changing user statuses (Active/Archived/Blocked), and assigning
+ * or revoking roles. CORS is locked to known Lovable origins.
+ */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const allowedOrigins = [
