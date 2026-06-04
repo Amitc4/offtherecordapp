@@ -1,3 +1,19 @@
+/**
+ * @file spotify-auth edge function — Spotify OAuth 2.0 (Authorization Code).
+ *
+ * Single endpoint that branches on a JSON `action` field:
+ *  - `authorize`  — Builds the Spotify consent URL with the configured
+ *                   scopes (top-read, library-read, recently-played, email)
+ *                   and a random `state`; the client stashes the state and
+ *                   redirects the browser.
+ *  - `exchange`   — Swaps the returned `code` for access + refresh tokens,
+ *                   fetches the Spotify profile, and upserts both into
+ *                   `spotify_tokens` plus flags `profiles.spotify_connected`.
+ *  - `disconnect` — Deletes the stored tokens and clears the profile flag.
+ *
+ * The client secret never leaves this function; tokens are stored server-side
+ * and refreshed on demand by `spotify-recommendations`.
+ */
 // Spotify OAuth: handles authorize-URL generation, code exchange, and disconnect.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 

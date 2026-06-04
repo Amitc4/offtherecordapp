@@ -1,3 +1,17 @@
+/**
+ * @file identify-record edge function — AI cover-art recognition + Discogs lookup.
+ *
+ * Two-step pipeline for the "Scan Record" flow:
+ *  1. Sends the user's cover-art photo (base64 inline, or a signed URL to a
+ *     freshly uploaded file in the `record-photos` bucket) to Gemini 2.5
+ *     Flash via the Lovable AI Gateway. The model is instructed to prioritize
+ *     visual matching of the artwork and to return 1–3 ranked guesses as
+ *     strict JSON `{ guesses: [{ title, artist, confidence }] }`.
+ *  2. For each guess (best first), searches the Discogs database with the
+ *     consumer key/secret, deduplicates release IDs, and returns the merged
+ *     list of candidate releases together with the top guess as the primary
+ *     identification shown to the user.
+ */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.3";
 
 const corsHeaders = {

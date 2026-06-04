@@ -1,3 +1,14 @@
+/**
+ * @file DiscogsCallback.tsx — OAuth 1.0a callback handler for Discogs.
+ *
+ * Discogs redirects the user here after they authorize the app. This page:
+ * 1. Reads `oauth_token` and `oauth_verifier` from the URL.
+ * 2. Retrieves the matching `oauth_token_secret` previously stashed in
+ *    sessionStorage (with an expiry guard).
+ * 3. Calls the `discogs` edge function with `action=access_token` to swap
+ *    the request token for a permanent access token (stored server-side).
+ * 4. Shows a toast and redirects back to `/`.
+ */
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";

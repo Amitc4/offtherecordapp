@@ -1,9 +1,24 @@
+/**
+ * @file use-toast.ts — Headless toast notification store.
+ *
+ * Adapted from the shadcn/ui toast pattern. Maintains an in-memory queue of
+ * toasts in a module-level reducer so any component can call `toast(...)`
+ * without needing a context provider. `useToast()` subscribes a component to
+ * the queue so it re-renders when toasts are added, updated, or dismissed.
+ *
+ * - `TOAST_LIMIT` caps the visible toast count.
+ * - `TOAST_REMOVE_DELAY` controls how long dismissed toasts linger before
+ *   being removed from the queue (kept high so exit animations can complete).
+ */
 import * as React from "react";
 
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
+/** Maximum number of toasts visible at once. */
 const TOAST_LIMIT = 1;
+/** Delay (ms) before a dismissed toast is removed from the queue. */
 const TOAST_REMOVE_DELAY = 1000000;
+
 
 type ToasterToast = ToastProps & {
   id: string;
