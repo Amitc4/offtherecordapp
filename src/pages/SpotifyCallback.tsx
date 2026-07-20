@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Disc3 } from "lucide-react";
+import { getSpotifyRedirectUri } from "@/lib/spotifyOAuth";
 
 const SpotifyCallback = () => {
   const navigate = useNavigate();
@@ -39,9 +40,9 @@ const SpotifyCallback = () => {
       }
       sessionStorage.removeItem("spotify_oauth_state");
 
-      const redirectUri = `${window.location.origin}/spotify/callback`;
+      const redirectUri = getSpotifyRedirectUri();
       const { data, error: fnErr } = await supabase.functions.invoke("spotify-auth", {
-        body: { action: "exchange", code, redirect_uri: redirectUri },
+        body: { action: "exchange", code, state, redirect_uri: redirectUri },
       });
 
       if (fnErr || data?.error) {
