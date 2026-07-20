@@ -231,8 +231,9 @@ const ProfileScreen = () => {
   const handleConnectSpotify = async () => {
     setSpotifyConnecting(true);
     const inIframe = window.self !== window.top;
+    // Pre-open a blank tab synchronously to avoid popup blockers while we call the edge function.
+    // Do NOT null out `opener` — we still need permission to navigate this window to the Spotify URL.
     const authWindow = inIframe ? window.open("about:blank", "_blank") : null;
-    if (authWindow) authWindow.opener = null;
 
     try {
       const redirectUri = getSpotifyRedirectUri();
