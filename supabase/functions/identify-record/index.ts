@@ -75,11 +75,23 @@ Deno.serve(async (req) => {
       const dataUrl = `data:${body.mime_type};base64,${body.image_base64}`;
       imageContent = { type: "image_url", image_url: { url: dataUrl } };
     } else if (body.file_path) {
+      const filePath = body.file_path;
+      if (
+        typeof filePath !== "string" ||
+        !filePath.startsWith(`${user.id}/`) ||
+        filePath.includes("..") ||
+        filePath.includes("//")
+      ) {
+        return new Response(JSON.stringify({ error: "Invalid file_path" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const adminClient = createClient(SUPABASE_URL, serviceRoleKey);
       const { data: signedData, error: signedError } = await adminClient.storage
         .from("record-photos")
-        .createSignedUrl(body.file_path, 300);
+        .createSignedUrl(filePath, 300);
       if (signedError || !signedData?.signedUrl) {
         return new Response(JSON.stringify({ error: "Failed to access uploaded photo" }), {
           status: 500,
