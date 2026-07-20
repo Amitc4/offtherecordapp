@@ -299,6 +299,7 @@ export type Database = {
           created_at: string
           discogs_connected: boolean
           discogs_username: string | null
+          discoverable: boolean
           display_name: string | null
           first_name: string | null
           id: string
@@ -319,6 +320,7 @@ export type Database = {
           created_at?: string
           discogs_connected?: boolean
           discogs_username?: string | null
+          discoverable?: boolean
           display_name?: string | null
           first_name?: string | null
           id?: string
@@ -339,6 +341,7 @@ export type Database = {
           created_at?: string
           discogs_connected?: boolean
           discogs_username?: string | null
+          discoverable?: boolean
           display_name?: string | null
           first_name?: string | null
           id?: string
