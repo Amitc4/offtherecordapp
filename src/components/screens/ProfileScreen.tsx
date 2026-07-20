@@ -236,7 +236,19 @@ const ProfileScreen = () => {
       });
       if (error || data?.error) throw new Error(data?.error || error?.message);
       sessionStorage.setItem("spotify_oauth_state", data.state);
-      window.location.href = data.url;
+      // Spotify refuses to load inside iframes (X-Frame-Options: DENY).
+      // Break out of the Lovable preview iframe if present; otherwise navigate normally.
+      const inIframe = window.self !== window.top;
+      if (inIframe) {
+        const opened = window.open(data.url, "_blank", "noopener,noreferrer");
+        if (!opened) {
+          try { (window.top as Window).location.href = data.url; }
+          catch { window.location.href = data.url; }
+        }
+        setSpotifyConnecting(false);
+      } else {
+        window.location.href = data.url;
+      }
     } catch (err: any) {
       toast.error(err.message || "Failed to start Spotify connection");
       setSpotifyConnecting(false);
