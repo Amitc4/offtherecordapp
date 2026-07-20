@@ -230,6 +230,10 @@ const ProfileScreen = () => {
 
   const handleConnectSpotify = async () => {
     setSpotifyConnecting(true);
+    const inIframe = window.self !== window.top;
+    const authWindow = inIframe ? window.open("about:blank", "_blank") : null;
+    if (authWindow) authWindow.opener = null;
+
     try {
       const redirectUri = getSpotifyRedirectUri();
       const { data, error } = await supabase.functions.invoke("spotify-auth", {
@@ -239,10 +243,10 @@ const ProfileScreen = () => {
       sessionStorage.setItem("spotify_oauth_state", data.state);
       // Spotify refuses to load inside iframes (X-Frame-Options: DENY).
       // Break out of the Lovable preview iframe if present; otherwise navigate normally.
-      const inIframe = window.self !== window.top;
       if (inIframe) {
-        const opened = window.open(data.url, "_blank", "noopener,noreferrer");
-        if (!opened) {
+        if (authWindow) {
+          authWindow.location.href = data.url;
+        } else {
           try { (window.top as Window).location.href = data.url; }
           catch { window.location.href = data.url; }
         }
@@ -251,6 +255,7 @@ const ProfileScreen = () => {
         window.location.href = data.url;
       }
     } catch (err: any) {
+      authWindow?.close();
       toast.error(err.message || "Failed to start Spotify connection");
       setSpotifyConnecting(false);
     }
