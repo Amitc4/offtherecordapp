@@ -81,7 +81,12 @@ Deno.serve(async (req) => {
     }
 
     for (const p of filePaths) {
-      if (typeof p !== "string" || !p.startsWith(`${user.id}/`)) {
+      if (
+        typeof p !== "string" ||
+        !p.startsWith(`${user.id}/`) ||
+        p.includes("..") ||
+        p.includes("//")
+      ) {
         return new Response(JSON.stringify({ error: "Access denied" }), {
           status: 403,
           headers: { ...cors, "Content-Type": "application/json" },
