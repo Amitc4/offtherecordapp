@@ -34,6 +34,7 @@ import HelpSupportSheet from "@/components/HelpSupportSheet";
 import SettingsSheet from "@/components/SettingsSheet";
 import SpotifyRecommendationsSheet from "@/components/SpotifyRecommendationsSheet";
 import UserReviewsSheet from "@/components/UserReviewsSheet";
+import { getSpotifyRedirectUri } from "@/lib/spotifyOAuth";
 
 interface FriendRow {
   id: string;
@@ -230,7 +231,7 @@ const ProfileScreen = () => {
   const handleConnectSpotify = async () => {
     setSpotifyConnecting(true);
     try {
-      const redirectUri = `${window.location.origin}/spotify/callback`;
+      const redirectUri = getSpotifyRedirectUri();
       const { data, error } = await supabase.functions.invoke("spotify-auth", {
         body: { action: "authorize", redirect_uri: redirectUri },
       });
