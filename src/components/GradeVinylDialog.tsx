@@ -11,10 +11,10 @@
  *   photo. The 4 resulting images (2 originals + 2 auto-cropped macros) are
  *   attached to the record's photo gallery.
  */
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Camera, Loader2, Star, X, CheckCircle2, Images } from "lucide-react";
+import { Camera, Loader2, Star, X, CheckCircle2, Images, ImageIcon, FileUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
