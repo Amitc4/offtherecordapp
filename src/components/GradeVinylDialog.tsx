@@ -1,19 +1,15 @@
 /**
- * @file GradeVinylDialog.tsx — AI-powered vinyl condition grading dialog (4-photo workflow).
+ * @file GradeVinylDialog.tsx — AI-powered vinyl condition grading dialog (2-photo workflow).
  *
- * **Flow (4 photos):**
- *   0. Side A — Full disc (frame the whole record inside the circular guide)
- *   1. Side B — Full disc
- *   2. Side A — Macro (close-up of center label / matrix runout)
- *   3. Side B — Macro
+ * **Flow:**
+ *   User uploads 2 photos:
+ *     0. Side A — Full disc (frame the whole record inside the circular guide)
+ *     1. Side B — Full disc
  *
- * 1. **Capture** – User takes each of the 4 photos using the in-app camera which
- *    displays a circular guide sized for either a full-disc or macro shot.
- * 2. **Uploading** – Photos are uploaded to the `record-photos` bucket.
- * 3. **Grading** – The `grade-vinyl` edge function analyses the 4 photos.
- * 4. **Results** – Grade + Goldmine label. On success, the 4 photos are also
- *    attached to the record itself (via the `record_photos` table) so they
- *    appear in the record's photo gallery in the Collection tab.
+ *   After grading succeeds, the app automatically generates 2 additional
+ *   "macro" images by cropping the center-label region from each full-disc
+ *   photo. The 4 resulting images (2 originals + 2 auto-cropped macros) are
+ *   attached to the record's photo gallery.
  */
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
