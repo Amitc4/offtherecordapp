@@ -11,10 +11,10 @@
  *   photo. The 4 resulting images (2 originals + 2 auto-cropped macros) are
  *   attached to the record's photo gallery.
  */
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Camera, Loader2, Star, X, CheckCircle2, Images } from "lucide-react";
+import { Camera, Loader2, Star, X, CheckCircle2, Images, ImageIcon, FileUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -170,6 +170,9 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
   const [badIndices, setBadIndices] = useState<number[]>([]);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [activeSlot, setActiveSlot] = useState<number>(0);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const libraryInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filledCount = slots.filter(Boolean).length;
 
@@ -190,9 +193,31 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     onOpenChange(o);
   };
 
-  const openCameraFor = (idx: number) => {
+  const openPickerFor = (idx: number) => {
     setActiveSlot(idx);
+    setPickerOpen(true);
+  };
+
+  const chooseCamera = () => {
+    setPickerOpen(false);
     setCameraOpen(true);
+  };
+
+  const chooseLibrary = () => {
+    setPickerOpen(false);
+    libraryInputRef.current?.click();
+  };
+
+  const chooseFile = () => {
+    setPickerOpen(false);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    handleCapture(file);
   };
 
   const handleCapture = (file: File) => {
@@ -396,7 +421,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                         spec={SLOTS[i]}
                         slot={slots[i]}
                         needsRetake={badIndices.includes(i)}
-                        onClick={() => openCameraFor(i)}
+                        onClick={() => openPickerFor(i)}
                         onRemove={() => handleRemoveSlot(i)}
                       />
                     ))}
@@ -567,6 +592,71 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
         hint={activeSpec.hint}
         onCapture={handleCapture}
       />
+
+      <input
+        ref={libraryInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileSelected}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        onChange={handleFileSelected}
+      />
+
+      <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle className="font-display text-base">
+              Add {activeSpec.short} photo
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-2 pt-2">
+            <button
+              type="button"
+              onClick={chooseCamera}
+              className="flex items-center gap-3 rounded-xl bg-primary/10 p-3 text-left transition-colors active:bg-primary/20"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <Camera size={18} />
+              </div>
+              <div>
+                <p className="font-body text-sm font-semibold text-foreground">Open camera</p>
+                <p className="font-body text-xs text-muted-foreground">Take a photo with the guide</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={chooseLibrary}
+              className="flex items-center gap-3 rounded-xl bg-background p-3 text-left transition-colors active:bg-accent"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary">
+                <ImageIcon size={18} />
+              </div>
+              <div>
+                <p className="font-body text-sm font-semibold text-foreground">Photo library</p>
+                <p className="font-body text-xs text-muted-foreground">Pick an existing image</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={chooseFile}
+              className="flex items-center gap-3 rounded-xl bg-background p-3 text-left transition-colors active:bg-accent"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary">
+                <FileUp size={18} />
+              </div>
+              <div>
+                <p className="font-body text-sm font-semibold text-foreground">Upload file</p>
+                <p className="font-body text-xs text-muted-foreground">Browse files on device</p>
+              </div>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };
