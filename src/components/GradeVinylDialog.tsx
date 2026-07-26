@@ -193,9 +193,31 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     onOpenChange(o);
   };
 
-  const openCameraFor = (idx: number) => {
+  const openPickerFor = (idx: number) => {
     setActiveSlot(idx);
+    setPickerOpen(true);
+  };
+
+  const chooseCamera = () => {
+    setPickerOpen(false);
     setCameraOpen(true);
+  };
+
+  const chooseLibrary = () => {
+    setPickerOpen(false);
+    libraryInputRef.current?.click();
+  };
+
+  const chooseFile = () => {
+    setPickerOpen(false);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    handleCapture(file);
   };
 
   const handleCapture = (file: File) => {
