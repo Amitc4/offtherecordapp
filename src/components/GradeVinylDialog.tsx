@@ -421,7 +421,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                         spec={SLOTS[i]}
                         slot={slots[i]}
                         needsRetake={badIndices.includes(i)}
-                        onClick={() => openCameraFor(i)}
+                        onClick={() => openPickerFor(i)}
                         onRemove={() => handleRemoveSlot(i)}
                       />
                     ))}
