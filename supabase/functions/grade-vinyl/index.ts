@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    // 4-photo workflow: [Side A full, Side B full, Side A macro, Side B macro]
+    // 2-photo workflow: [Side A full disc, Side B full disc]
     const filePaths: string[] = Array.isArray(body.file_paths)
       ? body.file_paths
       : (body.file_path ? [body.file_path] : []);
@@ -73,8 +73,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (filePaths.length > 4) {
-      return new Response(JSON.stringify({ error: "Maximum 4 photos allowed" }), {
+    if (filePaths.length > 2) {
+      return new Response(JSON.stringify({ error: "Maximum 2 photos allowed" }), {
         status: 400,
         headers: { ...cors, "Content-Type": "application/json" },
       });
@@ -111,12 +111,10 @@ Deno.serve(async (req) => {
       signedUrls.push(signedData.signedUrl);
     }
 
-    // Photo labels for the 4-photo workflow
+    // Photo labels for the 2-photo workflow
     const photoLabels = [
       "Photo 1 — Side A, FULL DISC shot (whole record visible, center label included)",
       "Photo 2 — Side B, FULL DISC shot (whole record visible, center label included)",
-      "Photo 3 — Side A, MACRO close-up of the center label / matrix area",
-      "Photo 4 — Side B, MACRO close-up of the center label / matrix area",
     ];
 
 
