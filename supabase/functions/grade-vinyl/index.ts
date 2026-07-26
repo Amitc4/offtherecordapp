@@ -221,7 +221,7 @@ Respond ONLY with valid JSON in this format:
         text: `Analyze and grade this vinyl. ${signedUrls.length} photo(s) provided. Confirm all show the same record (center label) before grading.`,
       },
       ...signedUrls.flatMap((url, i) => ([
-        { type: "text", text: quarterLabels[i] || `Photo ${i + 1}` },
+        { type: "text", text: photoLabels[i] || `Photo ${i + 1}` },
         { type: "image_url", image_url: { url } },
       ])),
     ];
