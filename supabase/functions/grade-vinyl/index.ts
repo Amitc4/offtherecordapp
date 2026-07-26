@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    // Accept either single `file_path` (legacy) or `file_paths` (8 quarter shots)
+    // 4-photo workflow: [Side A full, Side B full, Side A macro, Side B macro]
     const filePaths: string[] = Array.isArray(body.file_paths)
       ? body.file_paths
       : (body.file_path ? [body.file_path] : []);
@@ -73,8 +73,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (filePaths.length > 8) {
-      return new Response(JSON.stringify({ error: "Maximum 8 photos allowed" }), {
+    if (filePaths.length > 4) {
+      return new Response(JSON.stringify({ error: "Maximum 4 photos allowed" }), {
         status: 400,
         headers: { ...cors, "Content-Type": "application/json" },
       });
@@ -111,17 +111,14 @@ Deno.serve(async (req) => {
       signedUrls.push(signedData.signedUrl);
     }
 
-    // Quarter labels for the 8-photo workflow (Side A Q1-Q4, Side B Q1-Q4)
-    const quarterLabels = [
-      "Side A — Quarter 1 (top-right, including center)",
-      "Side A — Quarter 2 (bottom-right, including center)",
-      "Side A — Quarter 3 (bottom-left, including center)",
-      "Side A — Quarter 4 (top-left, including center)",
-      "Side B — Quarter 1 (top-right, including center)",
-      "Side B — Quarter 2 (bottom-right, including center)",
-      "Side B — Quarter 3 (bottom-left, including center)",
-      "Side B — Quarter 4 (top-left, including center)",
+    // Photo labels for the 4-photo workflow
+    const photoLabels = [
+      "Photo 1 — Side A, FULL DISC shot (whole record visible, center label included)",
+      "Photo 2 — Side B, FULL DISC shot (whole record visible, center label included)",
+      "Photo 3 — Side A, MACRO close-up of the center label / matrix area",
+      "Photo 4 — Side B, MACRO close-up of the center label / matrix area",
     ];
+
 
     // ============================================================
     // DUAL-PASS GRADING
@@ -130,13 +127,19 @@ Deno.serve(async (req) => {
     // We then reconcile: take the LOWER (harsher) score, union defects.
     // ============================================================
 
-    const balancedSystemPrompt = `You are a professional vinyl record condition grader. You will receive up to 8 high-quality photos of a single vinyl record: 4 quarters of Side A and 4 quarters of Side B. Each quarter photo includes the center label so you can confirm all photos are of the SAME physical record.
+    const balancedSystemPrompt = `You are a professional vinyl record condition grader. You will receive exactly 4 photos of a single vinyl record, in this order:
+- Photo 0: Side A full disc (whole record visible, center label included)
+- Photo 1: Side B full disc (whole record visible, center label included)
+- Photo 2: Side A macro close-up of the center label / matrix runout area
+- Photo 3: Side B macro close-up of the center label / matrix runout area
+
+Use the FULL-DISC photos to grade the overall playing surface (scratches, scuffs, warping, edge damage). Use the MACRO photos to verify the pressing (matrix numbers, label variant) and to inspect the inner grooves / label condition closely. Cross-check the center labels across all 4 photos to confirm they are the SAME physical record.
 
 First, verify all photos depict the same record (matching center label, color, pressing). If they clearly show different records or the photos are not of a vinyl playing surface, set score to null and explain in the summary.
 
 If you cannot grade because one or more specific photos are unusable (blurry, too dark, severe glare covering most of the surface, wrong subject, missing center label, finger covering the disc, or duplicates of another quarter), list those photo indices (0-based, in the order provided) in "bad_photo_indices" so the user can retake them. If grading succeeds normally, return an empty array for "bad_photo_indices". If you must set score to null because photos are unusable, "bad_photo_indices" MUST list every problematic photo.
 
-Otherwise, analyze the combined surface condition across all quarters and grade with a precise DECIMAL SCORE from 0.0 to 10.0 (one decimal place), where:
+Otherwise, analyze the combined surface condition across both full-disc shots (informed by the macro shots) and grade with a precise DECIMAL SCORE from 0.0 to 10.0 (one decimal place), where:
 - 10.0 = absolutely perfect, no flaws whatsoever
 - 9.5–9.9 = nearly perfect, only the most minor manufacturing marks
 - 9.0–9.4 = excellent, minimal handling marks, no scratches
@@ -175,9 +178,9 @@ Respond ONLY with valid JSON in this exact format:
 }
 The "defects_per_photo" array MUST have exactly one entry per provided photo. "bad_photo_indices" MUST be an array.`;
 
-    const harshSystemPrompt = `You are a HARSH, adversarial vinyl record QC inspector working on behalf of a buyer. Your job is to find every single imperfection a seller might be hiding. Assume the record HAS flaws until proven otherwise. You will receive up to 8 photos: 4 quarters of Side A and 4 quarters of Side B.
+    const harshSystemPrompt = `You are a HARSH, adversarial vinyl record QC inspector working on behalf of a buyer. Your job is to find every single imperfection a seller might be hiding. Assume the record HAS flaws until proven otherwise. You will receive exactly 4 photos in this order: Side A full, Side B full, Side A macro (label close-up), Side B macro (label close-up).
 
-Your bias: when uncertain whether a mark is a reflection or a real scratch, lean toward CALLING IT A DEFECT. It is far worse to miss a scratch than to over-report one. Examine grooves carefully for hairlines, spider-web scuffs, fingerprint smudges, pressing flaws, edge wear, label damage, and any haziness that dulls the gloss.
+Your bias: when uncertain whether a mark is a reflection or a real scratch, lean toward CALLING IT A DEFECT. It is far worse to miss a scratch than to over-report one. Examine grooves carefully for hairlines, spider-web scuffs, fingerprint smudges, pressing flaws, edge wear, label damage, and any haziness that dulls the gloss. Use the macro photos to catch label wear, ring-wear near the label, and inner-groove scratches that are hard to see in the full shot.
 
 Use this STRICTER scoring scale (be tougher than a typical grader):
 - 10.0 = literally flawless, sealed-grade
@@ -188,7 +191,7 @@ Use this STRICTER scoring scale (be tougher than a typical grader):
 - 3.5–5.4 = poor
 - 0.0–3.4 = damaged
 
-Anchor your score to the WORST quarter. Round DOWN when between two grades.
+Anchor your score to the WORSE of the two sides. Round DOWN when between two grades.
 
 If photos are unusable (blurry, dark, heavy glare, wrong subject), set score to null and list the bad indices in "bad_photo_indices".
 
@@ -218,7 +221,7 @@ Respond ONLY with valid JSON in this format:
         text: `Analyze and grade this vinyl. ${signedUrls.length} photo(s) provided. Confirm all show the same record (center label) before grading.`,
       },
       ...signedUrls.flatMap((url, i) => ([
-        { type: "text", text: quarterLabels[i] || `Photo ${i + 1}` },
+        { type: "text", text: photoLabels[i] || `Photo ${i + 1}` },
         { type: "image_url", image_url: { url } },
       ])),
     ];
