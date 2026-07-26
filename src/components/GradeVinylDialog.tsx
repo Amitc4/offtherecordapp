@@ -347,9 +347,9 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
               >
                 <div className="rounded-xl bg-primary/10 p-3">
                   <p className="font-body text-xs text-foreground">
-                    Take <strong>4 photos</strong>: full shots of <strong>Side A</strong> and <strong>Side B</strong>,
-                    plus close-up macro shots of each center label. A circular guide will appear in the camera to
-                    help you frame the disc.
+                    Take <strong>2 photos</strong>: full shots of <strong>Side A</strong> and <strong>Side B</strong>.
+                    A circular guide will help you frame the disc. Close-up label shots are generated automatically
+                    after grading.
                   </p>
                 </div>
 
@@ -364,32 +364,12 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                   </div>
                 )}
 
-                {/* Full disc row */}
                 <div>
                   <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                    Full disc
+                    Full disc — both sides
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     {[0, 1].map((i) => (
-                      <SlotButton
-                        key={i}
-                        spec={SLOTS[i]}
-                        slot={slots[i]}
-                        needsRetake={badIndices.includes(i)}
-                        onClick={() => openCameraFor(i)}
-                        onRemove={() => handleRemoveSlot(i)}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Macro row */}
-                <div>
-                  <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                    Macro (center label)
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[2, 3].map((i) => (
                       <SlotButton
                         key={i}
                         spec={SLOTS[i]}
