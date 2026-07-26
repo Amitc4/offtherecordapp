@@ -592,6 +592,71 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
         hint={activeSpec.hint}
         onCapture={handleCapture}
       />
+
+      <input
+        ref={libraryInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileSelected}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        onChange={handleFileSelected}
+      />
+
+      <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle className="font-display text-base">
+              Add {activeSpec.short} photo
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-2 pt-2">
+            <button
+              type="button"
+              onClick={chooseCamera}
+              className="flex items-center gap-3 rounded-xl bg-primary/10 p-3 text-left transition-colors active:bg-primary/20"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <Camera size={18} />
+              </div>
+              <div>
+                <p className="font-body text-sm font-semibold text-foreground">Open camera</p>
+                <p className="font-body text-xs text-muted-foreground">Take a photo with the guide</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={chooseLibrary}
+              className="flex items-center gap-3 rounded-xl bg-background p-3 text-left transition-colors active:bg-accent"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary">
+                <ImageIcon size={18} />
+              </div>
+              <div>
+                <p className="font-body text-sm font-semibold text-foreground">Photo library</p>
+                <p className="font-body text-xs text-muted-foreground">Pick an existing image</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={chooseFile}
+              className="flex items-center gap-3 rounded-xl bg-background p-3 text-left transition-colors active:bg-accent"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary">
+                <FileUp size={18} />
+              </div>
+              <div>
+                <p className="font-body text-sm font-semibold text-foreground">Upload file</p>
+                <p className="font-body text-xs text-muted-foreground">Browse files on device</p>
+              </div>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };
