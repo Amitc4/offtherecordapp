@@ -170,6 +170,9 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
   const [badIndices, setBadIndices] = useState<number[]>([]);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [activeSlot, setActiveSlot] = useState<number>(0);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const libraryInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filledCount = slots.filter(Boolean).length;
 
