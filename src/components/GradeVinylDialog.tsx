@@ -1,30 +1,31 @@
 /**
- * @file GradeVinylDialog.tsx — AI-powered vinyl condition grading dialog (8-photo workflow).
+ * @file GradeVinylDialog.tsx — AI-powered vinyl condition grading dialog (4-photo workflow).
  *
- * **Flow:**
- * 1. **Capture** – User uploads exactly 8 photos: 4 quarters of Side A + 4 quarters of Side B.
- *    Each photo must include the center label so the AI can confirm all photos belong to
- *    the same physical record.
- * 2. **Uploading** – Photos are uploaded to the `record-photos` bucket under a per-grading
- *    folder so they persist and can be displayed later.
- * 3. **Grading** – The `grade-vinyl` edge function sends the 8 signed image URLs to an AI
- *    model that verifies the record identity and grades scratches/scuffs/warping/chips.
- * 4. **Results** – Displays the grade, confidence, breakdown, and notes. The 8 photo URLs
- *    are saved to `grading_history.photo_urls` so they can be viewed later from the record
- *    detail sheet.
+ * **Flow (4 photos):**
+ *   0. Side A — Full disc (frame the whole record inside the circular guide)
+ *   1. Side B — Full disc
+ *   2. Side A — Macro (close-up of center label / matrix runout)
+ *   3. Side B — Macro
+ *
+ * 1. **Capture** – User takes each of the 4 photos using the in-app camera which
+ *    displays a circular guide sized for either a full-disc or macro shot.
+ * 2. **Uploading** – Photos are uploaded to the `record-photos` bucket.
+ * 3. **Grading** – The `grade-vinyl` edge function analyses the 4 photos.
+ * 4. **Results** – Grade + Goldmine label. On success, the 4 photos are also
+ *    attached to the record itself (via the `record_photos` table) so they
+ *    appear in the record's photo gallery in the Collection tab.
  */
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Camera, Loader2, Star, X, ImagePlus, CheckCircle2, Images } from "lucide-react";
+import { Camera, Loader2, Star, X, CheckCircle2, Images } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import QuarterTutorial from "@/components/QuarterTutorial";
 import GradingPhotosViewer, { type PhotoDefect } from "@/components/GradingPhotosViewer";
+import CameraCapture, { type CaptureMode } from "@/components/CameraCapture";
 
-/** Props — `recordId/title/artist` are stored on the resulting history row. */
 interface GradeVinylDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -33,9 +34,7 @@ interface GradeVinylDialogProps {
   recordArtist?: string;
 }
 
-/** Shape of the grading payload returned by the `grade-vinyl` edge function. */
 interface GradingResult {
-  /** Decimal condition score from 0.0 (damaged) to 10.0 (perfect), or null if undecidable. */
   score: number | null;
   confidence: number;
   summary: string;
@@ -49,25 +48,45 @@ interface GradingResult {
   notes: string;
 }
 
-/** UI state machine: photo capture → upload → AI grading → results display. */
 type Stage = "capture" | "uploading" | "grading" | "results";
 
-/** Exact number of photos required before grading can be submitted. */
-const REQUIRED_PHOTOS = 8;
+const REQUIRED_PHOTOS = 4;
 
-/** Human-readable slot labels — index matches the slot grid order. */
-const SLOT_LABELS = [
-  "Side A · Q1 (top-right)",
-  "Side A · Q2 (bottom-right)",
-  "Side A · Q3 (bottom-left)",
-  "Side A · Q4 (top-left)",
-  "Side B · Q1 (top-right)",
-  "Side B · Q2 (bottom-right)",
-  "Side B · Q3 (bottom-left)",
-  "Side B · Q4 (top-left)",
+interface SlotSpec {
+  label: string;
+  short: string;
+  mode: CaptureMode;
+  hint: string;
+}
+
+/** Slot definitions — order matches the array indices sent to the edge fn. */
+const SLOTS: SlotSpec[] = [
+  {
+    label: "Side A — Full disc",
+    short: "Side A · Full",
+    mode: "full",
+    hint: "Fit the whole record inside the circle. Include the center label.",
+  },
+  {
+    label: "Side B — Full disc",
+    short: "Side B · Full",
+    mode: "full",
+    hint: "Flip the record. Fit the whole disc inside the circle.",
+  },
+  {
+    label: "Side A — Macro (label)",
+    short: "Side A · Macro",
+    mode: "macro",
+    hint: "Get close. Fit the center label inside the small circle.",
+  },
+  {
+    label: "Side B — Macro (label)",
+    short: "Side B · Macro",
+    mode: "macro",
+    hint: "Flip again. Fit the Side B label inside the small circle.",
+  },
 ];
 
-/** Score-to-Tailwind-color mapping for the displayed decimal score. */
 const scoreColor = (score: number | null): string => {
   if (score === null) return "text-foreground";
   if (score >= 9.5) return "text-emerald-500";
@@ -78,7 +97,6 @@ const scoreColor = (score: number | null): string => {
   return "text-destructive";
 };
 
-/** Background tint behind the score badge. */
 const scoreBackground = (score: number | null): string => {
   if (score === null) return "bg-muted";
   if (score >= 9.5) return "bg-emerald-500/15";
@@ -89,7 +107,6 @@ const scoreBackground = (score: number | null): string => {
   return "bg-destructive/15";
 };
 
-/** Goldmine Standard letter grade derived from decimal score. */
 const goldmineGrade = (score: number | null): string => {
   if (score === null) return "—";
   if (score >= 9.8) return "M";
@@ -101,7 +118,6 @@ const goldmineGrade = (score: number | null): string => {
   return "F";
 };
 
-/** Long-form Goldmine label paired with the letter grade. */
 const scoreLabel = (score: number | null): string => {
   if (score === null) return "Unknown";
   if (score >= 9.8) return "Mint";
@@ -113,7 +129,6 @@ const scoreLabel = (score: number | null): string => {
   return "Fair";
 };
 
-/** Map a severity word from the AI breakdown to a Tailwind text color. */
 const severityColor = (level: string) => {
   switch (level) {
     case "none": return "text-emerald-500";
@@ -126,7 +141,6 @@ const severityColor = (level: string) => {
   }
 };
 
-/** A photo placed into one of the 8 grid slots, plus its blob preview URL. */
 interface SlotPhoto {
   file: File;
   previewUrl: string;
@@ -134,23 +148,20 @@ interface SlotPhoto {
 
 const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArtist }: GradeVinylDialogProps) => {
   const { user, session } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const activeSlotRef = useRef<number>(0);
   const [stage, setStage] = useState<Stage>("capture");
   const [slots, setSlots] = useState<(SlotPhoto | null)[]>(Array(REQUIRED_PHOTOS).fill(null));
   const [grading, setGrading] = useState<GradingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
-  const [tutorialOpen, setTutorialOpen] = useState(false);
-  const [tutorialSlot, setTutorialSlot] = useState<number>(0);
   const [resultPhotoUrls, setResultPhotoUrls] = useState<string[]>([]);
   const [resultDefects, setResultDefects] = useState<PhotoDefect[][]>([]);
   const [photosViewerOpen, setPhotosViewerOpen] = useState(false);
   const [badIndices, setBadIndices] = useState<number[]>([]);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [activeSlot, setActiveSlot] = useState<number>(0);
 
   const filledCount = slots.filter(Boolean).length;
 
-  /** Reset all state and revoke any blob URLs to avoid memory leaks. */
   const reset = () => {
     slots.forEach((s) => s && URL.revokeObjectURL(s.previewUrl));
     setStage("capture");
@@ -163,47 +174,18 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     setBadIndices([]);
   };
 
-  /** When the dialog is closed, reset state so the next open starts fresh. */
   const handleOpenChange = (o: boolean) => {
     if (!o) reset();
     onOpenChange(o);
   };
 
-  /** Tap a slot → open the animated tutorial for that quarter. */
-  const handleSlotClick = (idx: number) => {
-    activeSlotRef.current = idx;
-    setTutorialSlot(idx);
-    setTutorialOpen(true);
+  const openCameraFor = (idx: number) => {
+    setActiveSlot(idx);
+    setCameraOpen(true);
   };
 
-  /** Tutorial confirmed → close it and trigger the camera input. */
-  const handleTutorialConfirm = () => {
-    setTutorialOpen(false);
-    // Wait for dialog close animation before opening the camera so iOS picks it up reliably
-    setTimeout(() => fileInputRef.current?.click(), 150);
-  };
-
-  /**
-   * File input change — validate quality (min ~150KB), max size (10MB),
-   * then place the file in the currently active slot.
-   */
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Quality check: require at least 800x800 estimate via file size as a proxy (>= 200KB)
-    if (file.size < 150 * 1024) {
-      toast.error("Photo quality too low. Please use a clear, high-resolution image.");
-      e.target.value = "";
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Photo too large (max 10MB).");
-      e.target.value = "";
-      return;
-    }
-
-    const idx = activeSlotRef.current;
+  const handleCapture = (file: File) => {
+    const idx = activeSlot;
     setSlots((prev) => {
       const next = [...prev];
       if (next[idx]) URL.revokeObjectURL(next[idx]!.previewUrl);
@@ -211,10 +193,8 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
       return next;
     });
     setBadIndices((prev) => prev.filter((i) => i !== idx));
-    e.target.value = "";
   };
 
-  /** Remove a photo from a single slot and revoke its blob URL. */
   const handleRemoveSlot = (idx: number) => {
     setSlots((prev) => {
       const next = [...prev];
@@ -224,13 +204,6 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     });
   };
 
-  /**
-   * Submit flow:
-   * 1. Upload all 8 photos to `record-photos/<userId>/grading/<sessionId>/`.
-   *    On any upload failure, already-uploaded photos are removed.
-   * 2. Invoke the `grade-vinyl` edge function with the file paths.
-   * 3. Persist the AI result + photo URLs to `grading_history` for later viewing.
-   */
   const handleSubmit = async () => {
     if (!user || !session) return;
     if (filledCount < REQUIRED_PHOTOS) {
@@ -247,18 +220,16 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     const uploadedPaths: string[] = [];
     const publicUrls: string[] = [];
 
-    // Upload each photo sequentially so we can show progress
     for (let i = 0; i < slots.length; i++) {
       const slot = slots[i]!;
-      const ext = slot.file.name.split(".").pop() || "jpg";
+      const ext = (slot.file.name.split(".").pop() || "jpg").toLowerCase();
       const path = `${user.id}/grading/${sessionId}/${i + 1}-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("record-photos")
-        .upload(path, slot.file, { contentType: slot.file.type, upsert: false });
+        .upload(path, slot.file, { contentType: slot.file.type || "image/jpeg", upsert: false });
       if (upErr) {
         setError("Failed to upload photo. Please try again.");
         setStage("capture");
-        // Cleanup any already uploaded
         if (uploadedPaths.length) {
           await supabase.storage.from("record-photos").remove(uploadedPaths);
         }
@@ -278,7 +249,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
       });
 
       if (resp.error) {
-        setError("Failed to grade record. Try clearer photos showing the playing surface and center.");
+        setError("Failed to grade record. Try clearer photos.");
         setStage("capture");
         return;
       }
@@ -286,9 +257,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
       const data = resp.data;
       if (data.error) {
         setError(data.error);
-        if (Array.isArray(data.bad_photo_indices)) {
-          setBadIndices(data.bad_photo_indices);
-        }
+        if (Array.isArray(data.bad_photo_indices)) setBadIndices(data.bad_photo_indices);
         setStage("capture");
         return;
       }
@@ -328,11 +297,22 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
         photo_urls: publicUrls,
         defects: defects,
       } as any);
+
+      // Attach the 4 photos directly to the record so they show up in the
+      // record's photo gallery (Collection tab). Max is 4 in the schema, so
+      // clear any existing rows first to avoid the limit tripping.
+      if (recordId) {
+        await supabase.from("record_photos").delete().eq("record_id", recordId);
+        const rows = publicUrls.map((url) => ({ record_id: recordId, photo_url: url }));
+        await supabase.from("record_photos").insert(rows as any);
+      }
     } catch {
       setError("Something went wrong. Please try again.");
       setStage("capture");
     }
   };
+
+  const activeSpec = SLOTS[activeSlot];
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -343,15 +323,6 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
             Grade Vinyl Condition
           </DialogTitle>
         </DialogHeader>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={handleFileChange}
-        />
 
         <div className="flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
@@ -365,8 +336,9 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
               >
                 <div className="rounded-xl bg-primary/10 p-3">
                   <p className="font-body text-xs text-foreground">
-                    Add <strong>8 high-quality photos</strong>: 4 quarters of <strong>Side A</strong> and 4 quarters of <strong>Side B</strong>.
-                    Each photo <strong>must include the center label</strong> so we can confirm it's the same record.
+                    Take <strong>4 photos</strong>: full shots of <strong>Side A</strong> and <strong>Side B</strong>,
+                    plus close-up macro shots of each center label. A circular guide will appear in the camera to
+                    help you frame the disc.
                   </p>
                 </div>
 
@@ -381,37 +353,39 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                   </div>
                 )}
 
-                {/* Side A */}
+                {/* Full disc row */}
                 <div>
-                  <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Side A</p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {slots.slice(0, 4).map((slot, i) => (
+                  <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                    Full disc
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[0, 1].map((i) => (
                       <SlotButton
                         key={i}
-                        index={i}
-                        slot={slot}
-                        label={SLOT_LABELS[i]}
+                        spec={SLOTS[i]}
+                        slot={slots[i]}
                         needsRetake={badIndices.includes(i)}
-                        onClick={() => handleSlotClick(i)}
+                        onClick={() => openCameraFor(i)}
                         onRemove={() => handleRemoveSlot(i)}
                       />
                     ))}
                   </div>
                 </div>
 
-                {/* Side B */}
+                {/* Macro row */}
                 <div>
-                  <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Side B</p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {slots.slice(4, 8).map((slot, i) => (
+                  <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                    Macro (center label)
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[2, 3].map((i) => (
                       <SlotButton
-                        key={i + 4}
-                        index={i + 4}
-                        slot={slot}
-                        label={SLOT_LABELS[i + 4]}
-                        needsRetake={badIndices.includes(i + 4)}
-                        onClick={() => handleSlotClick(i + 4)}
-                        onRemove={() => handleRemoveSlot(i + 4)}
+                        key={i}
+                        spec={SLOTS[i]}
+                        slot={slots[i]}
+                        needsRetake={badIndices.includes(i)}
+                        onClick={() => openCameraFor(i)}
+                        onRemove={() => handleRemoveSlot(i)}
                       />
                     ))}
                   </div>
@@ -456,21 +430,11 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                 {stage === "grading" && slots[0]?.previewUrl ? (
                   <div className="relative w-48 h-48 rounded-xl overflow-hidden border border-primary/30 shadow-lg">
                     <img src={slots[0].previewUrl} alt="Scanning" className="h-full w-full object-cover" />
-                    {/* Scanning line */}
                     <motion.div
                       className="absolute inset-x-0 h-1 bg-primary shadow-[0_0_12px_3px_hsl(var(--primary))]"
                       initial={{ top: "0%" }}
                       animate={{ top: ["0%", "100%", "0%"] }}
                       transition={{ duration: 2.2, repeat: Infinity, ease: "linear" }}
-                    />
-                    {/* Grid overlay */}
-                    <div
-                      className="absolute inset-0 opacity-30 pointer-events-none"
-                      style={{
-                        backgroundImage:
-                          "linear-gradient(hsl(var(--primary)/0.4) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)/0.4) 1px, transparent 1px)",
-                        backgroundSize: "20px 20px",
-                      }}
                     />
                     <div className="absolute inset-0 ring-1 ring-primary/50 rounded-xl" />
                   </div>
@@ -484,7 +448,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                   <p className="font-body text-xs text-muted-foreground text-center px-4">
                     {stage === "uploading"
                       ? "Sending high-quality images securely"
-                      : "Filtering reflections, mapping groove breaks across all 8 angles"}
+                      : "Filtering reflections, mapping groove wear across both sides"}
                   </p>
                 </div>
                 {stage === "uploading" && (
@@ -583,27 +547,27 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
         defectsPerPhoto={resultDefects}
       />
 
-      <QuarterTutorial
-        open={tutorialOpen}
-        onOpenChange={setTutorialOpen}
-        slotIndex={tutorialSlot}
-        onConfirm={handleTutorialConfirm}
+      <CameraCapture
+        open={cameraOpen}
+        onOpenChange={setCameraOpen}
+        mode={activeSpec.mode}
+        title={activeSpec.label}
+        hint={activeSpec.hint}
+        onCapture={handleCapture}
       />
     </Dialog>
   );
 };
 
-/** One cell in the 4×2 quarter grid — empty placeholder or filled thumbnail. */
 interface SlotButtonProps {
-  index: number;
+  spec: SlotSpec;
   slot: SlotPhoto | null;
-  label: string;
   needsRetake?: boolean;
   onClick: () => void;
   onRemove: () => void;
 }
 
-const SlotButton = ({ index, slot, label, needsRetake, onClick, onRemove }: SlotButtonProps) => {
+const SlotButton = ({ spec, slot, needsRetake, onClick, onRemove }: SlotButtonProps) => {
   return (
     <div className="relative aspect-square">
       {slot ? (
@@ -614,9 +578,9 @@ const SlotButton = ({ index, slot, label, needsRetake, onClick, onRemove }: Slot
             className={`block h-full w-full overflow-hidden rounded-lg ${
               needsRetake ? "ring-2 ring-destructive ring-offset-1 ring-offset-background animate-pulse" : ""
             }`}
-            aria-label={needsRetake ? `Retake ${label}` : label}
+            aria-label={needsRetake ? `Retake ${spec.label}` : spec.label}
           >
-            <img src={slot.previewUrl} alt={label} className="h-full w-full object-cover" />
+            <img src={slot.previewUrl} alt={spec.label} className="h-full w-full object-cover" />
           </button>
           <button
             onClick={onRemove}
@@ -631,20 +595,27 @@ const SlotButton = ({ index, slot, label, needsRetake, onClick, onRemove }: Slot
               <span className="font-body text-[9px] font-semibold text-destructive-foreground">Retake</span>
             </div>
           ) : (
-            <div className="absolute bottom-0.5 right-0.5 rounded-full bg-emerald-500 p-0.5">
-              <CheckCircle2 size={10} className="text-white" />
-            </div>
+            <>
+              <div className="absolute bottom-0.5 right-0.5 rounded-full bg-emerald-500 p-0.5">
+                <CheckCircle2 size={10} className="text-white" />
+              </div>
+              <div className="absolute inset-x-0 bottom-0 rounded-b-lg bg-black/60 py-0.5 text-center">
+                <span className="font-body text-[9px] font-semibold text-white">{spec.short}</span>
+              </div>
+            </>
           )}
         </>
       ) : (
         <button
           onClick={onClick}
           type="button"
-          className="flex h-full w-full flex-col items-center justify-center gap-0.5 rounded-lg border-2 border-dashed border-primary/30 text-primary transition-colors hover:border-primary/60 hover:bg-primary/5"
-          aria-label={label}
+          className="flex h-full w-full flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-primary/30 text-primary transition-colors hover:border-primary/60 hover:bg-primary/5"
+          aria-label={spec.label}
         >
-          <ImagePlus size={16} />
-          <span className="font-body text-[9px] font-semibold">Q{(index % 4) + 1}</span>
+          <Camera size={20} />
+          <span className="font-body text-[10px] font-semibold text-center px-1 leading-tight">
+            {spec.short}
+          </span>
         </button>
       )}
     </div>
