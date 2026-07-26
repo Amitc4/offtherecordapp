@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    // Accept either single `file_path` (legacy) or `file_paths` (8 quarter shots)
+    // 4-photo workflow: [Side A full, Side B full, Side A macro, Side B macro]
     const filePaths: string[] = Array.isArray(body.file_paths)
       ? body.file_paths
       : (body.file_path ? [body.file_path] : []);
@@ -73,8 +73,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (filePaths.length > 8) {
-      return new Response(JSON.stringify({ error: "Maximum 8 photos allowed" }), {
+    if (filePaths.length > 4) {
+      return new Response(JSON.stringify({ error: "Maximum 4 photos allowed" }), {
         status: 400,
         headers: { ...cors, "Content-Type": "application/json" },
       });
@@ -111,17 +111,14 @@ Deno.serve(async (req) => {
       signedUrls.push(signedData.signedUrl);
     }
 
-    // Quarter labels for the 8-photo workflow (Side A Q1-Q4, Side B Q1-Q4)
-    const quarterLabels = [
-      "Side A — Quarter 1 (top-right, including center)",
-      "Side A — Quarter 2 (bottom-right, including center)",
-      "Side A — Quarter 3 (bottom-left, including center)",
-      "Side A — Quarter 4 (top-left, including center)",
-      "Side B — Quarter 1 (top-right, including center)",
-      "Side B — Quarter 2 (bottom-right, including center)",
-      "Side B — Quarter 3 (bottom-left, including center)",
-      "Side B — Quarter 4 (top-left, including center)",
+    // Photo labels for the 4-photo workflow
+    const photoLabels = [
+      "Photo 1 — Side A, FULL DISC shot (whole record visible, center label included)",
+      "Photo 2 — Side B, FULL DISC shot (whole record visible, center label included)",
+      "Photo 3 — Side A, MACRO close-up of the center label / matrix area",
+      "Photo 4 — Side B, MACRO close-up of the center label / matrix area",
     ];
+
 
     // ============================================================
     // DUAL-PASS GRADING
