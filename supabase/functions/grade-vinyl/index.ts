@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    // 4-photo workflow: [Side A full, Side B full, Side A macro, Side B macro]
+    // 2-photo workflow: [Side A full disc, Side B full disc]
     const filePaths: string[] = Array.isArray(body.file_paths)
       ? body.file_paths
       : (body.file_path ? [body.file_path] : []);
@@ -73,8 +73,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (filePaths.length > 4) {
-      return new Response(JSON.stringify({ error: "Maximum 4 photos allowed" }), {
+    if (filePaths.length > 2) {
+      return new Response(JSON.stringify({ error: "Maximum 2 photos allowed" }), {
         status: 400,
         headers: { ...cors, "Content-Type": "application/json" },
       });
@@ -111,12 +111,10 @@ Deno.serve(async (req) => {
       signedUrls.push(signedData.signedUrl);
     }
 
-    // Photo labels for the 4-photo workflow
+    // Photo labels for the 2-photo workflow
     const photoLabels = [
       "Photo 1 — Side A, FULL DISC shot (whole record visible, center label included)",
       "Photo 2 — Side B, FULL DISC shot (whole record visible, center label included)",
-      "Photo 3 — Side A, MACRO close-up of the center label / matrix area",
-      "Photo 4 — Side B, MACRO close-up of the center label / matrix area",
     ];
 
 
@@ -127,19 +125,17 @@ Deno.serve(async (req) => {
     // We then reconcile: take the LOWER (harsher) score, union defects.
     // ============================================================
 
-    const balancedSystemPrompt = `You are a professional vinyl record condition grader. You will receive exactly 4 photos of a single vinyl record, in this order:
+    const balancedSystemPrompt = `You are a professional vinyl record condition grader. You will receive exactly 2 photos of a single vinyl record, in this order:
 - Photo 0: Side A full disc (whole record visible, center label included)
 - Photo 1: Side B full disc (whole record visible, center label included)
-- Photo 2: Side A macro close-up of the center label / matrix runout area
-- Photo 3: Side B macro close-up of the center label / matrix runout area
 
-Use the FULL-DISC photos to grade the overall playing surface (scratches, scuffs, warping, edge damage). Use the MACRO photos to verify the pressing (matrix numbers, label variant) and to inspect the inner grooves / label condition closely. Cross-check the center labels across all 4 photos to confirm they are the SAME physical record.
+Grade the overall playing surface (scratches, scuffs, warping, edge damage). Zoom in mentally on the center label and inner grooves to verify the record and inspect close-in wear. Cross-check the center labels across both photos to confirm they are the SAME physical record.
 
-First, verify all photos depict the same record (matching center label, color, pressing). If they clearly show different records or the photos are not of a vinyl playing surface, set score to null and explain in the summary.
+First, verify both photos depict the same record (matching center label, color, pressing). If they clearly show different records or the photos are not of a vinyl playing surface, set score to null and explain in the summary.
 
-If you cannot grade because one or more specific photos are unusable (blurry, too dark, severe glare covering most of the surface, wrong subject, missing center label, finger covering the disc, or duplicates of another quarter), list those photo indices (0-based, in the order provided) in "bad_photo_indices" so the user can retake them. If grading succeeds normally, return an empty array for "bad_photo_indices". If you must set score to null because photos are unusable, "bad_photo_indices" MUST list every problematic photo.
+If you cannot grade because one or more specific photos are unusable (blurry, too dark, severe glare covering most of the surface, wrong subject, missing center label, finger covering the disc), list those photo indices (0-based, in the order provided) in "bad_photo_indices" so the user can retake them. If grading succeeds normally, return an empty array for "bad_photo_indices". If you must set score to null because photos are unusable, "bad_photo_indices" MUST list every problematic photo.
 
-Otherwise, analyze the combined surface condition across both full-disc shots (informed by the macro shots) and grade with a precise DECIMAL SCORE from 0.0 to 10.0 (one decimal place), where:
+Otherwise, analyze the combined surface condition across both full-disc shots and grade with a precise DECIMAL SCORE from 0.0 to 10.0 (one decimal place), where:
 - 10.0 = absolutely perfect, no flaws whatsoever
 - 9.5–9.9 = nearly perfect, only the most minor manufacturing marks
 - 9.0–9.4 = excellent, minimal handling marks, no scratches
@@ -176,11 +172,11 @@ Respond ONLY with valid JSON in this exact format:
     []
   ]
 }
-The "defects_per_photo" array MUST have exactly one entry per provided photo. "bad_photo_indices" MUST be an array.`;
+The "defects_per_photo" array MUST have exactly one entry per provided photo (2 entries). "bad_photo_indices" MUST be an array.`;
 
-    const harshSystemPrompt = `You are a HARSH, adversarial vinyl record QC inspector working on behalf of a buyer. Your job is to find every single imperfection a seller might be hiding. Assume the record HAS flaws until proven otherwise. You will receive exactly 4 photos in this order: Side A full, Side B full, Side A macro (label close-up), Side B macro (label close-up).
+    const harshSystemPrompt = `You are a HARSH, adversarial vinyl record QC inspector working on behalf of a buyer. Your job is to find every single imperfection a seller might be hiding. Assume the record HAS flaws until proven otherwise. You will receive exactly 2 photos in this order: Side A full disc, Side B full disc.
 
-Your bias: when uncertain whether a mark is a reflection or a real scratch, lean toward CALLING IT A DEFECT. It is far worse to miss a scratch than to over-report one. Examine grooves carefully for hairlines, spider-web scuffs, fingerprint smudges, pressing flaws, edge wear, label damage, and any haziness that dulls the gloss. Use the macro photos to catch label wear, ring-wear near the label, and inner-groove scratches that are hard to see in the full shot.
+Your bias: when uncertain whether a mark is a reflection or a real scratch, lean toward CALLING IT A DEFECT. It is far worse to miss a scratch than to over-report one. Examine grooves carefully for hairlines, spider-web scuffs, fingerprint smudges, pressing flaws, edge wear, label damage, ring-wear near the label, and any haziness that dulls the gloss.
 
 Use this STRICTER scoring scale (be tougher than a typical grader):
 - 10.0 = literally flawless, sealed-grade

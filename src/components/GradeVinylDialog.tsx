@@ -1,19 +1,15 @@
 /**
- * @file GradeVinylDialog.tsx — AI-powered vinyl condition grading dialog (4-photo workflow).
+ * @file GradeVinylDialog.tsx — AI-powered vinyl condition grading dialog (2-photo workflow).
  *
- * **Flow (4 photos):**
- *   0. Side A — Full disc (frame the whole record inside the circular guide)
- *   1. Side B — Full disc
- *   2. Side A — Macro (close-up of center label / matrix runout)
- *   3. Side B — Macro
+ * **Flow:**
+ *   User uploads 2 photos:
+ *     0. Side A — Full disc (frame the whole record inside the circular guide)
+ *     1. Side B — Full disc
  *
- * 1. **Capture** – User takes each of the 4 photos using the in-app camera which
- *    displays a circular guide sized for either a full-disc or macro shot.
- * 2. **Uploading** – Photos are uploaded to the `record-photos` bucket.
- * 3. **Grading** – The `grade-vinyl` edge function analyses the 4 photos.
- * 4. **Results** – Grade + Goldmine label. On success, the 4 photos are also
- *    attached to the record itself (via the `record_photos` table) so they
- *    appear in the record's photo gallery in the Collection tab.
+ *   After grading succeeds, the app automatically generates 2 additional
+ *   "macro" images by cropping the center-label region from each full-disc
+ *   photo. The 4 resulting images (2 originals + 2 auto-cropped macros) are
+ *   attached to the record's photo gallery.
  */
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -50,7 +46,7 @@ interface GradingResult {
 
 type Stage = "capture" | "uploading" | "grading" | "results";
 
-const REQUIRED_PHOTOS = 4;
+const REQUIRED_PHOTOS = 2;
 
 interface SlotSpec {
   label: string;
@@ -63,29 +59,44 @@ interface SlotSpec {
 const SLOTS: SlotSpec[] = [
   {
     label: "Side A — Full disc",
-    short: "Side A · Full",
+    short: "Side A",
     mode: "full",
     hint: "Fit the whole record inside the circle. Include the center label.",
   },
   {
     label: "Side B — Full disc",
-    short: "Side B · Full",
+    short: "Side B",
     mode: "full",
     hint: "Flip the record. Fit the whole disc inside the circle.",
   },
-  {
-    label: "Side A — Macro (label)",
-    short: "Side A · Macro",
-    mode: "macro",
-    hint: "Get close. Fit the center label inside the small circle.",
-  },
-  {
-    label: "Side B — Macro (label)",
-    short: "Side B · Macro",
-    mode: "macro",
-    hint: "Flip again. Fit the Side B label inside the small circle.",
-  },
 ];
+
+/**
+ * Crop the center label region from a full-disc photo. The label sits at the
+ * geometric center of the disc; we extract a square that's ~38% of the shorter
+ * side, then upscale to a clean 800px square for the macro view.
+ */
+async function generateMacroCrop(sourceFile: File): Promise<File> {
+  const bitmap = await createImageBitmap(sourceFile);
+  const side = Math.min(bitmap.width, bitmap.height);
+  const cropSize = Math.round(side * 0.38);
+  const sx = Math.round((bitmap.width - cropSize) / 2);
+  const sy = Math.round((bitmap.height - cropSize) / 2);
+
+  const out = 800;
+  const canvas = document.createElement("canvas");
+  canvas.width = out;
+  canvas.height = out;
+  const ctx = canvas.getContext("2d")!;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(bitmap, sx, sy, cropSize, cropSize, 0, 0, out, out);
+  bitmap.close?.();
+
+  const blob: Blob = await new Promise((resolve) =>
+    canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.92)
+  );
+  return new File([blob], `macro-${Date.now()}.jpg`, { type: "image/jpeg" });
+}
 
 const scoreColor = (score: number | null): string => {
   if (score === null) return "text-foreground";
@@ -279,7 +290,28 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
       const defects: PhotoDefect[][] = Array.isArray(data.grading?.defects_per_photo)
         ? data.grading.defects_per_photo
         : [];
-      setResultPhotoUrls(publicUrls);
+      // Auto-generate macro (center label) crops from the 2 full-disc photos,
+      // upload them, and surface all 4 URLs to the results view + gallery.
+      const macroPublicUrls: string[] = [];
+      try {
+        for (let i = 0; i < slots.length; i++) {
+          const src = slots[i]!.file;
+          const macroFile = await generateMacroCrop(src);
+          const path = `${user.id}/grading/${sessionId}/macro-${i + 1}-${Date.now()}.jpg`;
+          const { error: mUpErr } = await supabase.storage
+            .from("record-photos")
+            .upload(path, macroFile, { contentType: "image/jpeg", upsert: false });
+          if (!mUpErr) {
+            const { data: pub } = supabase.storage.from("record-photos").getPublicUrl(path);
+            macroPublicUrls.push(pub.publicUrl);
+          }
+        }
+      } catch (e) {
+        console.warn("Macro crop generation failed", e);
+      }
+
+      const allPhotoUrls = [...publicUrls, ...macroPublicUrls];
+      setResultPhotoUrls(allPhotoUrls);
       setResultDefects(defects);
       setStage("results");
 
@@ -294,16 +326,16 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
         summary: data.grading.summary,
         details: data.grading.details,
         notes: data.grading.notes,
-        photo_urls: publicUrls,
+        photo_urls: allPhotoUrls,
         defects: defects,
       } as any);
 
-      // Attach the 4 photos directly to the record so they show up in the
-      // record's photo gallery (Collection tab). Max is 4 in the schema, so
-      // clear any existing rows first to avoid the limit tripping.
+      // Attach the 4 images (2 full + 2 auto macros) to the record so they
+      // show up in the record's photo gallery (Collection tab). Clear any
+      // existing rows first to stay within the 4-photo cap.
       if (recordId) {
         await supabase.from("record_photos").delete().eq("record_id", recordId);
-        const rows = publicUrls.map((url) => ({ record_id: recordId, photo_url: url }));
+        const rows = allPhotoUrls.map((url) => ({ record_id: recordId, photo_url: url }));
         await supabase.from("record_photos").insert(rows as any);
       }
     } catch {
@@ -336,9 +368,9 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
               >
                 <div className="rounded-xl bg-primary/10 p-3">
                   <p className="font-body text-xs text-foreground">
-                    Take <strong>4 photos</strong>: full shots of <strong>Side A</strong> and <strong>Side B</strong>,
-                    plus close-up macro shots of each center label. A circular guide will appear in the camera to
-                    help you frame the disc.
+                    Take <strong>2 photos</strong>: full shots of <strong>Side A</strong> and <strong>Side B</strong>.
+                    A circular guide will help you frame the disc. Close-up label shots are generated automatically
+                    after grading.
                   </p>
                 </div>
 
@@ -353,32 +385,12 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                   </div>
                 )}
 
-                {/* Full disc row */}
                 <div>
                   <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                    Full disc
+                    Full disc — both sides
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     {[0, 1].map((i) => (
-                      <SlotButton
-                        key={i}
-                        spec={SLOTS[i]}
-                        slot={slots[i]}
-                        needsRetake={badIndices.includes(i)}
-                        onClick={() => openCameraFor(i)}
-                        onRemove={() => handleRemoveSlot(i)}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Macro row */}
-                <div>
-                  <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                    Macro (center label)
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[2, 3].map((i) => (
                       <SlotButton
                         key={i}
                         spec={SLOTS[i]}
