@@ -290,7 +290,28 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
       const defects: PhotoDefect[][] = Array.isArray(data.grading?.defects_per_photo)
         ? data.grading.defects_per_photo
         : [];
-      setResultPhotoUrls(publicUrls);
+      // Auto-generate macro (center label) crops from the 2 full-disc photos,
+      // upload them, and surface all 4 URLs to the results view + gallery.
+      const macroPublicUrls: string[] = [];
+      try {
+        for (let i = 0; i < slots.length; i++) {
+          const src = slots[i]!.file;
+          const macroFile = await generateMacroCrop(src);
+          const path = `${user.id}/grading/${sessionId}/macro-${i + 1}-${Date.now()}.jpg`;
+          const { error: mUpErr } = await supabase.storage
+            .from("record-photos")
+            .upload(path, macroFile, { contentType: "image/jpeg", upsert: false });
+          if (!mUpErr) {
+            const { data: pub } = supabase.storage.from("record-photos").getPublicUrl(path);
+            macroPublicUrls.push(pub.publicUrl);
+          }
+        }
+      } catch (e) {
+        console.warn("Macro crop generation failed", e);
+      }
+
+      const allPhotoUrls = [...publicUrls, ...macroPublicUrls];
+      setResultPhotoUrls(allPhotoUrls);
       setResultDefects(defects);
       setStage("results");
 
@@ -305,16 +326,16 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
         summary: data.grading.summary,
         details: data.grading.details,
         notes: data.grading.notes,
-        photo_urls: publicUrls,
+        photo_urls: allPhotoUrls,
         defects: defects,
       } as any);
 
-      // Attach the 4 photos directly to the record so they show up in the
-      // record's photo gallery (Collection tab). Max is 4 in the schema, so
-      // clear any existing rows first to avoid the limit tripping.
+      // Attach the 4 images (2 full + 2 auto macros) to the record so they
+      // show up in the record's photo gallery (Collection tab). Clear any
+      // existing rows first to stay within the 4-photo cap.
       if (recordId) {
         await supabase.from("record_photos").delete().eq("record_id", recordId);
-        const rows = publicUrls.map((url) => ({ record_id: recordId, photo_url: url }));
+        const rows = allPhotoUrls.map((url) => ({ record_id: recordId, photo_url: url }));
         await supabase.from("record_photos").insert(rows as any);
       }
     } catch {
