@@ -225,8 +225,44 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
       );
     }
 
-    return items;
-  }, [records, spotifyRecs, useSpotifyRecs, user?.id, activeGenre, searchText, blockedUserIds]);
+    const distanceOf = (sellerId: string): number => {
+      if (!latitude || !longitude || !permissionGranted) return Number.POSITIVE_INFINITY;
+      const seller = sellerProfiles[sellerId];
+      if (!seller?.latitude || !seller?.longitude) return Number.POSITIVE_INFINITY;
+      return getDistanceKm(latitude, longitude, seller.latitude, seller.longitude);
+    };
+
+    const sorted = [...items];
+    if (sortBy === "distance") {
+      sorted.sort((a: any, b: any) => distanceOf(a.user_id) - distanceOf(b.user_id));
+    } else if (sortBy === "price_asc" || sortBy === "price_desc") {
+      sorted.sort((a: any, b: any) => {
+        const pa = a.price == null ? null : Number(a.price);
+        const pb = b.price == null ? null : Number(b.price);
+        if (pa == null && pb == null) return 0;
+        if (pa == null) return 1; // "Open to trade" listings last
+        if (pb == null) return -1;
+        return sortBy === "price_asc" ? pa - pb : pb - pa;
+      });
+    } else if (sortBy === "condition") {
+      sorted.sort((a: any, b: any) => conditionRank(b) - conditionRank(a));
+    }
+
+    return sorted;
+  }, [
+    records,
+    spotifyRecs,
+    useSpotifyRecs,
+    user?.id,
+    activeGenre,
+    searchText,
+    blockedUserIds,
+    sortBy,
+    sellerProfiles,
+    latitude,
+    longitude,
+    permissionGranted,
+  ]);
 
   const getDistance = (sellerId: string): string | null => {
     if (!latitude || !longitude || !permissionGranted) return null;
