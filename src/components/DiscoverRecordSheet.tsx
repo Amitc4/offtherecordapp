@@ -19,7 +19,7 @@ import { useState } from "react";
 import { displayName, textDirClass } from "@/lib/utils";
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Disc3, Calendar, MessageCircle, Flag } from "lucide-react";
+import { Disc3, Calendar, MessageCircle, Flag, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
