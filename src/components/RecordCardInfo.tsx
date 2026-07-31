@@ -65,7 +65,7 @@ const RecordCardInfo = ({
   price,
   size = "sm",
 }: RecordCardInfoProps) => {
-  const classifications = buildClassifications(format, genre, sealed);
+  const classifications = buildClassifications(format, genre, false);
   const titleSize = size === "md" ? "text-base" : "text-sm";
   const lineSize = size === "md" ? "text-sm" : "text-xs";
   const metaSize = size === "md" ? "text-xs" : "text-[10px]";
