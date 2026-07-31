@@ -200,9 +200,16 @@ const WishlistScreen = () => {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-display text-base font-semibold text-foreground truncate">{item.title}</h3>
-                  <p className="font-display text-sm text-muted-foreground truncate">{item.artist}{item.year ? ` · ${item.year}` : ""}</p>
+                  <RecordCardInfo
+                    size="md"
+                    title={item.title}
+                    artist={item.artist}
+                    year={item.year}
+                    format={(item as any).format}
+                    genre={(item as any).genre}
+                  />
                 </div>
+
               </div>
             );
           })}
