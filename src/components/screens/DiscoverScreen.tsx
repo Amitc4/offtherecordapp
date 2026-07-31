@@ -19,7 +19,7 @@ import { useState, useMemo, useEffect } from "react";
 import { textDirClass } from "@/lib/utils";
 import RecordCardInfo from "@/components/RecordCardInfo";
 
-import { Disc3, Search, MapPin, Sparkles, SlidersHorizontal, Check } from "lucide-react";
+import { Disc3, Search, MapPin, Sparkles, SlidersHorizontal, Check, ShieldCheck } from "lucide-react";
 import ViewToggle from "@/components/ViewToggle";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
