@@ -17,15 +17,54 @@
  */
 import { useState, useMemo, useEffect } from "react";
 import { textDirClass } from "@/lib/utils";
-import { Disc3, Search, MapPin, Sparkles } from "lucide-react";
+import { Disc3, Search, MapPin, Sparkles, SlidersHorizontal, Check } from "lucide-react";
 import ViewToggle from "@/components/ViewToggle";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import DiscoverRecordSheet from "@/components/DiscoverRecordSheet";
 import { toast } from "sonner";
 import { useLocation, getDistanceKm } from "@/hooks/useLocation";
+
+/** Sort options available in the Discover filter menu. */
+type SortKey = "newest" | "distance" | "price_asc" | "price_desc" | "condition";
+
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: "newest", label: "Newest first" },
+  { key: "distance", label: "Distance (closest)" },
+  { key: "price_asc", label: "Price (low → high)" },
+  { key: "price_desc", label: "Price (high → low)" },
+  { key: "condition", label: "Condition (best first)" },
+];
+
+/** Higher rank = better condition. Sealed records outrank everything. */
+const CONDITION_RANK: Record<string, number> = {
+  SEALED: 100,
+  GEM: 95,
+  M: 90,
+  MINT: 90,
+  NM: 80,
+  "NEAR MINT": 80,
+  "VG+": 70,
+  "VERY GOOD PLUS": 70,
+  VG: 60,
+  "VERY GOOD": 60,
+  "G+": 50,
+  G: 40,
+  GOOD: 40,
+  OK: 30,
+  F: 10,
+  FAIR: 10,
+  P: 5,
+};
+
+const conditionRank = (record: any): number => {
+  if (record?.sealed) return CONDITION_RANK.SEALED;
+  const key = String(record?.condition || "").trim().toUpperCase();
+  return CONDITION_RANK[key] ?? 0;
+};
 
 /** List of genre filter options shown as horizontal chips. */
 const GENRES = ["All", "Rock", "Jazz", "Soul", "Electronic", "Hip Hop", "Pop", "Classical", "Funk", "R&B"];
