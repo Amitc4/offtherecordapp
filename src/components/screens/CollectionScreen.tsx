@@ -416,23 +416,18 @@ const CollectionScreen = () => {
                   {perfectIds.has(record.id) && <PerfectStar />}
                   {(record as any).sealed && <SealedDiamond offset={perfectIds.has(record.id)} />}
                 </div>
-                <h3 className={`font-display text-sm font-semibold leading-tight text-foreground truncate ${textDirClass(record.title)}`}>{record.title}</h3>
-                <p className={`mt-0.5 font-display text-xs text-muted-foreground truncate ${textDirClass(record.artist)}`}>{record.artist}</p>
-                <div className="mt-2 flex items-center justify-between">
-                  {recordStatus === "for_sale" && recordPrice != null ? (
-                    <span className="font-body text-xs font-bold text-primary">₪{recordPrice}</span>
-                  ) : (
-                    <span className="font-body text-xs text-muted-foreground">{record.year || "—"}</span>
-                  )}
-                  <div className="flex items-center gap-1">
-                    {recordStatus && getStatusBadgeSmall(recordStatus)}
-                    {record.format && (
-                      <span className="rounded bg-secondary px-1.5 py-0.5 font-body text-[9px] font-semibold text-secondary-foreground">
-                        {record.format}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                <RecordCardInfo
+                  title={record.title}
+                  artist={record.artist}
+                  year={record.year}
+                  format={record.format}
+                  genre={(record as any).genre}
+                  sealed={(record as any).sealed}
+                  condition={record.condition}
+                  status={recordStatus || "personal"}
+                  price={recordPrice}
+                />
+
               </div>
             );
           })}
