@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.cdnfonts.com/css/opendyslexic');
 
 @layer base {
@@ -54,8 +54,8 @@
     --cream: 32 70% 93%;
     --burnt-sienna: 14 60% 38%;
 
-    --font-display: 'Heebo', sans-serif;
-    --font-body: 'Heebo', sans-serif;
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'Inter', sans-serif;
   }
 
   .dark {
