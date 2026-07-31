@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { Music, Disc3 } from "lucide-react";
+import { displayName } from "@/lib/utils";
 
 interface Props {
   open: boolean;
@@ -131,8 +132,8 @@ const SpotifyRecommendationsSheet = ({ open, onOpenChange }: Props) => {
                         )}
                       </div>
                       <div className="p-2">
-                        <p className="font-body text-xs font-semibold text-foreground truncate">{r.title}</p>
-                        <p className="font-body text-[11px] text-muted-foreground truncate">{r.artist}</p>
+                        <p className="font-body text-xs font-semibold text-foreground truncate">{displayName(r.title)}</p>
+                        <p className="font-body text-[11px] text-muted-foreground truncate">{displayName(r.artist)}</p>
                         {r.price != null && (
                           <p className="mt-1 font-body text-xs font-bold text-primary">₪{r.price}</p>
                         )}

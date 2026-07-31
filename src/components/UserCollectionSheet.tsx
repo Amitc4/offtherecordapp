@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Disc3 } from "lucide-react";
+import { displayName } from "@/lib/utils";
 
 interface UserCollectionSheetProps {
   open: boolean;
@@ -95,8 +96,8 @@ const UserCollectionSheet = ({ open, onOpenChange, userId, userName }: UserColle
                       <Disc3 size={36} className="text-primary" />
                     )}
                   </div>
-                  <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{record.title}</h3>
-                  <p className="mt-0.5 font-display text-xs text-muted-foreground truncate">{record.artist}</p>
+                  <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{displayName(record.title)}</h3>
+                  <p className="mt-0.5 font-display text-xs text-muted-foreground truncate">{displayName(record.artist)}</p>
                   <div className="mt-1.5 flex items-center justify-between">
                     {record.status === "for_sale" && record.price != null ? (
                       <span className="font-body text-sm font-bold text-primary">₪{record.price}</span>

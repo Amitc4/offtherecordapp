@@ -15,6 +15,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { ArrowRightLeft, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { displayName } from "@/lib/utils";
 
 interface Transaction {
   id: string;
@@ -123,8 +124,8 @@ const TransactionHistorySheet = ({ open, onOpenChange }: TransactionHistorySheet
         )}
       </div>
       <div className="min-w-0">
-        <p className="truncate font-body text-[10px] font-semibold text-foreground">{record.title}</p>
-        <p className="truncate font-body text-[9px] text-muted-foreground">{record.artist}</p>
+        <p className="truncate font-body text-[10px] font-semibold text-foreground">{displayName(record.title)}</p>
+        <p className="truncate font-body text-[9px] text-muted-foreground">{displayName(record.artist)}</p>
       </div>
     </div>
   );

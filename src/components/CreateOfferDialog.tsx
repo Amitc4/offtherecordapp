@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { displayName } from "@/lib/utils";
 
 interface RecordItem {
   id: string;
@@ -60,8 +61,8 @@ const RecordGrid = ({
                 <div className="flex h-full w-full items-center justify-center font-display text-lg text-muted-foreground">♪</div>
               )}
             </div>
-            <p className="w-full truncate text-center font-body text-[10px] font-semibold text-foreground">{r.title}</p>
-            <p className="w-full truncate text-center font-body text-[9px] text-muted-foreground">{r.artist}</p>
+            <p className="w-full truncate text-center font-body text-[10px] font-semibold text-foreground">{displayName(r.title)}</p>
+            <p className="w-full truncate text-center font-body text-[9px] text-muted-foreground">{displayName(r.artist)}</p>
             {isSelected && (
               <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
                 <Plus size={12} className="rotate-45 text-primary-foreground" />
