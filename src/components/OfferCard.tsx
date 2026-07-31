@@ -87,6 +87,22 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate, onCounterOffer }
         setItems(enriched);
       });
 
+    // Profile pictures + names for both sides of the trade.
+    supabase
+      .from("profiles")
+      .select("user_id, display_name, avatar_url")
+      .in("user_id", [offer.sender_id, offer.receiver_id])
+      .then(({ data }) => {
+        if (!data) return;
+        const map: Record<string, { display_name: string | null; avatar_url: string | null }> = {};
+        data.forEach((p: any) => {
+          map[p.user_id] = { display_name: p.display_name, avatar_url: p.avatar_url };
+        });
+        setProfiles(map);
+      });
+
+
+
     if (user && offer.status === "completed") {
       supabase
         .from("user_reviews")
