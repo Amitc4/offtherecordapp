@@ -275,15 +275,15 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate, onCounterOffer }
         </span>
       </div>
 
-      <div className="flex items-start gap-2">
+      <div className="flex items-stretch gap-2">
         <SideColumn
           userId={offer.sender_id}
           fallbackName={senderName}
           sideItems={senderItems}
           cash={offer.sender_cash}
         />
-        <div className="mt-6 shrink-0 self-start">
-          <ArrowRightLeft size={14} className="text-muted-foreground" />
+        <div className="flex shrink-0 items-center justify-center self-stretch">
+          <ArrowRightLeft size={24} className="text-muted-foreground" />
         </div>
         <SideColumn
           userId={offer.receiver_id}
