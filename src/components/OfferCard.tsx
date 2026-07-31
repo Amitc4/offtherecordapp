@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { displayName } from "@/lib/utils";
 
 interface OfferItem {
   id: string;
@@ -214,8 +215,8 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate, onCounterOffer }
         )}
       </div>
       <div className="min-w-0">
-        <p className="truncate font-body text-[10px] font-semibold text-foreground">{item.record?.title || "Unknown"}</p>
-        <p className="truncate font-body text-[9px] text-muted-foreground">{item.record?.artist || ""}</p>
+        <p className="truncate font-body text-[10px] font-semibold text-foreground">{displayName(item.record?.title) || "Unknown"}</p>
+        <p className="truncate font-body text-[9px] text-muted-foreground">{displayName(item.record?.artist)}</p>
       </div>
     </div>
   );
