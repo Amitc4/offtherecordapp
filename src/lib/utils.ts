@@ -32,3 +32,30 @@ export function isHebrew(text?: string | null): boolean {
 export function textDirClass(text?: string | null): string {
   return isHebrew(text) ? "text-right dir-rtl" : "text-left";
 }
+
+/**
+ * Cleans a Discogs-style multi-language name for display.
+ *
+ * Discogs stores translated equivalents joined by "=" (e.g.
+ * "מחכים למשיח = Waiting For Messiah") and disambiguation markers ("*").
+ * For display we keep only ONE variant — the Hebrew one when present —
+ * so Hebrew albums/artists don't show their English equivalent.
+ * The raw value is still used for searching/matching in the backend.
+ */
+export function displayName(text?: string | null): string {
+  if (!text) return "";
+  const cleanSegment = (segment: string): string => {
+    const variants = segment
+      .split(/\s*=\s*/)
+      .map((v) => v.replace(/\*/g, "").trim())
+      .filter(Boolean);
+    if (variants.length === 0) return "";
+    const hebrew = variants.find((v) => isHebrew(v));
+    return hebrew ?? variants[0];
+  };
+  return text
+    .split(",")
+    .map((s) => cleanSegment(s))
+    .filter(Boolean)
+    .join(", ");
+}
