@@ -17,6 +17,8 @@
  */
 import { useState, useMemo, useEffect } from "react";
 import { textDirClass } from "@/lib/utils";
+import RecordCardInfo from "@/components/RecordCardInfo";
+
 import { Disc3, Search, MapPin, Sparkles, SlidersHorizontal, Check } from "lucide-react";
 import ViewToggle from "@/components/ViewToggle";
 import { Input } from "@/components/ui/input";
@@ -459,20 +461,23 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                     <Disc3 size={36} className="text-primary transition-transform group-hover:rotate-45" />
                   )}
                 </div>
-                <h3 className={`font-display text-sm font-semibold leading-tight text-foreground truncate ${textDirClass(item.title)}`}>{item.title}</h3>
-                <p className={`mt-0.5 font-display text-xs text-muted-foreground truncate ${textDirClass(item.artist)}`}>{item.artist}</p>
-                <div className="mt-2 flex items-center justify-between">
+                <RecordCardInfo
+                  title={item.title}
+                  artist={item.artist}
+                  year={item.year}
+                  format={item.format}
+                  genre={(item as any).genre}
+                  sealed={(item as any).sealed}
+                  condition={item.condition}
+                />
+                <div className="mt-1.5">
                   {price != null ? (
                     <span className="font-body text-sm font-bold text-primary">₪{price}</span>
                   ) : (
                     <span className="rounded bg-primary/15 px-1.5 py-0.5 font-body text-[10px] font-bold text-primary">Open to trade</span>
                   )}
-                  {item.condition && (
-                    <span className="rounded bg-secondary px-1.5 py-0.5 font-body text-[9px] font-semibold text-secondary-foreground">
-                      {item.condition}
-                    </span>
-                  )}
                 </div>
+
                 {distance && (
                   <p className="mt-1 flex items-center gap-1 font-body text-[10px] text-muted-foreground">
                     <MapPin size={9} /> {distance}
@@ -501,26 +506,30 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <h3 className={`font-display text-base font-semibold text-foreground truncate ${textDirClass(item.title)}`}>{item.title}</h3>
-                  <p className={`font-display text-sm text-muted-foreground ${textDirClass(item.artist)}`}>{item.artist}</p>
+                  <RecordCardInfo
+                    size="md"
+                    title={item.title}
+                    artist={item.artist}
+                    year={item.year}
+                    format={item.format}
+                    genre={(item as any).genre}
+                    sealed={(item as any).sealed}
+                    condition={item.condition}
+                  />
                   {distance && (
                     <p className="flex items-center gap-1 font-body text-[10px] text-muted-foreground">
                       <MapPin size={9} /> {distance}
                     </p>
                   )}
                 </div>
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex shrink-0 flex-col items-end gap-1">
                   {price != null ? (
                     <span className="font-body text-sm font-bold text-primary">₪{price}</span>
                   ) : (
                     <span className="rounded bg-primary/15 px-1.5 py-0.5 font-body text-[10px] font-bold text-primary">Open to trade</span>
                   )}
-                  {item.condition && (
-                    <span className="rounded bg-secondary px-1.5 py-0.5 font-body text-[9px] font-semibold text-secondary-foreground">
-                      {item.condition}
-                    </span>
-                  )}
                 </div>
+
               </div>
             );
           })}

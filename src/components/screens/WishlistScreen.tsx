@@ -38,7 +38,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import RecordInfoList from "@/components/RecordInfoList";
+import RecordCardInfo from "@/components/RecordCardInfo";
 
 
 const WishlistScreen = () => {
@@ -200,9 +200,16 @@ const WishlistScreen = () => {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-display text-base font-semibold text-foreground truncate">{item.title}</h3>
-                  <p className="font-display text-sm text-muted-foreground truncate">{item.artist}{item.year ? ` · ${item.year}` : ""}</p>
+                  <RecordCardInfo
+                    size="md"
+                    title={item.title}
+                    artist={item.artist}
+                    year={item.year}
+                    format={(item as any).format}
+                    genre={(item as any).genre}
+                  />
                 </div>
+
               </div>
             );
           })}
@@ -233,11 +240,15 @@ const WishlistScreen = () => {
                     <Heart size={36} className="text-primary transition-transform group-hover:scale-110" fill="hsl(var(--primary))" />
                   )}
                 </div>
-                <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{item.title}</h3>
-                <p className="mt-0.5 font-display text-xs text-muted-foreground truncate">{item.artist}</p>
-                <div className="mt-2">
-                  <span className="font-body text-xs text-muted-foreground">{item.year || "—"}</span>
-                </div>
+                <RecordCardInfo
+                  title={item.title}
+                  artist={item.artist}
+                  year={item.year}
+                  format={(item as any).format}
+                  genre={(item as any).genre}
+
+                />
+
               </div>
             );
           })}
@@ -294,25 +305,25 @@ const WishlistScreen = () => {
           </SheetHeader>
           {detailItem && (
             <div className="px-5 space-y-5">
-              <div className="flex justify-center">
-                <div className="relative h-40 w-40 shrink-0 overflow-hidden rounded-xl bg-primary/10">
+              <div className="flex gap-4">
+                <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-primary/10">
                   {detailItem.cover_image ? (
                     <img src={detailItem.cover_image} alt={detailItem.title} className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
-                      <Heart size={64} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
+                      <Heart size={48} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
                     </div>
+                  )}
+                </div>
+                <div className="flex flex-1 flex-col justify-center min-w-0">
+                  <h2 className="font-display text-base font-bold text-foreground leading-tight">{detailItem.title}</h2>
+                  <p className="mt-1 font-body text-sm text-muted-foreground">{detailItem.artist}</p>
+                  {detailItem.year && (
+                    <span className="mt-2 font-body text-xs text-muted-foreground">{detailItem.year}</span>
                   )}
                 </div>
               </div>
 
-              <RecordInfoList
-                title={detailItem.title}
-                artist={detailItem.artist}
-                year={detailItem.year}
-                format={detailItem.format}
-                genre={detailItem.genre}
-              />
 
 
               {detailItem.notes && (

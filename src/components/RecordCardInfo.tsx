@@ -1,0 +1,115 @@
+/**
+ * @file RecordCardInfo.tsx — Compact stacked info list rendered below a record's
+ * cover image on the Collection, Discover and Wishlist cards.
+ *
+ * Lines, in order:
+ * 1. Record name
+ * 2. Artist name
+ * 3. Year of release
+ * 4. Classifications (format / genre / sealed, e.g. "Vinyl, LP, Album")
+ * 5. Availability — only when `status` is provided (Collection tab):
+ *    "For sale · ₪120" / "Open to trade" / "Personal collection" / "Sold"
+ */
+import { textDirClass } from "@/lib/utils";
+
+interface RecordCardInfoProps {
+  title: string;
+  artist: string;
+  year?: number | null;
+  format?: string | null;
+  genre?: string | null;
+  sealed?: boolean | null;
+  condition?: string | null;
+  /** "for_sale" | "personal" | "sold" — omit to hide the availability line. */
+  status?: string | null;
+  price?: number | null;
+  /** Slightly larger type for list view. */
+  size?: "sm" | "md";
+}
+
+/** Builds the classification list, e.g. "Vinyl, LP, Album, Limited Edition". */
+export const buildClassifications = (
+  format?: string | null,
+  genre?: string | null,
+  sealed?: boolean | null,
+): string[] => {
+  const parts: string[] = [];
+  if (format) {
+    format
+      .split(/[,/]/)
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .forEach((p) => parts.push(p));
+  }
+  if (genre) parts.push(genre);
+  if (sealed) parts.push("Limited / Sealed");
+  const seen = new Set<string>();
+  return parts.filter((p) => {
+    const key = p.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
+const RecordCardInfo = ({
+  title,
+  artist,
+  year,
+  format,
+  genre,
+  sealed,
+  condition,
+  status,
+  price,
+  size = "sm",
+}: RecordCardInfoProps) => {
+  const classifications = buildClassifications(format, genre, sealed);
+  const titleSize = size === "md" ? "text-base" : "text-sm";
+  const lineSize = size === "md" ? "text-sm" : "text-xs";
+  const metaSize = size === "md" ? "text-xs" : "text-[10px]";
+
+  const availability =
+    status === "for_sale"
+      ? price != null
+        ? `For sale · ₪${price}`
+        : "For sale · Open to trade"
+      : status === "sold"
+        ? "Sold"
+        : status === "personal"
+          ? "Personal collection"
+          : null;
+
+  return (
+    <div className="min-w-0">
+      <h3
+        className={`font-display ${titleSize} font-semibold leading-tight text-foreground truncate ${textDirClass(title)}`}
+      >
+        {title}
+      </h3>
+      <p className={`font-display ${lineSize} text-muted-foreground truncate ${textDirClass(artist)}`}>
+        {artist}
+      </p>
+      <p className={`font-body ${metaSize} text-muted-foreground`}>{year || "—"}</p>
+      <p className={`font-body ${metaSize} text-muted-foreground truncate`}>
+        {classifications.length ? classifications.join(", ") : "—"}
+      </p>
+      {condition && (
+        <p className={`font-body ${metaSize} font-semibold text-secondary-foreground truncate`}>
+          {condition}
+        </p>
+      )}
+      {availability && (
+        <p
+          className={`font-body ${metaSize} font-semibold ${
+            status === "sold" ? "text-muted-foreground" : "text-primary"
+          }`}
+        >
+          {availability}
+        </p>
+      )}
+    </div>
+  );
+};
+
+export default RecordCardInfo;
