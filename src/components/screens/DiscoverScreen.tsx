@@ -337,7 +337,48 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
           <MapPin size={14} />
           {permissionGranted ? "Location on" : "Enable location"}
         </button>
-        <ViewToggle view={view} onChange={setView} />
+        <div className="flex items-center gap-2">
+          <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+            <PopoverTrigger asChild>
+              <button
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-body text-xs font-medium transition-colors ${
+                  sortBy !== "newest"
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                <SlidersHorizontal size={14} />
+                Filter
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-56 p-1">
+              <p className="px-2 py-1.5 font-body text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Sort by
+              </p>
+              {SORT_OPTIONS.map((opt) => {
+                const disabled = opt.key === "distance" && !permissionGranted;
+                return (
+                  <button
+                    key={opt.key}
+                    disabled={disabled}
+                    onClick={() => {
+                      setSortBy(opt.key);
+                      setFilterOpen(false);
+                    }}
+                    className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left font-body text-xs text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+                  >
+                    <span>
+                      {opt.label}
+                      {disabled && <span className="ml-1 text-muted-foreground">(enable location)</span>}
+                    </span>
+                    {sortBy === opt.key && <Check size={14} className="text-primary" />}
+                  </button>
+                );
+              })}
+            </PopoverContent>
+          </Popover>
+          <ViewToggle view={view} onChange={setView} />
+        </div>
       </div>
 
       {/* Search bar */}
