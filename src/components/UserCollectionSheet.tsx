@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Disc3 } from "lucide-react";
+import { displayName } from "@/lib/utils";
 
 interface UserCollectionSheetProps {
   open: boolean;

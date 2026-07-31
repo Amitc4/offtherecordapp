@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { Music, Disc3 } from "lucide-react";
+import { displayName } from "@/lib/utils";
 
 interface Props {
   open: boolean;
