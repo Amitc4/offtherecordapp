@@ -23,6 +23,7 @@ import { textDirClass } from "@/lib/utils";
 import RecordCardInfo from "@/components/RecordCardInfo";
 
 import { Disc3, Plus, Camera, RefreshCw, CheckSquare, X, Tag, Trash2, ArrowUp, ArrowDown, Filter, Archive, Star, Diamond } from "lucide-react";
+import SealedDiamond from "@/components/SealedDiamond";
 import { usePerfectRecords } from "@/hooks/usePerfectRecords";
 import {
   AlertDialog,
