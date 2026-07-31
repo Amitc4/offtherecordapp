@@ -98,18 +98,26 @@ const UserCollectionSheet = ({ open, onOpenChange, userId, userName }: UserColle
                   </div>
                   <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{displayName(record.title)}</h3>
                   <p className="mt-0.5 font-display text-xs text-muted-foreground truncate">{displayName(record.artist)}</p>
-                  <div className="mt-1.5 flex items-center justify-between">
+                  <div className="mt-1.5 flex items-center justify-between gap-1">
                     {record.status === "for_sale" && record.price != null ? (
                       <span className="font-body text-sm font-bold text-primary">₪{record.price}</span>
                     ) : (
                       <span className="font-body text-xs text-muted-foreground">{record.year || "—"}</span>
                     )}
-                    {record.condition && (
-                      <span className="rounded bg-secondary px-1.5 py-0.5 font-body text-[9px] font-semibold text-secondary-foreground">
-                        {record.condition}
-                      </span>
-                    )}
+                    <div className="flex flex-wrap items-center justify-end gap-1">
+                      {(record as any).sealed && (
+                        <span className="inline-flex items-center gap-1 rounded bg-primary/15 px-1.5 py-0.5 font-body text-[9px] font-bold text-primary">
+                          <ShieldCheck size={10} /> Sealed
+                        </span>
+                      )}
+                      {record.condition && (
+                        <span className="inline-flex items-center gap-1 rounded bg-secondary px-1.5 py-0.5 font-body text-[9px] font-semibold text-secondary-foreground">
+                          <Sparkles size={10} /> {record.condition}
+                        </span>
+                      )}
+                    </div>
                   </div>
+
                 </div>
               ))}
             </div>
