@@ -17,3 +17,18 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+/**
+ * Returns true when the text contains Hebrew characters.
+ */
+export function isHebrew(text?: string | null): boolean {
+  return !!text && /[\u0590-\u05FF]/.test(text);
+}
+
+/**
+ * Tailwind classes that align record titles/artists right for Hebrew text
+ * and left (default) for Latin text.
+ */
+export function textDirClass(text?: string | null): string {
+  return isHebrew(text) ? "text-right dir-rtl" : "text-left";
+}

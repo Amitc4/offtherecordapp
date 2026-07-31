@@ -192,3 +192,5 @@
 .a11y-dyslexia-font * {
   font-family: 'OpenDyslexic', sans-serif !important;
 }
+
+[dir="rtl"], .dir-rtl { direction: rtl; }

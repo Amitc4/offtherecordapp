@@ -16,15 +16,55 @@
  * @see DiscoverRecordSheet – Bottom sheet shown when a record card is tapped.
  */
 import { useState, useMemo, useEffect } from "react";
-import { Disc3, Search, MapPin, Sparkles } from "lucide-react";
+import { textDirClass } from "@/lib/utils";
+import { Disc3, Search, MapPin, Sparkles, SlidersHorizontal, Check } from "lucide-react";
 import ViewToggle from "@/components/ViewToggle";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import DiscoverRecordSheet from "@/components/DiscoverRecordSheet";
 import { toast } from "sonner";
 import { useLocation, getDistanceKm } from "@/hooks/useLocation";
+
+/** Sort options available in the Discover filter menu. */
+type SortKey = "newest" | "distance" | "price_asc" | "price_desc" | "condition";
+
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: "newest", label: "Newest first" },
+  { key: "distance", label: "Distance (closest)" },
+  { key: "price_asc", label: "Price (low → high)" },
+  { key: "price_desc", label: "Price (high → low)" },
+  { key: "condition", label: "Condition (best first)" },
+];
+
+/** Higher rank = better condition. Sealed records outrank everything. */
+const CONDITION_RANK: Record<string, number> = {
+  SEALED: 100,
+  GEM: 95,
+  M: 90,
+  MINT: 90,
+  NM: 80,
+  "NEAR MINT": 80,
+  "VG+": 70,
+  "VERY GOOD PLUS": 70,
+  VG: 60,
+  "VERY GOOD": 60,
+  "G+": 50,
+  G: 40,
+  GOOD: 40,
+  OK: 30,
+  F: 10,
+  FAIR: 10,
+  P: 5,
+};
+
+const conditionRank = (record: any): number => {
+  if (record?.sealed) return CONDITION_RANK.SEALED;
+  const key = String(record?.condition || "").trim().toUpperCase();
+  return CONDITION_RANK[key] ?? 0;
+};
 
 /** List of genre filter options shown as horizontal chips. */
 const GENRES = ["All", "Rock", "Jazz", "Soul", "Electronic", "Hip Hop", "Pop", "Classical", "Funk", "R&B"];
@@ -92,6 +132,8 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
   const [searchText, setSearchText] = useState("");
   const [activeGenre, setActiveGenre] = useState("All");
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
+  const [sortBy, setSortBy] = useState<SortKey>("newest");
+  const [filterOpen, setFilterOpen] = useState(false);
   const { latitude, longitude, permissionGranted, requestLocation } = useLocation();
 
   // Fetch seller profiles for distance calculation
@@ -185,8 +227,44 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
       );
     }
 
-    return items;
-  }, [records, spotifyRecs, useSpotifyRecs, user?.id, activeGenre, searchText, blockedUserIds]);
+    const distanceOf = (sellerId: string): number => {
+      if (!latitude || !longitude || !permissionGranted) return Number.POSITIVE_INFINITY;
+      const seller = sellerProfiles[sellerId];
+      if (!seller?.latitude || !seller?.longitude) return Number.POSITIVE_INFINITY;
+      return getDistanceKm(latitude, longitude, seller.latitude, seller.longitude);
+    };
+
+    const sorted = [...items];
+    if (sortBy === "distance") {
+      sorted.sort((a: any, b: any) => distanceOf(a.user_id) - distanceOf(b.user_id));
+    } else if (sortBy === "price_asc" || sortBy === "price_desc") {
+      sorted.sort((a: any, b: any) => {
+        const pa = a.price == null ? null : Number(a.price);
+        const pb = b.price == null ? null : Number(b.price);
+        if (pa == null && pb == null) return 0;
+        if (pa == null) return 1; // "Open to trade" listings last
+        if (pb == null) return -1;
+        return sortBy === "price_asc" ? pa - pb : pb - pa;
+      });
+    } else if (sortBy === "condition") {
+      sorted.sort((a: any, b: any) => conditionRank(b) - conditionRank(a));
+    }
+
+    return sorted;
+  }, [
+    records,
+    spotifyRecs,
+    useSpotifyRecs,
+    user?.id,
+    activeGenre,
+    searchText,
+    blockedUserIds,
+    sortBy,
+    sellerProfiles,
+    latitude,
+    longitude,
+    permissionGranted,
+  ]);
 
   const getDistance = (sellerId: string): string | null => {
     if (!latitude || !longitude || !permissionGranted) return null;
@@ -259,7 +337,48 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
           <MapPin size={14} />
           {permissionGranted ? "Location on" : "Enable location"}
         </button>
-        <ViewToggle view={view} onChange={setView} />
+        <div className="flex items-center gap-2">
+          <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+            <PopoverTrigger asChild>
+              <button
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-body text-xs font-medium transition-colors ${
+                  sortBy !== "newest"
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                <SlidersHorizontal size={14} />
+                Filter
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-56 p-1">
+              <p className="px-2 py-1.5 font-body text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Sort by
+              </p>
+              {SORT_OPTIONS.map((opt) => {
+                const disabled = opt.key === "distance" && !permissionGranted;
+                return (
+                  <button
+                    key={opt.key}
+                    disabled={disabled}
+                    onClick={() => {
+                      setSortBy(opt.key);
+                      setFilterOpen(false);
+                    }}
+                    className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left font-body text-xs text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+                  >
+                    <span>
+                      {opt.label}
+                      {disabled && <span className="ml-1 text-muted-foreground">(enable location)</span>}
+                    </span>
+                    {sortBy === opt.key && <Check size={14} className="text-primary" />}
+                  </button>
+                );
+              })}
+            </PopoverContent>
+          </Popover>
+          <ViewToggle view={view} onChange={setView} />
+        </div>
       </div>
 
       {/* Search bar */}
@@ -340,8 +459,8 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                     <Disc3 size={36} className="text-primary transition-transform group-hover:rotate-45" />
                   )}
                 </div>
-                <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{item.title}</h3>
-                <p className="mt-0.5 font-display text-xs text-muted-foreground truncate">{item.artist}</p>
+                <h3 className={`font-display text-sm font-semibold leading-tight text-foreground truncate ${textDirClass(item.title)}`}>{item.title}</h3>
+                <p className={`mt-0.5 font-display text-xs text-muted-foreground truncate ${textDirClass(item.artist)}`}>{item.artist}</p>
                 <div className="mt-2 flex items-center justify-between">
                   {price != null ? (
                     <span className="font-body text-sm font-bold text-primary">₪{price}</span>
@@ -382,8 +501,8 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-display text-base font-semibold text-foreground truncate">{item.title}</h3>
-                  <p className="font-display text-sm text-muted-foreground">{item.artist}</p>
+                  <h3 className={`font-display text-base font-semibold text-foreground truncate ${textDirClass(item.title)}`}>{item.title}</h3>
+                  <p className={`font-display text-sm text-muted-foreground ${textDirClass(item.artist)}`}>{item.artist}</p>
                   {distance && (
                     <p className="flex items-center gap-1 font-body text-[10px] text-muted-foreground">
                       <MapPin size={9} /> {distance}
