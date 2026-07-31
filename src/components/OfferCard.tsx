@@ -54,6 +54,9 @@ interface OfferCardProps {
 const OfferCard = ({ offer, senderName, receiverName, onUpdate, onCounterOffer }: OfferCardProps) => {
   const { user } = useAuth();
   const [items, setItems] = useState<OfferItem[]>([]);
+  const [profiles, setProfiles] = useState<
+    Record<string, { display_name: string | null; avatar_url: string | null }>
+  >({});
   const [showReview, setShowReview] = useState(false);
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
