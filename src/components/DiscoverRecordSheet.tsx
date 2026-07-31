@@ -107,8 +107,8 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
                 )}
               </div>
               <div className="flex flex-1 flex-col justify-center min-w-0">
-                <h2 className="font-display text-base font-bold text-foreground leading-tight">{record.title}</h2>
-                <p className="mt-1 font-display text-sm text-muted-foreground">{record.artist}</p>
+                <h2 className={`font-display text-base font-bold text-foreground leading-tight ${textDirClass(record.title)}`}>{record.title}</h2>
+                <p className={`mt-1 font-display text-sm text-muted-foreground ${textDirClass(record.artist)}`}>{record.artist}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   {record.year && (
                     <span className="flex items-center gap-1 font-body text-xs text-muted-foreground">
