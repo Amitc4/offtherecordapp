@@ -13,6 +13,8 @@
  */
 import { useRef, useState, useEffect } from "react";
 import { textDirClass } from "@/lib/utils";
+import RecordInfoList from "@/components/RecordInfoList";
+
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive, Images, Diamond } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
