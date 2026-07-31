@@ -233,11 +233,14 @@ const WishlistScreen = () => {
                     <Heart size={36} className="text-primary transition-transform group-hover:scale-110" fill="hsl(var(--primary))" />
                   )}
                 </div>
-                <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{item.title}</h3>
-                <p className="mt-0.5 font-display text-xs text-muted-foreground truncate">{item.artist}</p>
-                <div className="mt-2">
-                  <span className="font-body text-xs text-muted-foreground">{item.year || "—"}</span>
-                </div>
+                <RecordCardInfo
+                  title={item.title}
+                  artist={item.artist}
+                  year={item.year}
+                  format={item.format}
+                  genre={item.genre}
+                />
+
               </div>
             );
           })}
