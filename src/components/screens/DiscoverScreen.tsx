@@ -506,26 +506,30 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <h3 className={`font-display text-base font-semibold text-foreground truncate ${textDirClass(item.title)}`}>{item.title}</h3>
-                  <p className={`font-display text-sm text-muted-foreground ${textDirClass(item.artist)}`}>{item.artist}</p>
+                  <RecordCardInfo
+                    size="md"
+                    title={item.title}
+                    artist={item.artist}
+                    year={item.year}
+                    format={item.format}
+                    genre={(item as any).genre}
+                    sealed={(item as any).sealed}
+                    condition={item.condition}
+                  />
                   {distance && (
                     <p className="flex items-center gap-1 font-body text-[10px] text-muted-foreground">
                       <MapPin size={9} /> {distance}
                     </p>
                   )}
                 </div>
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex shrink-0 flex-col items-end gap-1">
                   {price != null ? (
                     <span className="font-body text-sm font-bold text-primary">₪{price}</span>
                   ) : (
                     <span className="rounded bg-primary/15 px-1.5 py-0.5 font-body text-[10px] font-bold text-primary">Open to trade</span>
                   )}
-                  {item.condition && (
-                    <span className="rounded bg-secondary px-1.5 py-0.5 font-body text-[9px] font-semibold text-secondary-foreground">
-                      {item.condition}
-                    </span>
-                  )}
                 </div>
+
               </div>
             );
           })}
