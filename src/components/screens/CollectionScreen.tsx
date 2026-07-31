@@ -19,6 +19,7 @@
  * @see AddRecordDialog   – Search Discogs or add manually.
  */
 import { useState, useMemo, useRef } from "react";
+import { textDirClass } from "@/lib/utils";
 import { Disc3, Plus, Camera, RefreshCw, CheckSquare, X, Tag, Trash2, ArrowUp, ArrowDown, Filter, Archive, Star, Diamond } from "lucide-react";
 import { usePerfectRecords } from "@/hooks/usePerfectRecords";
 import {

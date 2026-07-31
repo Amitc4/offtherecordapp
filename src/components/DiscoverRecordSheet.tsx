@@ -16,6 +16,7 @@
  * @param onContactSeller – Called when the user taps "Contact Seller".
  */
 import { useState } from "react";
+import { textDirClass } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Disc3, Calendar, MessageCircle, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
