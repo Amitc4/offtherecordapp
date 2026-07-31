@@ -17,7 +17,6 @@
  */
 import { useState } from "react";
 import { textDirClass } from "@/lib/utils";
-import RecordInfoList from "@/components/RecordInfoList";
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Disc3, Calendar, MessageCircle, Flag } from "lucide-react";
