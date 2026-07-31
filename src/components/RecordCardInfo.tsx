@@ -91,9 +91,21 @@ const RecordCardInfo = ({
         {artist}
       </p>
       <p className={`font-body ${metaSize} text-muted-foreground`}>{year || "—"}</p>
-      <p className={`font-body ${metaSize} text-muted-foreground truncate`}>
-        {classifications.length ? classifications.join(", ") : "—"}
-      </p>
+      {classifications.length ? (
+        <div className="mt-0.5 flex flex-wrap gap-1">
+          {classifications.map((c) => (
+            <span
+              key={c}
+              className={`font-body ${metaSize} rounded-full bg-muted px-1.5 py-0.5 leading-tight text-muted-foreground max-w-full truncate`}
+            >
+              {c}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className={`font-body ${metaSize} text-muted-foreground`}>—</p>
+      )}
+
       {condition && (
         <p className={`font-body ${metaSize} font-semibold text-secondary-foreground truncate`}>
           {condition}
