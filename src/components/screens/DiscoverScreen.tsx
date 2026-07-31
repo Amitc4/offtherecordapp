@@ -506,13 +506,17 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                 onClick={() => setSelectedRecord(item)}
                 className="flex cursor-pointer items-center gap-4 rounded-xl bg-card p-4 vinyl-shadow"
               >
-                {item.cover_image ? (
-                  <img src={item.cover_image} alt={item.title} className="h-12 w-12 rounded-lg object-cover" />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/15">
-                    <Disc3 size={24} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
-                  </div>
-                )}
+                <div className="relative h-12 w-12 shrink-0">
+                  {item.cover_image ? (
+                    <img src={item.cover_image} alt={item.title} className="h-12 w-12 rounded-lg object-cover" />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/15">
+                      <Disc3 size={24} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
+                    </div>
+                  )}
+                  {(item as any).sealed && <SealedDiamond small />}
+                </div>
+
                 <div className="min-w-0 flex-1">
                   <RecordCardInfo
                     size="md"
