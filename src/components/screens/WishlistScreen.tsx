@@ -292,24 +292,26 @@ const WishlistScreen = () => {
           </SheetHeader>
           {detailItem && (
             <div className="px-5 space-y-5">
-              <div className="flex gap-4">
-                <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-primary/10">
+              <div className="flex justify-center">
+                <div className="relative h-40 w-40 shrink-0 overflow-hidden rounded-xl bg-primary/10">
                   {detailItem.cover_image ? (
                     <img src={detailItem.cover_image} alt={detailItem.title} className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
-                      <Heart size={48} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
+                      <Heart size={64} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
                     </div>
                   )}
                 </div>
-                <div className="flex flex-1 flex-col justify-center min-w-0">
-                  <h2 className="font-display text-base font-bold text-foreground leading-tight">{detailItem.title}</h2>
-                  <p className="mt-1 font-body text-sm text-muted-foreground">{detailItem.artist}</p>
-                  {detailItem.year && (
-                    <span className="mt-2 font-body text-xs text-muted-foreground">{detailItem.year}</span>
-                  )}
-                </div>
               </div>
+
+              <RecordInfoList
+                title={detailItem.title}
+                artist={detailItem.artist}
+                year={detailItem.year}
+                format={detailItem.format}
+                genre={detailItem.genre}
+              />
+
 
               {detailItem.notes && (
                 <div>
