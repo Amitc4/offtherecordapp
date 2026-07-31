@@ -34,6 +34,7 @@ import AdminScreen from "@/components/screens/AdminScreen";
 import { useAuth } from "@/hooks/useAuth";
 import { useUnreadChats } from "@/hooks/useUnreadChats";
 import { supabase } from "@/integrations/supabase/client";
+import { OPEN_CHAT_EVENT, type OpenChatDetail } from "@/lib/openChatWithSeller";
 
 type Tab = "collection" | "wishlist" | "discover" | "chats" | "profile" | "admin";
 
@@ -82,6 +83,18 @@ const HomePage = () => {
     setDraftMessage(draft || "");
     setActiveTab("chats");
   };
+
+  // Open a chat when a notification (e.g. wishlist match) requests it.
+  useEffect(() => {
+    const onOpenChat = (e: Event) => {
+      const detail = (e as CustomEvent<OpenChatDetail>).detail;
+      if (!detail) return;
+      handleNavigateToChat(detail.chatId, detail.draft);
+    };
+    window.addEventListener(OPEN_CHAT_EVENT, onOpenChat);
+    return () => window.removeEventListener(OPEN_CHAT_EVENT, onOpenChat);
+  }, []);
+
 
   const renderScreen = () => {
     switch (activeTab) {
