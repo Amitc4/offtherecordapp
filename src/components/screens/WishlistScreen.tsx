@@ -237,8 +237,9 @@ const WishlistScreen = () => {
                   title={item.title}
                   artist={item.artist}
                   year={item.year}
-                  format={item.format}
-                  genre={item.genre}
+                  format={(item as any).format}
+                  genre={(item as any).genre}
+
                 />
 
               </div>
