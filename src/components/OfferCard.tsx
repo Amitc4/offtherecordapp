@@ -220,21 +220,51 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate, onCounterOffer }
     </div>
   );
 
-  const SideSection = ({ label, sideItems, cash }: { label: string; sideItems: OfferItem[]; cash: number }) => (
-    (sideItems.length > 0 || cash > 0) ? (
-      <div className="mb-2">
-        <p className="mb-1 font-body text-[9px] font-semibold text-muted-foreground uppercase">{label}</p>
-        <div className="space-y-1">
-          {sideItems.map((item) => <RecordPill key={item.id} item={item} />)}
-          {cash > 0 && (
-            <div className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1.5">
-              <span className="font-body text-xs font-semibold text-primary">₪{cash}</span>
-            </div>
-          )}
+  /** Resolves the display name for a side, falling back to the passed-in names. */
+  const nameFor = (userId: string, fallback: string) => {
+    const name = profiles[userId]?.display_name;
+    if (name) return name.split(" ")[0];
+    if (fallback && fallback !== "You") return fallback.split(" ")[0];
+    return "They";
+  };
+
+  const SideColumn = ({
+    userId,
+    fallbackName,
+    sideItems,
+    cash,
+  }: { userId: string; fallbackName: string; sideItems: OfferItem[]; cash: number }) => {
+    const profile = profiles[userId];
+    const name = nameFor(userId, fallbackName);
+    return (
+      <div className="min-w-0 flex-1">
+        <p className="mb-1.5 font-body text-[10px] font-semibold text-foreground">
+          {name} will give:
+        </p>
+        <div className="flex items-start gap-2">
+          <Avatar className="h-9 w-9 shrink-0 border border-border">
+            <AvatarImage src={profile?.avatar_url || undefined} alt="" />
+            <AvatarFallback className="font-body text-[10px]">
+              {(profile?.display_name || name).charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1 space-y-1">
+            {sideItems.map((item) => (
+              <RecordPill key={item.id} item={item} />
+            ))}
+            {cash > 0 && (
+              <div className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1.5">
+                <span className="font-body text-xs font-semibold text-primary">₪{cash}</span>
+              </div>
+            )}
+            {sideItems.length === 0 && cash <= 0 && (
+              <p className="font-body text-[10px] italic text-muted-foreground">Nothing</p>
+            )}
+          </div>
         </div>
       </div>
-    ) : null
-  );
+    );
+  };
 
   return (
     <div className="rounded-xl border border-border bg-card p-3 vinyl-shadow">
@@ -245,17 +275,24 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate, onCounterOffer }
         </span>
       </div>
 
-      <SideSection
-        label={isSender ? "You will give" : `You will receive from ${senderName}`}
-        sideItems={senderItems}
-        cash={offer.sender_cash}
-      />
+      <div className="flex items-start gap-2">
+        <SideColumn
+          userId={offer.sender_id}
+          fallbackName={senderName}
+          sideItems={senderItems}
+          cash={offer.sender_cash}
+        />
+        <div className="mt-6 shrink-0 self-start">
+          <ArrowRightLeft size={14} className="text-muted-foreground" />
+        </div>
+        <SideColumn
+          userId={offer.receiver_id}
+          fallbackName={receiverName}
+          sideItems={receiverItems}
+          cash={offer.receiver_cash}
+        />
+      </div>
 
-      <SideSection
-        label={isReceiver ? "You will give" : `You will receive from ${receiverName}`}
-        sideItems={receiverItems}
-        cash={offer.receiver_cash}
-      />
 
       {/* Actions */}
       {offer.status === "pending" && isReceiver && (
