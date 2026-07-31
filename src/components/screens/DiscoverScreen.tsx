@@ -19,7 +19,8 @@ import { useState, useMemo, useEffect } from "react";
 import { textDirClass } from "@/lib/utils";
 import RecordCardInfo from "@/components/RecordCardInfo";
 
-import { Disc3, Search, MapPin, Sparkles, SlidersHorizontal, Check, ShieldCheck } from "lucide-react";
+import { Disc3, Search, MapPin, Sparkles, SlidersHorizontal, Check } from "lucide-react";
+import SealedDiamond from "@/components/SealedDiamond";
 import ViewToggle from "@/components/ViewToggle";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -460,18 +461,12 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                   ) : (
                     <Disc3 size={36} className="text-primary transition-transform group-hover:rotate-45" />
                   )}
-                  <div className="absolute left-1.5 top-1.5 flex flex-col items-start gap-1">
-                    {(item as any).sealed && (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-primary px-1.5 py-0.5 font-body text-[9px] font-bold text-primary-foreground shadow">
-                        <ShieldCheck size={10} /> Sealed
-                      </span>
-                    )}
-                    {item.condition && (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-card/90 px-1.5 py-0.5 font-body text-[9px] font-bold text-foreground shadow">
-                        <Sparkles size={10} /> {item.condition}
-                      </span>
-                    )}
-                  </div>
+                  {(item as any).sealed && <SealedDiamond />}
+                  {item.condition && (
+                    <span className="absolute bottom-1.5 left-1.5 inline-flex items-center gap-1 rounded-md bg-card/90 px-1.5 py-0.5 font-body text-[9px] font-bold text-foreground shadow">
+                      <Sparkles size={10} /> {item.condition}
+                    </span>
+                  )}
                 </div>
 
                 <RecordCardInfo
@@ -511,13 +506,17 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                 onClick={() => setSelectedRecord(item)}
                 className="flex cursor-pointer items-center gap-4 rounded-xl bg-card p-4 vinyl-shadow"
               >
-                {item.cover_image ? (
-                  <img src={item.cover_image} alt={item.title} className="h-12 w-12 rounded-lg object-cover" />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/15">
-                    <Disc3 size={24} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
-                  </div>
-                )}
+                <div className="relative h-12 w-12 shrink-0">
+                  {item.cover_image ? (
+                    <img src={item.cover_image} alt={item.title} className="h-12 w-12 rounded-lg object-cover" />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/15">
+                      <Disc3 size={24} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
+                    </div>
+                  )}
+                  {(item as any).sealed && <SealedDiamond small />}
+                </div>
+
                 <div className="min-w-0 flex-1">
                   <RecordCardInfo
                     size="md"
