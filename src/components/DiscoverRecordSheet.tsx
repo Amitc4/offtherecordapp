@@ -122,11 +122,17 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
                       {record.format}
                     </span>
                   )}
-                  {record.condition && (
-                    <span className="rounded-md bg-primary/15 px-1.5 py-0.5 font-body text-[10px] font-semibold text-primary">
-                      {record.condition}
+                  {(record as any).sealed && (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-primary/15 px-1.5 py-0.5 font-body text-[10px] font-bold text-primary">
+                      <ShieldCheck size={11} /> Sealed
                     </span>
                   )}
+                  {record.condition && (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-1.5 py-0.5 font-body text-[10px] font-semibold text-secondary-foreground">
+                      <Sparkles size={11} /> {record.condition}
+                    </span>
+                  )}
+
                   {record.genre && (
                     <span className="rounded-md bg-accent/15 px-1.5 py-0.5 font-body text-[10px] font-semibold text-accent">
                       {record.genre}
