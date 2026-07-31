@@ -132,6 +132,8 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
   const [searchText, setSearchText] = useState("");
   const [activeGenre, setActiveGenre] = useState("All");
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
+  const [sortBy, setSortBy] = useState<SortKey>("newest");
+  const [filterOpen, setFilterOpen] = useState(false);
   const { latitude, longitude, permissionGranted, requestLocation } = useLocation();
 
   // Fetch seller profiles for distance calculation
