@@ -12,7 +12,7 @@
  * - `minPhotos`      – Minimum required (used for validation messaging, default 2).
  * - `maxPhotos`      – Maximum allowed (default 4). The "Add" button hides at max.
  *
- * **Constraints:** Max 5 MB per file. Accepts image/* formats.
+ * **Constraints:** Max 25 MB per file. Accepts image/* formats.
  */
 import { useState, useRef } from "react";
 import { Camera, X, ImagePlus } from "lucide-react";
@@ -51,8 +51,8 @@ const RecordPhotoUpload = ({ recordId, existingPhotos = [], onPhotosChange, minP
     const newPhotos: { id: string; photo_url: string }[] = [];
 
     for (const file of filesToUpload) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`${file.name} is too large (max 5MB)`);
+      if (file.size > 25 * 1024 * 1024) {
+        toast.error(`${file.name} is too large (max 25MB)`);
         continue;
       }
 

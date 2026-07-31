@@ -341,8 +341,8 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                     <Disc3 size={36} className="text-primary transition-transform group-hover:rotate-45" />
                   )}
                 </div>
-                <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{item.title}</h3>
-                <p className="mt-0.5 font-display text-xs text-muted-foreground truncate">{item.artist}</p>
+                <h3 className={`font-display text-sm font-semibold leading-tight text-foreground truncate ${textDirClass(item.title)}`}>{item.title}</h3>
+                <p className={`mt-0.5 font-display text-xs text-muted-foreground truncate ${textDirClass(item.artist)}`}>{item.artist}</p>
                 <div className="mt-2 flex items-center justify-between">
                   {price != null ? (
                     <span className="font-body text-sm font-bold text-primary">₪{price}</span>
@@ -383,8 +383,8 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-display text-base font-semibold text-foreground truncate">{item.title}</h3>
-                  <p className="font-display text-sm text-muted-foreground">{item.artist}</p>
+                  <h3 className={`font-display text-base font-semibold text-foreground truncate ${textDirClass(item.title)}`}>{item.title}</h3>
+                  <p className={`font-display text-sm text-muted-foreground ${textDirClass(item.artist)}`}>{item.artist}</p>
                   {distance && (
                     <p className="flex items-center gap-1 font-body text-[10px] text-muted-foreground">
                       <MapPin size={9} /> {distance}
