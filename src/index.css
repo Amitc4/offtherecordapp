@@ -54,8 +54,8 @@
     --cream: 32 70% 93%;
     --burnt-sienna: 14 60% 38%;
 
-    --font-display: 'Heebo', sans-serif;
-    --font-body: 'Heebo', sans-serif;
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'Inter', sans-serif;
   }
 
   .dark {
