@@ -123,8 +123,8 @@ const TransactionHistorySheet = ({ open, onOpenChange }: TransactionHistorySheet
         )}
       </div>
       <div className="min-w-0">
-        <p className="truncate font-body text-[10px] font-semibold text-foreground">{record.title}</p>
-        <p className="truncate font-body text-[9px] text-muted-foreground">{record.artist}</p>
+        <p className="truncate font-body text-[10px] font-semibold text-foreground">{displayName(record.title)}</p>
+        <p className="truncate font-body text-[9px] text-muted-foreground">{displayName(record.artist)}</p>
       </div>
     </div>
   );

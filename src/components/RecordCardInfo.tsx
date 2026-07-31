@@ -10,7 +10,7 @@
  * 5. Availability — only when `status` is provided (Collection tab):
  *    "For sale · ₪120" / "Open to trade" / "Personal collection" / "Sold"
  */
-import { textDirClass } from "@/lib/utils";
+import { displayName, textDirClass } from "@/lib/utils";
 
 interface RecordCardInfoProps {
   title: string;
@@ -83,12 +83,12 @@ const RecordCardInfo = ({
   return (
     <div className="min-w-0">
       <h3
-        className={`font-display ${titleSize} font-semibold leading-tight text-foreground truncate ${textDirClass(title)}`}
+        className={`font-display ${titleSize} font-semibold leading-tight text-foreground truncate ${textDirClass(displayName(title))}`}
       >
-        {title}
+        {displayName(title)}
       </h3>
-      <p className={`font-display ${lineSize} text-muted-foreground truncate ${textDirClass(artist)}`}>
-        {artist}
+      <p className={`font-display ${lineSize} text-muted-foreground truncate ${textDirClass(displayName(artist))}`}>
+        {displayName(artist)}
       </p>
       <p className={`font-body ${metaSize} text-muted-foreground`}>{year || "—"}</p>
       {classifications.length ? (
