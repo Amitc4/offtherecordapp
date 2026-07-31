@@ -38,6 +38,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import RecordInfoList from "@/components/RecordInfoList";
+
 
 const WishlistScreen = () => {
   const [view, setView] = useState<"grid" | "list">("grid");
