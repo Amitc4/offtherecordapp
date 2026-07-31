@@ -19,6 +19,7 @@ import { Camera, X, ImagePlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import PhotoLightbox, { useSignedRecordPhotoUrls } from "@/components/PhotoLightbox";
 
 interface RecordPhotoUploadProps {
   recordId: string;
@@ -32,6 +33,8 @@ const RecordPhotoUpload = ({ recordId, existingPhotos = [], onPhotosChange, minP
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const displayUrls = useSignedRecordPhotoUrls(existingPhotos.map((p) => p.photo_url));
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -109,9 +112,20 @@ const RecordPhotoUpload = ({ recordId, existingPhotos = [], onPhotosChange, minP
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {existingPhotos.map((photo) => (
+        {existingPhotos.map((photo, i) => (
           <div key={photo.id} className="relative h-20 w-20 overflow-hidden rounded-lg">
-            <img src={photo.photo_url} alt="Record photo" className="h-full w-full object-cover" />
+            <button
+              type="button"
+              onClick={() => setLightboxIndex(i)}
+              aria-label="View photo full size"
+              className="h-full w-full"
+            >
+              <img
+                src={displayUrls[i] || photo.photo_url}
+                alt="Record photo"
+                className="h-full w-full object-cover"
+              />
+            </button>
             <button
               onClick={() => handleRemove(photo.id)}
               className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
@@ -146,6 +160,13 @@ const RecordPhotoUpload = ({ recordId, existingPhotos = [], onPhotosChange, minP
         multiple
         className="hidden"
         onChange={handleUpload}
+      />
+
+      <PhotoLightbox
+        urls={displayUrls}
+        index={lightboxIndex}
+        onClose={() => setLightboxIndex(null)}
+        onIndexChange={setLightboxIndex}
       />
     </div>
   );

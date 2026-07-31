@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import ReportBlockDialog from "@/components/ReportBlockDialog";
+import PhotoLightbox, { useSignedRecordPhotoUrls } from "@/components/PhotoLightbox";
 
 interface DiscoverRecord {
   id: string;
@@ -75,6 +76,9 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
     },
     enabled: !!record?.id,
   });
+
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const photoUrls = useSignedRecordPhotoUrls((recordPhotos as any[]).map((p) => p.photo_url));
 
   if (!record) return null;
 
@@ -138,13 +142,20 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
               <div>
                 <p className="mb-2 font-body text-xs font-medium text-muted-foreground">Condition Photos</p>
                 <div className="flex gap-2 overflow-x-auto pb-1">
-                  {recordPhotos.map((photo: any) => (
-                    <img
+                  {recordPhotos.map((photo: any, i: number) => (
+                    <button
                       key={photo.id}
-                      src={photo.photo_url}
-                      alt="Record condition"
-                      className="h-24 w-24 shrink-0 rounded-lg object-cover"
-                    />
+                      type="button"
+                      onClick={() => setLightboxIndex(i)}
+                      aria-label="View condition photo full size"
+                      className="shrink-0"
+                    >
+                      <img
+                        src={photoUrls[i] || photo.photo_url}
+                        alt="Record condition"
+                        className="h-24 w-24 rounded-lg object-cover"
+                      />
+                    </button>
                   ))}
                 </div>
               </div>
@@ -192,7 +203,15 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
         targetUserId={record.user_id}
         targetUserName={sellerName}
       />
+
+      <PhotoLightbox
+        urls={photoUrls}
+        index={lightboxIndex}
+        onClose={() => setLightboxIndex(null)}
+        onIndexChange={setLightboxIndex}
+      />
     </>
+
   );
 };
 
