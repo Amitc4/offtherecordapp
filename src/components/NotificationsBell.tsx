@@ -13,10 +13,28 @@ import { Bell, Disc3 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNotifications } from "@/hooks/useNotifications";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { openChatForRecord } from "@/lib/openChatWithSeller";
 
 const NotificationsBell = () => {
   const { notifications, unreadCount, markAsRead, markAllRead } = useNotifications();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
+
+  /** Tap handler: mark read and, for wishlist matches, open a chat with the seller. */
+  const handleNotificationClick = async (n: {
+    id: string;
+    type: string;
+    record_id: string | null;
+  }) => {
+    markAsRead(n.id);
+    if (n.type !== "wishlist_match" || !n.record_id || !user) return;
+    setOpen(false);
+    const ok = await openChatForRecord(n.record_id, user.id);
+    if (!ok) toast.error("This record is no longer available");
+  };
+
 
   return (
     <div className="relative">
@@ -66,7 +84,7 @@ const NotificationsBell = () => {
                   {notifications.map((n) => (
                     <button
                       key={n.id}
-                      onClick={() => { markAsRead(n.id); }}
+                      onClick={() => { handleNotificationClick(n); }}
                       className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 ${
                         !n.read ? "bg-primary/5" : ""
                       }`}
