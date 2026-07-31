@@ -13,6 +13,8 @@
  */
 import { useRef, useState, useEffect } from "react";
 import { textDirClass } from "@/lib/utils";
+import RecordInfoList from "@/components/RecordInfoList";
+
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive, Images, Diamond } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -184,39 +186,32 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-5 pb-8 space-y-5">
-          {/* Cover + title area */}
-          <div className="flex gap-4">
-            <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-primary/10">
+          {/* Cover image */}
+          <div className="flex justify-center">
+            <div className="relative h-40 w-40 shrink-0 overflow-hidden rounded-xl bg-primary/10">
               {record.cover_image ? (
                 <img src={record.cover_image} alt={record.title} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
-                  <Disc3 size={48} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
+                  <Disc3 size={64} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
                 </div>
               )}
             </div>
-            <div className="flex flex-1 flex-col justify-center min-w-0">
-              <h2 className={`font-display text-base font-bold text-foreground leading-tight ${textDirClass(record.title)}`}>{record.title}</h2>
-              <p className={`mt-1 font-body text-sm text-muted-foreground ${textDirClass(record.artist)}`}>{record.artist}</p>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                {record.year && (
-                  <span className="flex items-center gap-1 font-body text-xs text-muted-foreground">
-                    <Calendar size={12} /> {record.year}
-                  </span>
-                )}
-                {record.format && (
-                  <span className="rounded bg-secondary px-1.5 py-0.5 font-body text-[10px] font-semibold text-secondary-foreground">
-                    {record.format}
-                  </span>
-                )}
-                {record.condition && (
-                  <span className="rounded-md bg-primary/15 px-1.5 py-0.5 font-body text-[10px] font-semibold text-primary">
-                    {record.condition}
-                  </span>
-                )}
-              </div>
-            </div>
           </div>
+
+          {/* Details list */}
+          <RecordInfoList
+            title={record.title}
+            artist={record.artist}
+            year={record.year}
+            format={record.format}
+            genre={(record as any).genre}
+            sealed={(record as any).sealed}
+            condition={record.condition}
+            status={(record as any).status || "personal"}
+            price={recordPrice}
+          />
+
 
           {record.notes && (
             <div>
