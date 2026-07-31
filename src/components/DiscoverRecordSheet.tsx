@@ -77,6 +77,9 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
     enabled: !!record?.id,
   });
 
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const photoUrls = useSignedRecordPhotoUrls((recordPhotos as any[]).map((p) => p.photo_url));
+
   if (!record) return null;
 
   const sellerName = sellerProfile?.display_name || "User";
