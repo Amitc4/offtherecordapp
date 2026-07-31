@@ -10,7 +10,7 @@
  * 5. Availability — only when `status` is provided (Collection tab):
  *    "For sale · ₪120" / "Open to trade" / "Personal collection" / "Sold"
  */
-import { ShieldCheck, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { displayName, textDirClass } from "@/lib/utils";
 
 interface RecordCardInfoProps {
