@@ -366,22 +366,20 @@ const CollectionScreen = () => {
                   {(record as any).sealed && <SealedDiamond small offset={perfectIds.has(record.id)} />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className={`font-display text-base font-semibold text-foreground truncate ${textDirClass(record.title)}`}>{record.title}</h3>
-                  <p className={`font-display text-sm text-muted-foreground truncate ${textDirClass(record.artist)}`}>{record.artist}{record.year ? ` · ${record.year}` : ""}</p>
+                  <RecordCardInfo
+                    size="md"
+                    title={record.title}
+                    artist={record.artist}
+                    year={record.year}
+                    format={record.format}
+                    genre={(record as any).genre}
+                    sealed={(record as any).sealed}
+                    condition={record.condition}
+                    status={recordStatus || "personal"}
+                    price={recordPrice}
+                  />
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-1">
-                  {recordStatus === "for_sale" && recordPrice != null && (
-                    <span className="font-body text-sm font-bold text-primary">₪{recordPrice}</span>
-                  )}
-                  <div className="flex items-center gap-1.5">
-                    {recordStatus && getStatusBadge(recordStatus)}
-                    {record.condition && (
-                      <span className="rounded-md bg-secondary px-2 py-1 font-body text-[10px] font-semibold text-secondary-foreground">
-                        {record.condition}
-                      </span>
-                    )}
-                  </div>
-                </div>
+
               </div>
             );
           })}
