@@ -238,30 +238,28 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate, onCounterOffer }
     const profile = profiles[userId];
     const name = nameFor(userId, fallbackName);
     return (
-      <div className="min-w-0 flex-1">
-        <p className="mb-1.5 font-body text-[10px] font-semibold text-foreground">
+      <div className="min-w-0 flex-1 flex flex-col items-center">
+        <Avatar className="h-12 w-12 shrink-0 border border-border">
+          <AvatarImage src={profile?.avatar_url || undefined} alt="" />
+          <AvatarFallback className="font-body text-[11px]">
+            {(profile?.display_name || name).charAt(0).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <p className="mt-1.5 mb-1.5 w-full truncate text-center font-body text-[10px] font-semibold text-foreground">
           {name} will give:
         </p>
-        <div className="flex items-start gap-2">
-          <Avatar className="h-9 w-9 shrink-0 border border-border">
-            <AvatarImage src={profile?.avatar_url || undefined} alt="" />
-            <AvatarFallback className="font-body text-[10px]">
-              {(profile?.display_name || name).charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1 space-y-1">
-            {sideItems.map((item) => (
-              <RecordPill key={item.id} item={item} />
-            ))}
-            {cash > 0 && (
-              <div className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1.5">
-                <span className="font-body text-xs font-semibold text-primary">₪{cash}</span>
-              </div>
-            )}
-            {sideItems.length === 0 && cash <= 0 && (
-              <p className="font-body text-[10px] italic text-muted-foreground">Nothing</p>
-            )}
-          </div>
+        <div className="w-full min-w-0 space-y-1">
+          {sideItems.map((item) => (
+            <RecordPill key={item.id} item={item} />
+          ))}
+          {cash > 0 && (
+            <div className="flex items-center justify-center gap-1 rounded-lg bg-muted px-2 py-1.5">
+              <span className="font-body text-xs font-semibold text-primary">₪{cash}</span>
+            </div>
+          )}
+          {sideItems.length === 0 && cash <= 0 && (
+            <p className="text-center font-body text-[10px] italic text-muted-foreground">Nothing</p>
+          )}
         </div>
       </div>
     );
