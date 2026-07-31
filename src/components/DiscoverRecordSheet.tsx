@@ -203,7 +203,15 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
         targetUserId={record.user_id}
         targetUserName={sellerName}
       />
+
+      <PhotoLightbox
+        urls={photoUrls}
+        index={lightboxIndex}
+        onClose={() => setLightboxIndex(null)}
+        onIndexChange={setLightboxIndex}
+      />
     </>
+
   );
 };
 
