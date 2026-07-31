@@ -10,6 +10,7 @@
  * 5. Availability — only when `status` is provided (Collection tab):
  *    "For sale · ₪120" / "Open to trade" / "Personal collection" / "Sold"
  */
+import { ShieldCheck, Sparkles } from "lucide-react";
 import { displayName, textDirClass } from "@/lib/utils";
 
 interface RecordCardInfoProps {
@@ -64,7 +65,7 @@ const RecordCardInfo = ({
   price,
   size = "sm",
 }: RecordCardInfoProps) => {
-  const classifications = buildClassifications(format, genre, sealed);
+  const classifications = buildClassifications(format, genre, false);
   const titleSize = size === "md" ? "text-base" : "text-sm";
   const lineSize = size === "md" ? "text-sm" : "text-xs";
   const metaSize = size === "md" ? "text-xs" : "text-[10px]";
@@ -106,11 +107,27 @@ const RecordCardInfo = ({
         <p className={`font-body ${metaSize} text-muted-foreground`}>—</p>
       )}
 
-      {condition && (
-        <p className={`font-body ${metaSize} font-semibold text-secondary-foreground truncate`}>
-          {condition}
-        </p>
+      {(sealed || condition) && (
+        <div className="mt-1 flex flex-wrap items-center gap-1">
+          {sealed && (
+            <span
+              className={`inline-flex items-center gap-1 rounded-full bg-primary/15 px-1.5 py-0.5 font-body ${metaSize} font-bold leading-tight text-primary`}
+              title="Factory sealed — highest possible grade"
+            >
+              <ShieldCheck size={size === "md" ? 13 : 11} /> Sealed
+            </span>
+          )}
+          {condition && (
+            <span
+              className={`inline-flex items-center gap-1 rounded-full bg-secondary px-1.5 py-0.5 font-body ${metaSize} font-semibold leading-tight text-secondary-foreground`}
+              title={`Grade: ${condition}`}
+            >
+              <Sparkles size={size === "md" ? 13 : 11} /> {condition}
+            </span>
+          )}
+        </div>
       )}
+
       {availability && (
         <p
           className={`font-body ${metaSize} font-semibold ${
