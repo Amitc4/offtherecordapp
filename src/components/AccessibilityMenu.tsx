@@ -87,7 +87,7 @@ const AccessibilityMenu = () => {
                     <span className="font-body text-xs text-muted-foreground">{fontSizeLabels[settings.fontSize]}</span>
                     <button
                       onClick={() => setFontSize(settings.fontSize + 1)}
-                      disabled={settings.fontSize === 2}
+                      disabled={settings.fontSize === 4}
                       className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-foreground disabled:opacity-30"
                     >
                       <Plus size={14} />
