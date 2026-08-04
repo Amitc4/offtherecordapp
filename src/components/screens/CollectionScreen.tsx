@@ -255,18 +255,18 @@ const CollectionScreen = () => {
               <div className="relative">
                 <button
                   onClick={() => setFilterMenuOpen(!filterMenuOpen)}
-                  className={`flex h-9 items-center gap-1.5 rounded-lg px-3 font-body text-xs font-medium transition-colors ${
+                  aria-label="Filter records"
+                  className={`relative flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
                     activeFilter !== "default"
                       ? "bg-primary text-primary-foreground"
-                      : "bg-primary/10 text-primary hover:bg-primary/20"
+                      : "bg-primary/15 text-primary hover:bg-primary/25"
                   }`}
                 >
-                  <Filter size={14} />
-                  {activeFilter !== "default" && (
-                    <span>{FILTERS.find(f => f.key === activeFilter)?.label}</span>
-                  )}
+                  <Filter size={16} />
                   {activeFilter === "year" && (
-                    yearAsc ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                    <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-card text-primary">
+                      {yearAsc ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
+                    </span>
                   )}
                 </button>
                 <AnimatePresence>

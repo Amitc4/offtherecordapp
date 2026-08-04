@@ -333,8 +333,8 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
           onClick={requestLocation}
           className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-body text-xs font-medium transition-colors ${
             permissionGranted
-              ? "bg-primary/10 text-primary"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
+              ? "bg-primary text-primary-foreground"
+              : "bg-primary/15 text-primary hover:bg-primary/25"
           }`}
         >
           <MapPin size={14} />
@@ -344,14 +344,14 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
           <Popover open={filterOpen} onOpenChange={setFilterOpen}>
             <PopoverTrigger asChild>
               <button
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-body text-xs font-medium transition-colors ${
+                aria-label="Filter and sort"
+                className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
                   sortBy !== "newest"
-                    ? "bg-primary/10 text-primary"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-primary/15 text-primary hover:bg-primary/25"
                 }`}
               >
-                <SlidersHorizontal size={14} />
-                Filter
+                <SlidersHorizontal size={16} />
               </button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-56 p-1">
