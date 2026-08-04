@@ -139,7 +139,7 @@ const WishlistScreen = () => {
           ) : (
             <button
               onClick={exitSelectMode}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground active:scale-95"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary active:scale-95"
             >
               <X size={18} />
             </button>

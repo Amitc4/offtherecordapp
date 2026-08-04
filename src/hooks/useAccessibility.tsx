@@ -83,10 +83,9 @@ export const AccessibilityProvider = ({ children }: { children: ReactNode }) => 
 
     const root = document.documentElement;
 
-    // Font size
-    root.classList.remove("a11y-font-large", "a11y-font-xlarge");
-    if (settings.fontSize === 1) root.classList.add("a11y-font-large");
-    if (settings.fontSize === 2) root.classList.add("a11y-font-xlarge");
+    // Font size (0 = default, 1..4 = progressively larger)
+    root.classList.remove("a11y-font-1", "a11y-font-2", "a11y-font-3", "a11y-font-4");
+    if (settings.fontSize > 0) root.classList.add(`a11y-font-${settings.fontSize}`);
 
     // High contrast
     root.classList.toggle("a11y-high-contrast", settings.highContrast);

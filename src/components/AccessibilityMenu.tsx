@@ -16,7 +16,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAccessibility } from "@/hooks/useAccessibility";
 import NotificationsBell from "@/components/NotificationsBell";
 
-const fontSizeLabels = ["Default", "Large", "Extra Large"];
+const fontSizeLabels = ["Default", "Large", "Extra Large", "Huge", "Maximum"];
 
 const AccessibilityMenu = () => {
   const [open, setOpen] = useState(false);
@@ -30,10 +30,10 @@ const AccessibilityMenu = () => {
       <div className="fixed right-3 bottom-20 z-[60] flex flex-col items-center gap-2 [body.chat-open_&]:hidden">
         <button
           onClick={() => setOpen(!open)}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95"
+          className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95"
           aria-label="Accessibility menu"
         >
-          <Accessibility size={20} />
+          <Accessibility size={28} />
           {hasChanges && (
             <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-accent border-2 border-primary" />
           )}

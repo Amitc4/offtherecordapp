@@ -148,12 +148,23 @@
   }
 }
 
-/* Accessibility: Font size */
-.a11y-font-large {
+/* Base font size (bigger default) */
+html {
   font-size: 112.5%; /* 18px base */
 }
-.a11y-font-xlarge {
-  font-size: 125%; /* 20px base */
+
+/* Accessibility: Font size steps */
+.a11y-font-1 {
+  font-size: 125%; /* 20px */
+}
+.a11y-font-2 {
+  font-size: 137.5%; /* 22px */
+}
+.a11y-font-3 {
+  font-size: 150%; /* 24px */
+}
+.a11y-font-4 {
+  font-size: 162.5%; /* 26px */
 }
 
 /* Accessibility: High contrast */

@@ -18,7 +18,7 @@
  * @see ScanRecordDialog  – AI camera identification dialog.
  * @see AddRecordDialog   – Search Discogs or add manually.
  */
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { textDirClass } from "@/lib/utils";
 import RecordCardInfo from "@/components/RecordCardInfo";
 
@@ -64,6 +64,22 @@ const CollectionScreen = () => {
   const [activeFilter, setActiveFilter] = useState<FilterType>("default");
   const [yearAsc, setYearAsc] = useState(false);
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+
+  // Close the filter dropdown as soon as the user scrolls
+  useEffect(() => {
+    if (!filterMenuOpen) return;
+    const close = () => setFilterMenuOpen(false);
+    const opts: AddEventListenerOptions = { passive: true, capture: true };
+    window.addEventListener("wheel", close, opts);
+    window.addEventListener("touchmove", close, opts);
+    window.addEventListener("scroll", close, opts);
+    return () => {
+      window.removeEventListener("wheel", close, opts);
+      window.removeEventListener("touchmove", close, opts);
+      window.removeEventListener("scroll", close, opts);
+    };
+  }, [filterMenuOpen]);
+
 
   const { data: records = [], isLoading } = useUserRecords();
   const { data: perfectIds = new Set<string>() } = usePerfectRecords();
@@ -255,18 +271,18 @@ const CollectionScreen = () => {
               <div className="relative">
                 <button
                   onClick={() => setFilterMenuOpen(!filterMenuOpen)}
-                  className={`flex h-9 items-center gap-1.5 rounded-lg px-3 font-body text-xs font-medium transition-colors ${
+                  aria-label="Filter records"
+                  className={`relative flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
                     activeFilter !== "default"
                       ? "bg-primary text-primary-foreground"
-                      : "bg-primary/10 text-primary hover:bg-primary/20"
+                      : "bg-primary/15 text-primary hover:bg-primary/25"
                   }`}
                 >
-                  <Filter size={14} />
-                  {activeFilter !== "default" && (
-                    <span>{FILTERS.find(f => f.key === activeFilter)?.label}</span>
-                  )}
+                  <Filter size={16} />
                   {activeFilter === "year" && (
-                    yearAsc ? <ArrowUp size={12} /> : <ArrowDown size={12} />
+                    <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-card text-primary">
+                      {yearAsc ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
+                    </span>
                   )}
                 </button>
                 <AnimatePresence>
