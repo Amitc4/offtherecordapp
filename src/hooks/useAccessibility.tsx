@@ -8,7 +8,7 @@
  * **Available settings:**
  * | Setting           | Values          | Effect                                          |
  * |-------------------|-----------------|-------------------------------------------------|
- * | `fontSize`        | 0 / 1 / 2      | Default → Large → Extra-large (CSS class on `<html>`) |
+ * | `fontSize`        | 0–4             | Default through maximum (CSS class on `<html>`)       |
  * | `highContrast`    | boolean         | Toggles the `a11y-high-contrast` CSS class      |
  * | `reduceAnimations`| boolean         | Toggles `a11y-reduce-motion` (disables transitions) |
  * | `dyslexiaFont`    | boolean         | Toggles `a11y-dyslexia-font` (swaps to OpenDyslexic) |
@@ -25,7 +25,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 
 /** Shape of the persisted accessibility preferences. */
 interface AccessibilitySettings {
-  fontSize: number; // 0 = default, 1 = large, 2 = x-large
+  fontSize: number; // 0 = default, 1..4 = progressively larger
   highContrast: boolean;
   reduceAnimations: boolean;
   dyslexiaFont: boolean;
@@ -97,7 +97,7 @@ export const AccessibilityProvider = ({ children }: { children: ReactNode }) => 
     root.classList.toggle("a11y-dyslexia-font", settings.dyslexiaFont);
   }, [settings]);
 
-  const setFontSize = (level: number) => setSettings(s => ({ ...s, fontSize: Math.max(0, Math.min(2, level)) }));
+  const setFontSize = (level: number) => setSettings(s => ({ ...s, fontSize: Math.max(0, Math.min(4, level)) }));
   const toggleHighContrast = () => setSettings(s => ({ ...s, highContrast: !s.highContrast }));
   const toggleReduceAnimations = () => setSettings(s => ({ ...s, reduceAnimations: !s.reduceAnimations }));
   const toggleDyslexiaFont = () => setSettings(s => ({ ...s, dyslexiaFont: !s.dyslexiaFont }));

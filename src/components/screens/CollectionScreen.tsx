@@ -288,7 +288,7 @@ const CollectionScreen = () => {
                 <AnimatePresence>
                   {filterMenuOpen && (
                     <>
-                      <div className="fixed inset-0 z-40" onClick={() => setFilterMenuOpen(false)} />
+                       <div className="pointer-events-none fixed inset-0 z-40" aria-hidden="true" />
                       <motion.div
                         initial={{ y: -4, opacity: 0, scale: 0.95 }}
                         animate={{ y: 0, opacity: 1, scale: 1 }}
