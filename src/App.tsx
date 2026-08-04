@@ -26,6 +26,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AccessibilityProvider } from "@/hooks/useAccessibility";
 import AccessibilityMenu from "@/components/AccessibilityMenu";
+import DismissOnScroll from "@/components/DismissOnScroll";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import DiscogsCallback from "./pages/DiscogsCallback";
