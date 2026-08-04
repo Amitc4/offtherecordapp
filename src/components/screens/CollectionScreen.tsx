@@ -18,7 +18,7 @@
  * @see ScanRecordDialog  – AI camera identification dialog.
  * @see AddRecordDialog   – Search Discogs or add manually.
  */
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { textDirClass } from "@/lib/utils";
 import RecordCardInfo from "@/components/RecordCardInfo";
 
