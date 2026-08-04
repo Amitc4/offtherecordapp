@@ -65,6 +65,22 @@ const CollectionScreen = () => {
   const [yearAsc, setYearAsc] = useState(false);
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
 
+  // Close the filter dropdown as soon as the user scrolls
+  useEffect(() => {
+    if (!filterMenuOpen) return;
+    const close = () => setFilterMenuOpen(false);
+    const opts: AddEventListenerOptions = { passive: true, capture: true };
+    window.addEventListener("wheel", close, opts);
+    window.addEventListener("touchmove", close, opts);
+    window.addEventListener("scroll", close, opts);
+    return () => {
+      window.removeEventListener("wheel", close, opts);
+      window.removeEventListener("touchmove", close, opts);
+      window.removeEventListener("scroll", close, opts);
+    };
+  }, [filterMenuOpen]);
+
+
   const { data: records = [], isLoading } = useUserRecords();
   const { data: perfectIds = new Set<string>() } = usePerfectRecords();
   const { data: profile } = useDiscogsProfile();
