@@ -20,7 +20,7 @@ const ViewToggle = ({ view, onChange }: ViewToggleProps) => {
         className={`flex h-9 w-9 items-center justify-center transition-colors ${
           view === "grid"
             ? "bg-primary text-primary-foreground"
-            : "bg-primary/10 text-primary"
+            : "bg-primary/15 text-primary"
         }`}
       >
         <LayoutGrid size={16} />
@@ -30,7 +30,7 @@ const ViewToggle = ({ view, onChange }: ViewToggleProps) => {
         className={`flex h-9 w-9 items-center justify-center transition-colors ${
           view === "list"
             ? "bg-primary text-primary-foreground"
-            : "bg-primary/10 text-primary"
+            : "bg-primary/15 text-primary"
         }`}
       >
         <List size={16} />
