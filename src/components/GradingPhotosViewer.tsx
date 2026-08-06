@@ -11,6 +11,7 @@
  * Tapping an image opens a full-screen viewer with pinch-to-zoom and free panning.
  */
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Disc3, X, AlertTriangle } from "lucide-react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
@@ -199,7 +200,16 @@ const SideBlock = ({
   );
 };
 
-/** Full-screen image viewer with pinch-to-zoom and free panning. */
+/**
+ * Full-screen image viewer with pinch-to-zoom and free panning.
+ *
+ * Rendered through a portal into `document.body` so it escapes the modal's
+ * stacking context and truly covers the screen. While open it locks page
+ * scrolling, swallows Escape (so only the viewer closes, not the gallery
+ * modal), and intercepts the device back gesture via a pushed history entry.
+ *
+ * It reuses the exact same `url` as the thumbnail — no second URL is built.
+ */
 const ZoomViewer = ({
   url,
   label,
@@ -208,35 +218,90 @@ const ZoomViewer = ({
   url: string;
   label: string;
   onClose: () => void;
-}) => (
-  <div className="fixed inset-0 z-[100] bg-foreground/95" style={{ touchAction: "none" }}>
-    <button
-      className="absolute right-4 top-4 z-10 rounded-full bg-background/20 p-2 text-background"
-      onClick={onClose}
-      aria-label="Close"
-    >
-      <X size={20} />
-    </button>
-    <span className="absolute left-4 top-4 z-10 rounded-full bg-background/20 px-3 py-1 font-body text-xs font-semibold text-background">
-      {label}
-    </span>
+}) => {
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
-    <TransformWrapper minScale={1} maxScale={8} doubleClick={{ mode: "toggle" }} centerOnInit>
-      <TransformComponent
-        wrapperStyle={{ width: "100%", height: "100%" }}
-        contentStyle={{ width: "100%", height: "100%" }}
+  useEffect(() => {
+    // Lock scrolling behind the viewer.
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    // Escape closes only this viewer: capture-phase + stopImmediatePropagation
+    // runs before Radix's document-level (bubble) handler.
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      onClose();
+    };
+    document.addEventListener("keydown", onKeyDown, true);
+
+    // Device back gesture closes the viewer instead of navigating away.
+    window.history.pushState({ zoomViewer: true }, "");
+    const onPopState = () => onClose();
+    window.addEventListener("popstate", onPopState);
+
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener("keydown", onKeyDown, true);
+      window.removeEventListener("popstate", onPopState);
+      if (window.history.state?.zoomViewer) window.history.back();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[200] bg-foreground/95" style={{ touchAction: "none" }}>
+      <button
+        className="absolute right-4 top-4 z-10 rounded-full bg-background/20 p-2 text-background"
+        onClick={onClose}
+        aria-label="Close"
       >
-        <div className="flex h-full w-full items-center justify-center p-4">
-          <img
-            src={url}
-            alt={`${label} analysis image full size`}
-            className="max-h-full max-w-full object-contain"
-            draggable={false}
-          />
+        <X size={20} />
+      </button>
+      <span className="absolute left-4 top-4 z-10 rounded-full bg-background/20 px-3 py-1 font-body text-xs font-semibold text-background">
+        {label}
+      </span>
+
+      {failed ? (
+        <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-6 text-center">
+          <AlertTriangle size={28} className="text-background/80" />
+          <p className="font-body text-sm text-background">Image could not be loaded</p>
+          <button
+            type="button"
+            onClick={() => {
+              setFailed(false);
+              setAttempt((a) => a + 1);
+            }}
+            className="rounded-full bg-background/20 px-4 py-2 font-body text-xs font-semibold text-background"
+          >
+            Retry
+          </button>
         </div>
-      </TransformComponent>
-    </TransformWrapper>
-  </div>
-);
+      ) : (
+        <TransformWrapper minScale={1} maxScale={8} doubleClick={{ mode: "toggle" }} centerOnInit>
+          <TransformComponent
+            wrapperStyle={{ width: "100%", height: "100%" }}
+            contentStyle={{ width: "100%", height: "100%" }}
+          >
+            <div className="flex h-full w-full items-center justify-center p-4">
+              <img
+                key={attempt}
+                src={url}
+                alt={`${label} analysis image full size`}
+                className="max-h-full max-w-full object-contain"
+                draggable={false}
+                onError={() => setFailed(true)}
+              />
+            </div>
+          </TransformComponent>
+        </TransformWrapper>
+      )}
+    </div>,
+    document.body
+  );
+};
 
 export default GradingPhotosViewer;
