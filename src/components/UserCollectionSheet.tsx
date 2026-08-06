@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Disc3, ShieldCheck, Sparkles } from "lucide-react";
+import GradeBadge from "@/components/GradeBadge";
 import { displayName } from "@/lib/utils";
 
 interface UserCollectionSheetProps {
@@ -95,6 +96,7 @@ const UserCollectionSheet = ({ open, onOpenChange, userId, userName }: UserColle
                     ) : (
                       <Disc3 size={36} className="text-primary" />
                     )}
+                    <GradeBadge condition={record.condition} />
                   </div>
                   <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{displayName(record.title)}</h3>
                   <p className="mt-0.5 font-display text-xs text-muted-foreground truncate">{displayName(record.artist)}</p>
