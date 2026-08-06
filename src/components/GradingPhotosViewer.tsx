@@ -27,13 +27,21 @@ const extractPath = (url: string): string | null => {
   return decodeURIComponent(url.slice(i + marker.length).split("?")[0]);
 };
 
-/** Converts stored (private-bucket) public URLs into short-lived signed URLs. */
-const useSignedUrls = (urls: string[], open: boolean): string[] => {
-  const [signed, setSigned] = useState<string[]>(urls);
+/**
+ * Converts stored (private-bucket) public URLs into short-lived signed URLs.
+ * Returns `null` until signing has finished so callers never render the raw
+ * (unauthorised) URL first — doing so fires a spurious image error.
+ */
+const useSignedUrls = (urls: string[], open: boolean): string[] | null => {
+  const [signed, setSigned] = useState<string[] | null>(null);
   const key = urls.join("|");
 
   useEffect(() => {
-    if (!open || urls.length === 0) {
+    if (!open) {
+      setSigned(null);
+      return;
+    }
+    if (urls.length === 0) {
       setSigned(urls);
       return;
     }
@@ -44,6 +52,7 @@ const useSignedUrls = (urls: string[], open: boolean): string[] => {
       return;
     }
     let cancelled = false;
+    setSigned(null);
     (async () => {
       const { data } = await supabase.storage.from(BUCKET).createSignedUrls(validPaths, 3600);
       if (cancelled) return;
@@ -61,6 +70,7 @@ const useSignedUrls = (urls: string[], open: boolean): string[] => {
 
   return signed;
 };
+
 
 /** Stored analysis result for one record side. */
 export interface SideScanSummary {
@@ -91,9 +101,10 @@ const GradingPhotosViewer = ({ open, onOpenChange, sides }: GradingPhotosViewerP
 
   // Re-align signed URLs back to their side slots.
   let cursor = 0;
-  const displayUrls = overlayUrls.map((u) => (u ? signed[cursor++] || u : ""));
+  const displayUrls = overlayUrls.map((u) => (u ? (signed ? signed[cursor++] || u : "") : ""));
 
-  const count = displayUrls.filter(Boolean).length;
+  const loading = signed === null && overlayUrls.some(Boolean);
+  const count = overlayUrls.filter(Boolean).length;
   const zoomIdx = zoomSide ? SIDES.indexOf(zoomSide) : -1;
 
   return (
@@ -113,11 +124,14 @@ const GradingPhotosViewer = ({ open, onOpenChange, sides }: GradingPhotosViewerP
                 key={side}
                 side={side}
                 url={displayUrls[i]}
+                hasImage={!!overlayUrls[i]}
+                loading={loading}
                 scan={bySide[i]}
                 onOpen={() => setZoomSide(side)}
               />
             ))}
           </div>
+
         </DialogContent>
       </Dialog>
 
@@ -136,11 +150,15 @@ const GradingPhotosViewer = ({ open, onOpenChange, sides }: GradingPhotosViewerP
 const SideBlock = ({
   side,
   url,
+  hasImage,
+  loading,
   scan,
   onOpen,
 }: {
   side: string;
   url?: string;
+  hasImage?: boolean;
+  loading?: boolean;
   scan?: SideScanSummary;
   onOpen: () => void;
 }) => {
@@ -149,15 +167,22 @@ const SideBlock = ({
   const [thumbFailed, setThumbFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
+  // A new source is a fresh chance: never keep a stale failure flag.
+  useEffect(() => {
+    setThumbFailed(false);
+  }, [url]);
+
   return (
     <div>
       <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
         Side {side}
       </p>
 
-      {url ? (
+      {hasImage ? (
         <div className="flex items-start gap-3">
-          {thumbFailed ? (
+          {!url || loading ? (
+            <div className="h-20 w-20 shrink-0 animate-pulse rounded-lg bg-muted" />
+          ) : thumbFailed ? (
             <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-lg bg-muted p-1 text-center">
               <p className="font-body text-[10px] leading-tight text-muted-foreground">
                 Image could not be loaded
@@ -189,6 +214,7 @@ const SideBlock = ({
               />
             </button>
           )}
+
 
 
           <div className="flex-1 space-y-1">
