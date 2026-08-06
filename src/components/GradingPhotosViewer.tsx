@@ -101,9 +101,10 @@ const GradingPhotosViewer = ({ open, onOpenChange, sides }: GradingPhotosViewerP
 
   // Re-align signed URLs back to their side slots.
   let cursor = 0;
-  const displayUrls = overlayUrls.map((u) => (u ? signed[cursor++] || u : ""));
+  const displayUrls = overlayUrls.map((u) => (u ? (signed ? signed[cursor++] || u : "") : ""));
 
-  const count = displayUrls.filter(Boolean).length;
+  const loading = signed === null && overlayUrls.some(Boolean);
+  const count = overlayUrls.filter(Boolean).length;
   const zoomIdx = zoomSide ? SIDES.indexOf(zoomSide) : -1;
 
   return (
@@ -123,11 +124,14 @@ const GradingPhotosViewer = ({ open, onOpenChange, sides }: GradingPhotosViewerP
                 key={side}
                 side={side}
                 url={displayUrls[i]}
+                hasImage={!!overlayUrls[i]}
+                loading={loading}
                 scan={bySide[i]}
                 onOpen={() => setZoomSide(side)}
               />
             ))}
           </div>
+
         </DialogContent>
       </Dialog>
 
