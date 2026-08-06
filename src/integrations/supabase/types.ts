@@ -387,6 +387,53 @@ export type Database = {
           },
         ]
       }
+      record_surface_scans: {
+        Row: {
+          analysis_id: string | null
+          created_at: string
+          grade: string | null
+          id: string
+          judged_pct: number | null
+          mark_count: number | null
+          marks: Json
+          record_id: string | null
+          side: string
+          user_id: string
+        }
+        Insert: {
+          analysis_id?: string | null
+          created_at?: string
+          grade?: string | null
+          id?: string
+          judged_pct?: number | null
+          mark_count?: number | null
+          marks?: Json
+          record_id?: string | null
+          side: string
+          user_id: string
+        }
+        Update: {
+          analysis_id?: string | null
+          created_at?: string
+          grade?: string | null
+          id?: string
+          judged_pct?: number | null
+          mark_count?: number | null
+          marks?: Json
+          record_id?: string | null
+          side?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "record_surface_scans_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "user_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spotify_tokens: {
         Row: {
           access_token: string
