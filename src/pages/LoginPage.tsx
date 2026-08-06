@@ -162,7 +162,7 @@ const LoginPage = () => {
             onClick={() => handleSocial("apple")}
             className="h-12 w-full rounded-lg border border-black bg-black font-body text-sm font-semibold tracking-wide text-white hover:bg-black/90"
           >
-            <Apple className="mr-2 h-4 w-4 fill-white text-white" />
+            <AppleIcon className="mr-2 h-[18px] w-[18px] text-white" />
             {socialLoading === "apple" ? "Please wait..." : "Sign in with Apple"}
           </Button>
           <Button
