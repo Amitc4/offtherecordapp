@@ -20,7 +20,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import GradeVinylDialog from "@/components/GradeVinylDialog";
 import GradeBadge, { hasGrade } from "@/components/GradeBadge";
 import RecordPhotoUpload from "@/components/RecordPhotoUpload";
-import GradingPhotosViewer from "@/components/GradingPhotosViewer";
+import GradingPhotosViewer, { type SideScanSummary } from "@/components/GradingPhotosViewer";
+import { fetchScansByRecord } from "@/lib/gradingScans";
+
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -83,12 +85,12 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const [savingPrice, setSavingPrice] = useState(false);
   const [gradeOpen, setGradeOpen] = useState(false);
   const [photos, setPhotos] = useState<{ id: string; photo_url: string }[]>([]);
-  const [gradingPhotos, setGradingPhotos] = useState<string[]>([]);
+  const [sideScans, setSideScans] = useState<SideScanSummary[]>([]);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [sealed, setSealed] = useState(false);
   const [sealedSaving, setSealedSaving] = useState(false);
 
-  // Fetch existing photos & latest grading photos when record opens
+  // Fetch user-uploaded photos & the latest per-side grading results
   useEffect(() => {
     if (!record?.id || !open) return;
     const fetchData = async () => {
@@ -100,17 +102,11 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
         .order("created_at", { ascending: true });
       setPhotos(photoData || []);
 
-      const { data: gradeData } = await supabase
-        .from("grading_history")
-        .select("photo_urls")
-        .eq("record_id", record.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      setGradingPhotos(((gradeData as any)?.photo_urls as string[]) || []);
+      setSideScans(await fetchScansByRecord(record.id));
     };
     fetchData();
   }, [record?.id, open, gradeOpen]);
+
 
   const recordStatus = record?.status;
   const recordPrice = record?.price;
@@ -282,7 +278,7 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
           />
 
           {/* View grading photos button - only shown if available */}
-          {gradingPhotos.length > 0 && (
+          {sideScans.some((s) => s.overlayUrl) && (
             <button
               onClick={() => setViewerOpen(true)}
               className="flex w-full items-center gap-3 rounded-xl border border-border bg-background p-4 transition-colors active:bg-accent"
@@ -293,7 +289,7 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
               <div className="flex-1 text-left">
                 <p className="font-body text-sm font-semibold text-foreground">View grading photos</p>
                 <p className="font-body text-xs text-muted-foreground">
-                  {gradingPhotos.length} photo{gradingPhotos.length !== 1 ? "s" : ""} from the latest AI grading
+                  Side A &amp; Side B analysis from the latest AI grading
                 </p>
               </div>
             </button>
@@ -302,8 +298,9 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
           <GradingPhotosViewer
             open={viewerOpen}
             onOpenChange={setViewerOpen}
-            photoUrls={gradingPhotos}
+            sides={sideScans}
           />
+
 
           {/* Sealed toggle */}
           <label

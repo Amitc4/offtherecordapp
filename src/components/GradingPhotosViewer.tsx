@@ -1,24 +1,24 @@
 /**
- * @file GradingPhotosViewer.tsx — Modal that displays the 8 quarter photos used for an
- * AI grading of a record, with optional defect markers overlayed on each photo.
+ * @file GradingPhotosViewer.tsx — Modal showing exactly two images for a grading:
+ * the annotated analysis overlay for Side A and for Side B.
  *
- * Photos are shown in a 4×2 grid (Side A on top, Side B below) with quarter labels.
- * Tap any photo to open a full-screen lightbox with the same defect markers drawn on
- * top. A toggle lets the user show/hide markers. Tapping a marker reveals a tooltip
- * with the defect's description and severity.
+ * Only the overlay images produced by the analysis server are displayed here (the
+ * photo with detected marks highlighted). The raw photos the user took are kept in
+ * storage — for re-analysis and future training data — but never shown here.
+ *
+ * Each side renders its own heading plus the stored result (grade, mark count and
+ * assessed surface coverage). Sides with no result show a "Not graded yet" slot.
+ * Tapping an image opens a full-screen viewer with pinch-to-zoom and free panning.
  */
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Disc3, X, Eye, EyeOff } from "lucide-react";
+import { Disc3, X, AlertTriangle } from "lucide-react";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { supabase } from "@/integrations/supabase/client";
+import { MIN_JUDGED_PCT } from "@/config/scanner";
 
-/**
- * The grading photos are stored in the private `record-photos` bucket. The
- * URLs persisted in `grading_history.photo_urls` are the (non-working) public
- * URLs returned by `getPublicUrl`. To actually display them we extract the
- * object path and request short-lived signed URLs.
- */
 const BUCKET = "record-photos";
+
 const extractPath = (url: string): string | null => {
   const marker = `/storage/v1/object/public/${BUCKET}/`;
   const i = url.indexOf(marker);
@@ -26,90 +26,74 @@ const extractPath = (url: string): string | null => {
   return decodeURIComponent(url.slice(i + marker.length).split("?")[0]);
 };
 
-const useSignedPhotoUrls = (urls: string[], open: boolean): string[] => {
+/** Converts stored (private-bucket) public URLs into short-lived signed URLs. */
+const useSignedUrls = (urls: string[], open: boolean): string[] => {
   const [signed, setSigned] = useState<string[]>(urls);
+  const key = urls.join("|");
+
   useEffect(() => {
     if (!open || urls.length === 0) {
       setSigned(urls);
       return;
     }
     const paths = urls.map(extractPath);
-    if (paths.every((p) => p === null)) {
+    const validPaths = paths.filter((p): p is string => !!p);
+    if (validPaths.length === 0) {
       setSigned(urls);
       return;
     }
     let cancelled = false;
     (async () => {
-      const validPaths = paths.filter((p): p is string => !!p);
-      const { data } = await supabase.storage
-        .from(BUCKET)
-        .createSignedUrls(validPaths, 3600);
+      const { data } = await supabase.storage.from(BUCKET).createSignedUrls(validPaths, 3600);
       if (cancelled) return;
       const map = new Map<string, string>();
       data?.forEach((d, i) => {
         if (d.signedUrl) map.set(validPaths[i], d.signedUrl);
       });
-      setSigned(
-        urls.map((u, i) => {
-          const p = paths[i];
-          return (p && map.get(p)) || u;
-        })
-      );
+      setSigned(urls.map((u, i) => (paths[i] && map.get(paths[i]!)) || u));
     })();
     return () => {
       cancelled = true;
     };
-  }, [open, urls.join("|")]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, open]);
+
   return signed;
 };
 
-/** Single AI-detected defect on a photo. Coordinates are normalized 0–1. */
-export interface PhotoDefect {
-  x: number;
-  y: number;
-  radius: number;
-  type?: string;
-  severity?: string;
-  description?: string;
+/** Stored analysis result for one record side. */
+export interface SideScanSummary {
+  /** "A" or "B". */
+  side: string;
+  /** Annotated overlay image URL (marks highlighted). */
+  overlayUrl?: string | null;
+  grade?: string | null;
+  markCount?: number | null;
+  judgedPct?: number | null;
 }
 
-/** Props for the grading-photos viewer. */
 interface GradingPhotosViewerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Public URLs of the 8 quarter photos (Side A Q1-Q4 then Side B Q1-Q4). */
-  photoUrls: string[];
-  /** Optional defects per photo, aligned by index with `photoUrls`. */
-  defectsPerPhoto?: PhotoDefect[][];
+  /** Stored per-side results. Missing sides are rendered as empty slots. */
+  sides: SideScanSummary[];
 }
 
-/** Short label rendered on each thumbnail tile. Index matches `photoUrls`. */
-const SLOT_LABELS = [
-  "A · Q1", "A · Q2", "A · Q3", "A · Q4",
-  "B · Q1", "B · Q2", "B · Q3", "B · Q4",
-];
+const SIDES = ["A", "B"];
 
-/** Map a severity word to a Tailwind color used for the marker ring. */
-const severityRing = (sev?: string) => {
-  switch ((sev || "").toLowerCase()) {
-    case "none": return "border-emerald-400 bg-emerald-400/20";
-    case "light":
-    case "slight":
-    case "minor":
-    case "minimal": return "border-amber-400 bg-amber-400/25";
-    case "moderate": return "border-orange-500 bg-orange-500/25";
-    default: return "border-red-500 bg-red-500/25";
-  }
-};
+const GradingPhotosViewer = ({ open, onOpenChange, sides }: GradingPhotosViewerProps) => {
+  const [zoomSide, setZoomSide] = useState<string | null>(null);
 
-const GradingPhotosViewer = ({ open, onOpenChange, photoUrls, defectsPerPhoto }: GradingPhotosViewerProps) => {
-  /** Index of the photo open in the lightbox, or null. */
-  const [zoomIdx, setZoomIdx] = useState<number | null>(null);
-  /** Whether to draw defect markers (both in grid and lightbox). */
-  const [showMarkers, setShowMarkers] = useState(true);
+  const bySide = SIDES.map((s) => sides.find((x) => (x.side || "").toUpperCase() === s));
+  const overlayUrls = bySide.map((s) => s?.overlayUrl || "");
+  const signed = useSignedUrls(overlayUrls.filter(Boolean) as string[], open);
 
-  const totalDefects = (defectsPerPhoto || []).reduce((n, arr) => n + (arr?.length || 0), 0);
-  const displayUrls = useSignedPhotoUrls(photoUrls, open);
+  // Re-align signed URLs back to their side slots.
+  let cursor = 0;
+  const displayUrls = overlayUrls.map((u) => (u ? signed[cursor++] || u : ""));
+
+  const count = displayUrls.filter(Boolean).length;
+  const zoomIdx = zoomSide ? SIDES.indexOf(zoomSide) : -1;
 
   return (
     <>
@@ -118,219 +102,141 @@ const GradingPhotosViewer = ({ open, onOpenChange, photoUrls, defectsPerPhoto }:
           <DialogHeader>
             <DialogTitle className="font-display flex items-center gap-2">
               <Disc3 size={18} className="text-primary" />
-              Grading Photos ({photoUrls.length}/8)
+              Grading photos ({count})
             </DialogTitle>
           </DialogHeader>
 
-          {photoUrls.length === 0 ? (
-            <p className="py-8 text-center font-body text-sm text-muted-foreground">
-              No grading photos available for this record.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {totalDefects > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowMarkers((v) => !v)}
-                  className="flex w-full items-center justify-between rounded-lg bg-primary/10 px-3 py-2 text-primary"
-                >
-                  <span className="flex items-center gap-2 font-body text-xs font-semibold">
-                    {showMarkers ? <Eye size={14} /> : <EyeOff size={14} />}
-                    {showMarkers ? "Hide" : "Show"} defect markers
-                  </span>
-                  <span className="font-body text-[10px] opacity-80">
-                    {totalDefects} found
-                  </span>
-                </button>
-              )}
-
-              <PhotoSection
-                title="Side A"
-                offset={0}
-                photos={displayUrls.slice(0, 4)}
-                defects={defectsPerPhoto?.slice(0, 4)}
-                showMarkers={showMarkers}
-                onTile={(i) => setZoomIdx(i)}
+          <div className="space-y-4">
+            {SIDES.map((side, i) => (
+              <SideBlock
+                key={side}
+                side={side}
+                url={displayUrls[i]}
+                scan={bySide[i]}
+                onOpen={() => setZoomSide(side)}
               />
-
-              {displayUrls.length > 4 && (
-                <PhotoSection
-                  title="Side B"
-                  offset={4}
-                  photos={displayUrls.slice(4, 8)}
-                  defects={defectsPerPhoto?.slice(4, 8)}
-                  showMarkers={showMarkers}
-                  onTile={(i) => setZoomIdx(i + 4)}
-                />
-              )}
-
-              {totalDefects === 0 && defectsPerPhoto && (
-                <p className="text-center font-body text-xs text-muted-foreground">
-                  No visible defects detected by AI.
-                </p>
-              )}
-            </div>
-          )}
+            ))}
+          </div>
         </DialogContent>
       </Dialog>
 
-      {zoomIdx !== null && displayUrls[zoomIdx] && (
-        <Lightbox
+      {zoomIdx !== -1 && displayUrls[zoomIdx] && (
+        <ZoomViewer
           url={displayUrls[zoomIdx]}
-          label={SLOT_LABELS[zoomIdx]}
-          defects={showMarkers ? defectsPerPhoto?.[zoomIdx] : undefined}
-          onClose={() => setZoomIdx(null)}
+          label={`Side ${SIDES[zoomIdx]}`}
+          onClose={() => setZoomSide(null)}
         />
       )}
     </>
   );
 };
 
-/** Group of 4 photos for one side, with quarter labels. */
-const PhotoSection = ({
-  title, offset, photos, defects, showMarkers, onTile,
+/** One side: heading, overlay thumbnail (or empty slot) and its stored result. */
+const SideBlock = ({
+  side,
+  url,
+  scan,
+  onOpen,
 }: {
-  title: string;
-  offset: number;
-  photos: string[];
-  defects?: PhotoDefect[][];
-  showMarkers: boolean;
-  onTile: (i: number) => void;
-}) => (
-  <div>
-    <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-      {title}
-    </p>
-    <div className="grid grid-cols-4 gap-2">
-      {photos.map((url, i) => (
-        <PhotoTile
-          key={i}
-          url={url}
-          label={SLOT_LABELS[offset + i]}
-          defects={showMarkers ? defects?.[i] : undefined}
-          onClick={() => onTile(i)}
-        />
-      ))}
-    </div>
-  </div>
-);
-
-/** Single photo thumbnail with optional defect marker overlays. */
-const PhotoTile = ({
-  url, label, defects, onClick,
-}: {
-  url: string;
-  label: string;
-  defects?: PhotoDefect[];
-  onClick: () => void;
-}) => (
-  <button
-    onClick={onClick}
-    type="button"
-    className="group relative aspect-square overflow-hidden rounded-lg bg-muted"
-  >
-    <img src={url} alt={label} className="h-full w-full object-cover transition-transform group-active:scale-95" />
-    {defects?.map((d, i) => (
-      <span
-        key={i}
-        className={`pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 ${severityRing(d.severity)} animate-pulse`}
-        style={{
-          left: `${Math.max(0, Math.min(1, d.x)) * 100}%`,
-          top: `${Math.max(0, Math.min(1, d.y)) * 100}%`,
-          width: `${Math.max(0.02, Math.min(0.4, d.radius)) * 100}%`,
-          height: `${Math.max(0.02, Math.min(0.4, d.radius)) * 100}%`,
-        }}
-      />
-    ))}
-    <span className="absolute bottom-0.5 left-0.5 rounded bg-black/70 px-1 py-0.5 font-body text-[9px] font-semibold text-white">
-      {label}
-    </span>
-    {defects && defects.length > 0 && (
-      <span className="absolute top-0.5 right-0.5 rounded-full bg-amber-500 px-1.5 py-0.5 font-body text-[9px] font-bold text-white">
-        {defects.length}
-      </span>
-    )}
-  </button>
-);
-
-/** Full-screen lightbox with defect markers and tap-for-detail tooltips. */
-const Lightbox = ({
-  url, label, defects, onClose,
-}: {
-  url: string;
-  label: string;
-  defects?: PhotoDefect[];
-  onClose: () => void;
+  side: string;
+  url?: string;
+  scan?: SideScanSummary;
+  onOpen: () => void;
 }) => {
-  const [activeDefect, setActiveDefect] = useState<number | null>(null);
+  const judged = scan?.judgedPct;
+  const lowCoverage = typeof judged === "number" && judged < MIN_JUDGED_PCT;
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
-      onClick={onClose}
-    >
-      <button
-        className="absolute top-4 right-4 z-10 rounded-full bg-white/10 p-2 text-white"
-        onClick={onClose}
-        aria-label="Close"
-      >
-        <X size={20} />
-      </button>
-      <span className="absolute top-4 left-4 z-10 rounded-full bg-white/10 px-3 py-1 font-body text-xs font-semibold text-white">
-        {label}
-      </span>
+    <div>
+      <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+        Side {side}
+      </p>
 
-      <div
-        className="relative max-h-full max-w-full"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <img
-          src={url}
-          alt="Vinyl grading photo full size"
-          className="max-h-[85vh] max-w-full rounded-lg object-contain"
-        />
-        {defects?.map((d, i) => (
+      {url ? (
+        <div className="flex items-start gap-3">
           <button
-            key={i}
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setActiveDefect(activeDefect === i ? null : i);
-            }}
-            className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 ${severityRing(d.severity)} ${activeDefect === i ? "ring-2 ring-white" : "animate-pulse"}`}
-            style={{
-              left: `${Math.max(0, Math.min(1, d.x)) * 100}%`,
-              top: `${Math.max(0, Math.min(1, d.y)) * 100}%`,
-              width: `${Math.max(0.02, Math.min(0.4, d.radius)) * 100}%`,
-              height: `${Math.max(0.02, Math.min(0.4, d.radius)) * 100}%`,
-            }}
-            aria-label={d.description || d.type || "defect"}
-          />
-        ))}
-
-        {activeDefect !== null && defects?.[activeDefect] && (
-          <div
-            className="absolute bottom-3 left-3 right-3 rounded-lg bg-black/80 p-3 text-white backdrop-blur"
-            onClick={(e) => e.stopPropagation()}
+            onClick={onOpen}
+            className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted"
+            aria-label={`View side ${side} analysis image full screen`}
           >
-            <p className="font-display text-xs font-bold uppercase tracking-wide">
-              {defects[activeDefect].type || "Imperfection"}
-              {defects[activeDefect].severity && (
-                <span className="ml-2 font-body text-[10px] font-medium opacity-75">
-                  · {defects[activeDefect].severity}
-                </span>
-              )}
+            <img
+              src={url}
+              alt={`Detected marks on side ${side}`}
+              className="h-full w-full object-cover transition-transform active:scale-95"
+            />
+          </button>
+
+          <div className="flex-1 space-y-1">
+            <p className="font-display text-sm font-bold text-foreground">
+              {scan?.grade || "—"}
             </p>
-            {defects[activeDefect].description && (
-              <p className="mt-1 font-body text-xs opacity-90">
-                {defects[activeDefect].description}
+            <p className="font-body text-xs text-muted-foreground">
+              {scan?.markCount ?? 0} {(scan?.markCount ?? 0) === 1 ? "mark" : "marks"} detected
+            </p>
+            {typeof judged === "number" && (
+              <p className="font-body text-xs text-muted-foreground">
+                Surface assessed: {Math.round(judged)}%
+              </p>
+            )}
+            {lowCoverage && (
+              <p className="font-body text-[11px] text-amber-700 flex items-start gap-1">
+                <AlertTriangle size={12} className="mt-0.5 shrink-0 text-amber-600" />
+                Photo could not be fully assessed — a re-shoot is advised.
               </p>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-muted">
+            <Disc3 size={20} className="text-muted-foreground" />
+          </div>
+          <p className="font-body text-xs text-muted-foreground">Not graded yet</p>
+        </div>
+      )}
     </div>
   );
 };
+
+/** Full-screen image viewer with pinch-to-zoom and free panning. */
+const ZoomViewer = ({
+  url,
+  label,
+  onClose,
+}: {
+  url: string;
+  label: string;
+  onClose: () => void;
+}) => (
+  <div className="fixed inset-0 z-[100] bg-foreground/95" style={{ touchAction: "none" }}>
+    <button
+      className="absolute right-4 top-4 z-10 rounded-full bg-background/20 p-2 text-background"
+      onClick={onClose}
+      aria-label="Close"
+    >
+      <X size={20} />
+    </button>
+    <span className="absolute left-4 top-4 z-10 rounded-full bg-background/20 px-3 py-1 font-body text-xs font-semibold text-background">
+      {label}
+    </span>
+
+    <TransformWrapper minScale={1} maxScale={8} doubleClick={{ mode: "toggle" }} centerOnInit>
+      <TransformComponent
+        wrapperStyle={{ width: "100%", height: "100%" }}
+        contentStyle={{ width: "100%", height: "100%" }}
+      >
+        <div className="flex h-full w-full items-center justify-center p-4">
+          <img
+            src={url}
+            alt={`${label} analysis image full size`}
+            className="max-h-full max-w-full object-contain"
+            draggable={false}
+          />
+        </div>
+      </TransformComponent>
+    </TransformWrapper>
+  </div>
+);
 
 export default GradingPhotosViewer;
