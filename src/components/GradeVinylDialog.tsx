@@ -71,6 +71,8 @@ const SLOTS: SlotSpec[] = [
 interface SlotPhoto {
   file: File;
   previewUrl: string;
+  /** False when the phone's levelness couldn't be verified at capture time. */
+  levelVerified: boolean;
 }
 
 const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArtist }: GradeVinylDialogProps) => {
