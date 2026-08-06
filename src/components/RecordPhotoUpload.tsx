@@ -69,7 +69,7 @@ const RecordPhotoUpload = ({ recordId, existingPhotos = [], onPhotosChange, minP
 
       const { data, error } = await supabase
         .from("record_photos")
-        .insert({ record_id: recordId, photo_url: publicUrl } as any)
+        .insert({ record_id: recordId, photo_url: publicUrl, photo_type: "user_upload" } as any)
         .select("id, photo_url")
         .single();
 
