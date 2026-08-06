@@ -10,7 +10,8 @@ import { Star, Trash2, Clock, Images } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import GradingPhotosViewer, { type PhotoDefect } from "@/components/GradingPhotosViewer";
+import GradingPhotosViewer, { type SideScanSummary } from "@/components/GradingPhotosViewer";
+import { fetchScansByHistory } from "@/lib/gradingScans";
 
 /** Props for the bottom-sheet that lists past gradings. */
 interface GradingHistorySheetProps {
@@ -18,7 +19,6 @@ interface GradingHistorySheetProps {
   onOpenChange: (open: boolean) => void;
 }
 
-/** Single row from the `grading_history` table shown in the list. */
 /** Single row from the `grading_history` table shown in the list. */
 interface GradingEntry {
   id: string;
@@ -30,8 +30,8 @@ interface GradingEntry {
   summary: string | null;
   created_at: string;
   photo_urls: string[] | null;
-  defects: PhotoDefect[][] | null;
 }
+
 
 /** Tailwind text color for the decimal score (best → worst). */
 const scoreColor = (s: number | null): string => {
