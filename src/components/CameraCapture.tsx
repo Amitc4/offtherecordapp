@@ -50,6 +50,13 @@ const CameraCapture = ({ open, onOpenChange, mode, title, hint, onCapture }: Cam
   const level = useDeviceLevel(open);
   const { supported, isLevel, permission, levelVerified, requestPermission } = level;
 
+  /** Hide the floating accessibility / notification buttons while capturing. */
+  useEffect(() => {
+    if (open) document.body.classList.add("camera-open");
+    else document.body.classList.remove("camera-open");
+    return () => document.body.classList.remove("camera-open");
+  }, [open]);
+
   /** Sensors usable → gate the shutter. Otherwise never block the user. */
   const gated = levelVerified;
   const guideOk = gated ? isLevel : true;
@@ -142,121 +149,122 @@ const CameraCapture = ({ open, onOpenChange, mode, title, hint, onCapture }: Cam
     blobRef.current = null;
   };
 
-  // Circle sizing as % of shortest side
-  const circlePct = mode === "full" ? 92 : 45;
+  // Circle sizing as % of the shortest side of the preview zone (margin left on all sides)
+  const circlePct = mode === "full" ? 88 : 44;
   const guideColor = guideOk ? "#22c55e" : "#ef4444";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md p-0 overflow-hidden bg-black border-none">
         <DialogTitle className="sr-only">{title}</DialogTitle>
-        <div className="relative w-full aspect-square bg-black">
-          {previewUrl ? (
-            <img src={previewUrl} alt="Preview" className="absolute inset-0 h-full w-full object-cover" />
-          ) : (
-            <video
-              ref={videoRef}
-              playsInline
-              muted
-              autoPlay
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          )}
-
-          {/* Circular guide overlay — red until the phone is level, then green. */}
-          {!previewUrl && (
-            <svg
-              className="absolute inset-0 h-full w-full pointer-events-none"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="xMidYMid meet"
-            >
-              {/* Dim outside area with an even-odd mask */}
-              <defs>
-                <mask id="hole">
-                  <rect width="100" height="100" fill="white" />
-                  <circle cx="50" cy="50" r={circlePct / 2} fill="black" />
-                </mask>
-              </defs>
-              <rect width="100" height="100" fill="black" fillOpacity="0.35" mask="url(#hole)" />
-              <circle
-                cx="50"
-                cy="50"
-                r={circlePct / 2}
-                fill="none"
-                stroke={guideColor}
-                strokeWidth="0.9"
-                strokeDasharray="1.5 1.5"
-                style={{ transition: "stroke 200ms linear" }}
-              />
-              {/* Center dot for macro mode */}
-              {mode === "macro" && <circle cx="50" cy="50" r="0.8" fill={guideColor} />}
-            </svg>
-          )}
-
-          {/* Header */}
-          <div className="absolute top-0 inset-x-0 bg-gradient-to-b from-black/80 to-transparent p-3 flex items-start justify-between">
+        <div className="flex max-h-[85vh] w-full flex-col bg-black">
+          {/* ── TOP ZONE: title + instructions ───────────────────────────── */}
+          <div className="flex shrink-0 items-start justify-between gap-2 p-3">
             <div className="text-white">
               <p className="font-display text-sm font-semibold">{title}</p>
-              <p className="font-body text-[11px] opacity-80 max-w-[260px]">{hint}</p>
+              <p className="font-body text-[11px] opacity-80">{hint}</p>
               {!previewUrl && permission === "unknown" && (
-                <p className="font-body text-[11px] opacity-80 max-w-[260px]">
+                <p className="font-body text-[11px] opacity-80">
                   Motion access is used to check the phone is flat above the record.
                 </p>
               )}
             </div>
             <button
               onClick={() => onOpenChange(false)}
-              className="rounded-full bg-black/50 p-1.5 text-white"
+              className="shrink-0 rounded-full bg-white/10 p-1.5 text-white"
               aria-label="Close"
             >
               <X size={18} />
             </button>
           </div>
 
-          {/* Level feedback + notices */}
-          {!previewUrl && (
-            <div className="absolute inset-x-0 bottom-24 flex flex-col items-center gap-2 px-4">
-              {gated && !isLevel && (
-                <p className="rounded-full bg-black/70 px-3 py-1.5 font-body text-xs font-medium text-white">
-                  Hold the phone flat above the record.
-                </p>
-              )}
-              {!gated && (
-                <p className="flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 font-body text-[11px] text-white">
-                  <AlertTriangle size={13} className="text-primary" />
-                  Levelness couldn&apos;t be verified on this device.
-                </p>
-              )}
-              {supported && (
-                <p className="font-body text-[10px] text-white/60">
-                  Tilt {Math.abs(level.beta).toFixed(0)}° / {Math.abs(level.gamma).toFixed(0)}°
-                </p>
+          {/* ── MIDDLE ZONE: preview + circular guide only ────────────────── */}
+          <div className="relative min-h-0 flex-1 basis-[50vh] overflow-hidden bg-black" style={{ maxHeight: "min(50vh, 420px)" }}>
+            {previewUrl ? (
+              <img src={previewUrl} alt="Preview" className="absolute inset-0 h-full w-full object-cover" />
+            ) : (
+              <video
+                ref={videoRef}
+                playsInline
+                muted
+                autoPlay
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            )}
+
+            {!previewUrl && (
+              <svg
+                className="absolute inset-0 h-full w-full pointer-events-none"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="xMidYMid meet"
+              >
+                <defs>
+                  <mask id="hole">
+                    <rect width="100" height="100" fill="white" />
+                    <circle cx="50" cy="50" r={circlePct / 2} fill="black" />
+                  </mask>
+                </defs>
+                <rect width="100" height="100" fill="black" fillOpacity="0.35" mask="url(#hole)" />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r={circlePct / 2}
+                  fill="none"
+                  stroke={guideColor}
+                  strokeWidth="0.9"
+                  strokeDasharray="1.5 1.5"
+                  style={{ transition: "stroke 200ms linear" }}
+                />
+                {mode === "macro" && <circle cx="50" cy="50" r="0.8" fill={guideColor} />}
+              </svg>
+            )}
+          </div>
+
+          {/* ── BOTTOM ZONE: readouts + controls ─────────────────────────── */}
+          <div className="shrink-0 space-y-2 px-4 pb-4 pt-3">
+            {!previewUrl && (
+              <div className="flex flex-col items-center gap-1.5">
+                {gated && !isLevel && (
+                  <p className="font-body text-xs font-medium text-white">
+                    Hold the phone flat above the record.
+                  </p>
+                )}
+                {!gated && (
+                  <p className="flex items-center gap-1.5 font-body text-[11px] text-white">
+                    <AlertTriangle size={13} className="text-primary" />
+                    Levelness couldn&apos;t be verified on this device.
+                  </p>
+                )}
+                {supported && (
+                  <p className="font-body text-[10px] text-white/60">
+                    Tilt {Math.abs(level.beta).toFixed(0)}° / {Math.abs(level.gamma).toFixed(0)}°
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center justify-center gap-4">
+              {previewUrl ? (
+                <>
+                  <Button variant="secondary" onClick={retake} className="gap-2">
+                    <RotateCcw size={16} /> Retake
+                  </Button>
+                  <Button onClick={confirm} className="gap-2">
+                    Use photo
+                  </Button>
+                </>
+              ) : (
+                <button
+                  onClick={shoot}
+                  disabled={shutterDisabled}
+                  className="flex h-16 w-16 items-center justify-center rounded-full bg-white ring-4 ring-white/40 disabled:opacity-40"
+                  style={{ boxShadow: `0 0 0 2px ${guideColor}` }}
+                  aria-label="Capture"
+                >
+                  <Camera size={26} className="text-black" />
+                </button>
               )}
             </div>
-          )}
-
-          {/* Footer controls */}
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-4 flex items-center justify-center gap-4">
-            {previewUrl ? (
-              <>
-                <Button variant="secondary" onClick={retake} className="gap-2">
-                  <RotateCcw size={16} /> Retake
-                </Button>
-                <Button onClick={confirm} className="gap-2">
-                  Use photo
-                </Button>
-              </>
-            ) : (
-              <button
-                onClick={shoot}
-                disabled={shutterDisabled}
-                className="h-16 w-16 rounded-full bg-white ring-4 ring-white/40 disabled:opacity-40 flex items-center justify-center"
-                style={{ boxShadow: `0 0 0 2px ${guideColor}` }}
-                aria-label="Capture"
-              >
-                <Camera size={26} className="text-black" />
-              </button>
-            )}
           </div>
         </div>
       </DialogContent>
