@@ -259,8 +259,8 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
           .update({ condition: overallGrade })
           .eq("id", recordId);
         if (condErr) console.warn("Saving record condition failed", condErr);
-        queryClient.invalidateQueries({ queryKey: ["records"] });
-        queryClient.invalidateQueries({ queryKey: ["discover-records"] });
+        queryClient.invalidateQueries({ queryKey: ["user_records"] });
+        queryClient.invalidateQueries({ queryKey: ["discover_records"] });
       }
 
 
