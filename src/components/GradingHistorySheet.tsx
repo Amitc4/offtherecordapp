@@ -60,13 +60,29 @@ const GradingHistorySheet = ({ open, onOpenChange }: GradingHistorySheetProps) =
   const [entries, setEntries] = useState<GradingEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewerEntry, setViewerEntry] = useState<GradingEntry | null>(null);
+  const [viewerSides, setViewerSides] = useState<SideScanSummary[]>([]);
+
+  useEffect(() => {
+    if (!viewerEntry) {
+      setViewerSides([]);
+      return;
+    }
+    let cancelled = false;
+    fetchScansByHistory(viewerEntry.id).then((s) => {
+      if (!cancelled) setViewerSides(s);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [viewerEntry]);
 
   useEffect(() => {
     if (open && user) {
       setLoading(true);
       supabase
         .from("grading_history")
-        .select("id, record_title, record_artist, score, grade_label, confidence, summary, created_at, photo_urls, defects")
+        .select("id, record_title, record_artist, score, grade_label, confidence, summary, created_at, photo_urls")
+
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .then(({ data, error }) => {
