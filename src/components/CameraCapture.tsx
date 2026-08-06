@@ -50,6 +50,13 @@ const CameraCapture = ({ open, onOpenChange, mode, title, hint, onCapture }: Cam
   const level = useDeviceLevel(open);
   const { supported, isLevel, permission, levelVerified, requestPermission } = level;
 
+  /** Hide the floating accessibility / notification buttons while capturing. */
+  useEffect(() => {
+    if (open) document.body.classList.add("camera-open");
+    else document.body.classList.remove("camera-open");
+    return () => document.body.classList.remove("camera-open");
+  }, [open]);
+
   /** Sensors usable → gate the shutter. Otherwise never block the user. */
   const gated = levelVerified;
   const guideOk = gated ? isLevel : true;

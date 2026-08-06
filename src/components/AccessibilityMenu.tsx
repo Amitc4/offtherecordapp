@@ -27,7 +27,7 @@ const AccessibilityMenu = () => {
   return (
     <>
       {/* Floating buttons stack - right side above nav */}
-      <div className="fixed right-3 bottom-20 z-[60] flex flex-col items-center gap-2 [body.chat-open_&]:hidden">
+      <div className="fixed right-3 bottom-20 z-[60] flex flex-col items-center gap-2 [body.chat-open_&]:hidden [body.camera-open_&]:hidden">
         <button
           onClick={() => setOpen(!open)}
           className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95"
