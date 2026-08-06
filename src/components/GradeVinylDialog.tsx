@@ -251,6 +251,20 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
         photo_urls: publicUrls,
       } as any);
 
+      // Store the resulting grade on the record itself so the grade badge shows
+      // on cards / list rows / details. Sealed records are never graded.
+      if (recordId && overallGrade) {
+        const { error: condErr } = await supabase
+          .from("user_records")
+          .update({ condition: overallGrade })
+          .eq("id", recordId);
+        if (condErr) console.warn("Saving record condition failed", condErr);
+        queryClient.invalidateQueries({ queryKey: ["records"] });
+        queryClient.invalidateQueries({ queryKey: ["discover-records"] });
+      }
+
+
+
       if (recordId && publicUrls.length) {
         // Only replace previous grading scans — user-uploaded sleeve photos stay.
         await supabase
