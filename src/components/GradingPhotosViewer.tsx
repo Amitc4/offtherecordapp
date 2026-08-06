@@ -27,13 +27,21 @@ const extractPath = (url: string): string | null => {
   return decodeURIComponent(url.slice(i + marker.length).split("?")[0]);
 };
 
-/** Converts stored (private-bucket) public URLs into short-lived signed URLs. */
-const useSignedUrls = (urls: string[], open: boolean): string[] => {
-  const [signed, setSigned] = useState<string[]>(urls);
+/**
+ * Converts stored (private-bucket) public URLs into short-lived signed URLs.
+ * Returns `null` until signing has finished so callers never render the raw
+ * (unauthorised) URL first — doing so fires a spurious image error.
+ */
+const useSignedUrls = (urls: string[], open: boolean): string[] | null => {
+  const [signed, setSigned] = useState<string[] | null>(null);
   const key = urls.join("|");
 
   useEffect(() => {
-    if (!open || urls.length === 0) {
+    if (!open) {
+      setSigned(null);
+      return;
+    }
+    if (urls.length === 0) {
       setSigned(urls);
       return;
     }
@@ -44,6 +52,7 @@ const useSignedUrls = (urls: string[], open: boolean): string[] => {
       return;
     }
     let cancelled = false;
+    setSigned(null);
     (async () => {
       const { data } = await supabase.storage.from(BUCKET).createSignedUrls(validPaths, 3600);
       if (cancelled) return;
@@ -61,6 +70,7 @@ const useSignedUrls = (urls: string[], open: boolean): string[] => {
 
   return signed;
 };
+
 
 /** Stored analysis result for one record side. */
 export interface SideScanSummary {
