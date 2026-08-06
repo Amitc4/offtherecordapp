@@ -267,6 +267,8 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
             marks: (a.marks ?? []) as unknown,
             overlay_url: overlayUrls[i],
             raw_photo_url: rawUrls[i],
+            // Flags photos captured without a verified-level device.
+            level_verified: slots[i]?.levelVerified ?? false,
           };
         })
         .filter(Boolean);
@@ -297,11 +299,18 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
         await supabase
           .from("record_photos")
           .insert(
-            publicUrls.map((url) => ({
-              record_id: recordId,
-              photo_url: url,
-              photo_type: "grading",
-            })) as any
+            rawUrls
+              .map((url, i) =>
+                url
+                  ? {
+                      record_id: recordId,
+                      photo_url: url,
+                      photo_type: "grading",
+                      level_verified: slots[i]?.levelVerified ?? false,
+                    }
+                  : null
+              )
+              .filter(Boolean) as any
           );
       }
     } catch (e) {
@@ -517,6 +526,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                 <p className="font-body text-xs text-muted-foreground">Take a photo with the guide</p>
               </div>
             </button>
+            {isAdmin && (
             <button
               type="button"
               onClick={chooseLibrary}
@@ -530,6 +540,8 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                 <p className="font-body text-xs text-muted-foreground">Pick an existing image</p>
               </div>
             </button>
+            )}
+            {isAdmin && (
             <button
               type="button"
               onClick={chooseFile}
@@ -543,6 +555,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                 <p className="font-body text-xs text-muted-foreground">Browse files on device</p>
               </div>
             </button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
