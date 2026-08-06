@@ -150,11 +150,15 @@ const GradingPhotosViewer = ({ open, onOpenChange, sides }: GradingPhotosViewerP
 const SideBlock = ({
   side,
   url,
+  hasImage,
+  loading,
   scan,
   onOpen,
 }: {
   side: string;
   url?: string;
+  hasImage?: boolean;
+  loading?: boolean;
   scan?: SideScanSummary;
   onOpen: () => void;
 }) => {
@@ -163,15 +167,22 @@ const SideBlock = ({
   const [thumbFailed, setThumbFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
+  // A new source is a fresh chance: never keep a stale failure flag.
+  useEffect(() => {
+    setThumbFailed(false);
+  }, [url]);
+
   return (
     <div>
       <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
         Side {side}
       </p>
 
-      {url ? (
+      {hasImage ? (
         <div className="flex items-start gap-3">
-          {thumbFailed ? (
+          {!url || loading ? (
+            <div className="h-20 w-20 shrink-0 animate-pulse rounded-lg bg-muted" />
+          ) : thumbFailed ? (
             <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-lg bg-muted p-1 text-center">
               <p className="font-body text-[10px] leading-tight text-muted-foreground">
                 Image could not be loaded
@@ -203,6 +214,7 @@ const SideBlock = ({
               />
             </button>
           )}
+
 
 
           <div className="flex-1 space-y-1">
