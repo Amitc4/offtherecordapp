@@ -20,14 +20,16 @@ interface ScanSideResultCardProps {
 const ScanSideResultCard = ({ side, result, onViewOverlay }: ScanSideResultCardProps) => {
   const [marksOpen, setMarksOpen] = useState(false);
 
-  if (!result.ok) {
+  if (!result.ok || !result.analysis) {
     return (
       <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4">
         <p className="font-display text-sm font-bold text-destructive flex items-center gap-2">
           <TriangleAlert size={16} />
           Side {side} — analysis failed
         </p>
-        <p className="font-body text-xs text-destructive/80 mt-1">{result.error}</p>
+        <p className="font-body text-xs text-destructive/80 mt-1">
+          {result.error || "Unknown error"}
+        </p>
       </div>
     );
   }

@@ -28,9 +28,11 @@ export interface ScanAnalysis {
 }
 
 /** Per-side result, including the failure case so one side can fail alone. */
-export type SideResult =
-  | { ok: true; analysis: ScanAnalysis }
-  | { ok: false; error: string };
+export interface SideResult {
+  ok: boolean;
+  analysis?: ScanAnalysis;
+  error?: string;
+}
 
 /** Analyse one image. Never throws — failures come back as `{ ok: false }`. */
 export const analyzeImage = async (file: File): Promise<SideResult> => {
