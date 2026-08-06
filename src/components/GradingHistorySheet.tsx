@@ -198,8 +198,8 @@ const GradingHistorySheet = ({ open, onOpenChange }: GradingHistorySheetProps) =
       <GradingPhotosViewer
         open={viewerEntry !== null}
         onOpenChange={(o) => !o && setViewerEntry(null)}
-        photoUrls={viewerEntry?.photo_urls || []}
-        defectsPerPhoto={viewerEntry?.defects || undefined}
+        sides={viewerSides}
+
       />
     </Sheet>
   );
