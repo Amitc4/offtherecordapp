@@ -185,35 +185,76 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     const sessionId = crypto.randomUUID();
     const publicUrls: string[] = [];
 
+    /** Turns a base64 data URI (or bare base64) into a Blob for storage upload. */
+    const toBlob = (data: string): Blob => {
+      const base64 = data.includes(",") ? data.split(",")[1] : data;
+      const bin = atob(base64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return new Blob([bytes], { type: "image/png" });
+    };
+
+    const upload = async (path: string, body: Blob | File, contentType: string) => {
+      const { error } = await supabase.storage
+        .from("record-photos")
+        .upload(path, body, { contentType, upsert: false });
+      if (error) return null;
+      return supabase.storage.from("record-photos").getPublicUrl(path).data.publicUrl;
+    };
+
     try {
+      /** Raw + annotated overlay URLs per slot index. */
+      const rawUrls: (string | null)[] = [];
+      const overlayUrls: (string | null)[] = [];
+
       for (let i = 0; i < slots.length; i++) {
         const slot = slots[i];
-        if (!slot) continue;
-        const ext = (slot.file.name.split(".").pop() || "jpg").toLowerCase();
-        const path = `${user.id}/grading/${sessionId}/${i + 1}-${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("record-photos")
-          .upload(path, slot.file, { contentType: slot.file.type || "image/jpeg", upsert: false });
-        if (upErr) continue;
-        publicUrls.push(supabase.storage.from("record-photos").getPublicUrl(path).data.publicUrl);
-
-        try {
-          const macroFile = await generateMacroCrop(slot.file);
-          const macroPath = `${user.id}/grading/${sessionId}/macro-${i + 1}-${Date.now()}.jpg`;
-          const { error: mErr } = await supabase.storage
-            .from("record-photos")
-            .upload(macroPath, macroFile, { contentType: "image/jpeg", upsert: false });
-          if (!mErr) {
-            publicUrls.push(
-              supabase.storage.from("record-photos").getPublicUrl(macroPath).data.publicUrl
-            );
-          }
-        } catch (e) {
-          console.warn("Macro crop generation failed", e);
+        if (!slot) {
+          rawUrls.push(null);
+          overlayUrls.push(null);
+          continue;
         }
+        const ext = (slot.file.name.split(".").pop() || "jpg").toLowerCase();
+        // Raw capture: stored for the record, not shown in the grading gallery.
+        rawUrls.push(
+          await upload(
+            `${user.id}/grading/${sessionId}/${i + 1}-${Date.now()}.${ext}`,
+            slot.file,
+            slot.file.type || "image/jpeg"
+          )
+        );
+
+        // Annotated overlay returned by the analysis server — this is what the gallery shows.
+        const overlay = sideResults[i]?.analysis?.overlay_png;
+        overlayUrls.push(
+          overlay
+            ? await upload(
+                `${user.id}/grading/${sessionId}/overlay-${SLOTS[i].side}-${Date.now()}.png`,
+                toBlob(overlay),
+                "image/png"
+              )
+            : null
+        );
       }
 
-      // Per-side detections — kept for later admin review of individual marks.
+      const publicUrls = rawUrls.filter((u): u is string => !!u);
+
+      const { data: history } = await supabase
+        .from("grading_history")
+        .insert({
+          user_id: user.id,
+          record_id: recordId || null,
+          record_title: recordTitle || null,
+          record_artist: recordArtist || null,
+          grade: overallGrade,
+          grade_label: overallGrade ? formatGrade(overallGrade) : null,
+          summary: "Surface mark analysis (visible marks only).",
+          photo_urls: publicUrls,
+        } as any)
+        .select("id")
+        .maybeSingle();
+
+      // Per-side results feed the grading gallery (overlay + grade + coverage).
       const scanRows = sideResults
         .map((r, i) => {
           if (!r.ok || !r.analysis) return null;
@@ -221,6 +262,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
           return {
             user_id: user.id,
             record_id: recordId || null,
+            history_id: (history as any)?.id ?? null,
             side: SLOTS[i].side,
             analysis_id: a.analysis_id ?? null,
             grade: a.grade ?? null,
@@ -232,6 +274,8 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                   : null,
             judged_pct: a.coverage?.judged_pct ?? null,
             marks: (a.marks ?? []) as unknown,
+            overlay_url: overlayUrls[i],
+            raw_photo_url: rawUrls[i],
           };
         })
         .filter(Boolean);
@@ -239,17 +283,6 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
       if (scanRows.length) {
         await supabase.from("record_surface_scans").insert(scanRows as any);
       }
-
-      await supabase.from("grading_history").insert({
-        user_id: user.id,
-        record_id: recordId || null,
-        record_title: recordTitle || null,
-        record_artist: recordArtist || null,
-        grade: overallGrade,
-        grade_label: overallGrade ? formatGrade(overallGrade) : null,
-        summary: "Surface mark analysis (visible marks only).",
-        photo_urls: publicUrls,
-      } as any);
 
       // Store the resulting grade on the record itself so the grade badge shows
       // on cards / list rows / details. Sealed records are never graded.
@@ -262,8 +295,6 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
         queryClient.invalidateQueries({ queryKey: ["user_records"] });
         queryClient.invalidateQueries({ queryKey: ["discover_records"] });
       }
-
-
 
       if (recordId && publicUrls.length) {
         // Only replace previous grading scans — user-uploaded sleeve photos stay.
@@ -286,6 +317,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
       console.warn("Persisting scan results failed", e);
     }
   };
+
 
   const handleSubmit = async () => {
     if (filledCount < REQUIRED_PHOTOS) {
