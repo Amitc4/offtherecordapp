@@ -179,7 +179,7 @@ const CameraCapture = ({ open, onOpenChange, mode, title, hint, onCapture }: Cam
           </div>
 
           {/* ── MIDDLE ZONE: preview + circular guide only ────────────────── */}
-          <div className="relative min-h-0 flex-1 overflow-hidden bg-black">
+          <div className="relative min-h-0 flex-1 basis-[50vh] overflow-hidden bg-black" style={{ maxHeight: "min(50vh, 420px)" }}>
             {previewUrl ? (
               <img src={previewUrl} alt="Preview" className="absolute inset-0 h-full w-full object-cover" />
             ) : (
