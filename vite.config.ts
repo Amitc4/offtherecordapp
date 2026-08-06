@@ -3,9 +3,30 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
+import { execSync } from "child_process";
+
+/** Short commit hash when available, otherwise empty. */
+const commitHash = (() => {
+  try {
+    return execSync("git rev-parse --short HEAD").toString().trim();
+  } catch {
+    return "";
+  }
+})();
+
+/** Build stamp: e.g. "d0ba8c1 · 0806.1448" — changes on every build. */
+const buildStamp = (() => {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, "0");
+  const time = `${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}.${p(d.getUTCHours())}${p(d.getUTCMinutes())}`;
+  return commitHash ? `${commitHash} · ${time}` : time;
+})();
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  define: {
+    __APP_BUILD_ID__: JSON.stringify(buildStamp),
+  },
   server: {
     host: "::",
     port: 8080,
