@@ -73,6 +73,7 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
         .from("record_photos")
         .select("id, photo_url")
         .eq("record_id", record!.id)
+        .eq("photo_type", "user_upload")
         .order("created_at", { ascending: true });
       if (error) throw error;
       return data;

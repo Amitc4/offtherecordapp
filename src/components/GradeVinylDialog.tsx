@@ -250,10 +250,21 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
       } as any);
 
       if (recordId && publicUrls.length) {
-        await supabase.from("record_photos").delete().eq("record_id", recordId);
+        // Only replace previous grading scans — user-uploaded sleeve photos stay.
         await supabase
           .from("record_photos")
-          .insert(publicUrls.map((url) => ({ record_id: recordId, photo_url: url })) as any);
+          .delete()
+          .eq("record_id", recordId)
+          .eq("photo_type", "grading");
+        await supabase
+          .from("record_photos")
+          .insert(
+            publicUrls.map((url) => ({
+              record_id: recordId,
+              photo_url: url,
+              photo_type: "grading",
+            })) as any
+          );
       }
     } catch (e) {
       console.warn("Persisting scan results failed", e);
