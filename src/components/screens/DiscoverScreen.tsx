@@ -21,6 +21,7 @@ import RecordCardInfo from "@/components/RecordCardInfo";
 
 import { Disc3, Search, MapPin, Sparkles, SlidersHorizontal, Check } from "lucide-react";
 import SealedDiamond from "@/components/SealedDiamond";
+import GradeBadge from "@/components/GradeBadge";
 import ViewToggle from "@/components/ViewToggle";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -462,6 +463,7 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                     <Disc3 size={36} className="text-primary transition-transform group-hover:rotate-45" />
                   )}
                   {(item as any).sealed && <SealedDiamond />}
+                  <GradeBadge condition={item.condition} />
                   {item.condition && (
                     <span className="absolute bottom-1.5 left-1.5 inline-flex items-center gap-1 rounded-md bg-card/90 px-1.5 py-0.5 font-body text-[9px] font-bold text-foreground shadow">
                       <Sparkles size={10} /> {item.condition}
@@ -515,6 +517,7 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                     </div>
                   )}
                   {(item as any).sealed && <SealedDiamond small />}
+                  <GradeBadge small condition={item.condition} />
                 </div>
 
                 <div className="min-w-0 flex-1">
