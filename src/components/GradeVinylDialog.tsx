@@ -183,7 +183,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
   const persist = async (sideResults: SideResult[], overallGrade: string | null) => {
     if (!user) return;
     const sessionId = crypto.randomUUID();
-    const publicUrls: string[] = [];
+    
 
     /** Turns a base64 data URI (or bare base64) into a Blob for storage upload. */
     const toBlob = (data: string): Blob => {
