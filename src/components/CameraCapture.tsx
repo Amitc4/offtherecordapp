@@ -1,18 +1,34 @@
 /**
- * @file CameraCapture.tsx — In-app camera view with a circular guide overlay.
+ * @file CameraCapture.tsx — In-app camera view with a circular guide overlay
+ * and device-level gating.
  *
  * Uses `navigator.mediaDevices.getUserMedia` to open the rear camera and shows
  * a circular outline the user should align with the vinyl (full mode) or the
  * center label (macro mode). Captures a frame to a canvas and returns it as a
  * `File` via `onCapture`.
+ *
+ * **Level gating:** the phone must be flat and parallel to the record, or the
+ * disc is photographed as an ellipse. The guide border is red while the device
+ * is tilted and green once it is level (see `useDeviceLevel`,
+ * `LEVEL_TOLERANCE_DEG`), and the shutter is disabled while red.
+ *
+ * If motion permission is denied or the device has no orientation sensors, the
+ * shutter is enabled anyway (users must never be locked out) and `onCapture`
+ * receives `levelVerified: false` so those photos can be told apart later.
  */
 import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Camera, X, RotateCcw } from "lucide-react";
+import { Camera, X, RotateCcw, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { useDeviceLevel } from "@/hooks/useDeviceLevel";
 
 export type CaptureMode = "full" | "macro";
+
+export interface CaptureMeta {
+  /** False when levelness could not be verified (no sensors / permission denied). */
+  levelVerified: boolean;
+}
 
 interface CameraCaptureProps {
   open: boolean;
@@ -20,23 +36,37 @@ interface CameraCaptureProps {
   mode: CaptureMode;
   title: string;
   hint: string;
-  onCapture: (file: File) => void;
+  onCapture: (file: File, meta: CaptureMeta) => void;
 }
 
 const CameraCapture = ({ open, onOpenChange, mode, title, hint, onCapture }: CameraCaptureProps) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const blobRef = useRef<Blob | null>(null);
   const [ready, setReady] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
+
+  const level = useDeviceLevel(open);
+  const { supported, isLevel, permission, levelVerified, requestPermission } = level;
+
+  /** Sensors usable → gate the shutter. Otherwise never block the user. */
+  const gated = levelVerified;
+  const guideOk = gated ? isLevel : true;
+  const shutterDisabled = !ready || capturing || (gated && !isLevel);
 
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
     setReady(false);
     setPreviewUrl(null);
+    blobRef.current = null;
 
     (async () => {
+      // Ask for motion permission first — iOS 13+ requires a user gesture, and
+      // opening the camera is that gesture.
+      await requestPermission();
+
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1920 } },
@@ -85,10 +115,8 @@ const CameraCapture = ({ open, onOpenChange, mode, title, hint, onCapture }: Cam
       const blob: Blob = await new Promise((res, rej) =>
         canvas.toBlob((b) => (b ? res(b) : rej(new Error("no blob"))), "image/jpeg", 0.92)
       );
-      const url = URL.createObjectURL(blob);
-      setPreviewUrl(url);
-      // Stash the blob on element via dataset trick — keep it in closure instead
-      (shoot as any)._lastBlob = blob;
+      blobRef.current = blob;
+      setPreviewUrl(URL.createObjectURL(blob));
     } catch (err) {
       console.error(err);
       toast.error("Capture failed. Try again.");
@@ -98,11 +126,11 @@ const CameraCapture = ({ open, onOpenChange, mode, title, hint, onCapture }: Cam
   };
 
   const confirm = () => {
-    const blob: Blob | undefined = (shoot as any)._lastBlob;
+    const blob = blobRef.current;
     if (!blob) return;
     const file = new File([blob], `vinyl-${mode}-${Date.now()}.jpg`, { type: "image/jpeg" });
-    onCapture(file);
-    (shoot as any)._lastBlob = undefined;
+    onCapture(file, { levelVerified });
+    blobRef.current = null;
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
     onOpenChange(false);
@@ -111,11 +139,12 @@ const CameraCapture = ({ open, onOpenChange, mode, title, hint, onCapture }: Cam
   const retake = () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
-    (shoot as any)._lastBlob = undefined;
+    blobRef.current = null;
   };
 
   // Circle sizing as % of shortest side
   const circlePct = mode === "full" ? 92 : 45;
+  const guideColor = guideOk ? "#22c55e" : "#ef4444";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -134,7 +163,7 @@ const CameraCapture = ({ open, onOpenChange, mode, title, hint, onCapture }: Cam
             />
           )}
 
-          {/* Circular guide overlay */}
+          {/* Circular guide overlay — red until the phone is level, then green. */}
           {!previewUrl && (
             <svg
               className="absolute inset-0 h-full w-full pointer-events-none"
@@ -154,14 +183,13 @@ const CameraCapture = ({ open, onOpenChange, mode, title, hint, onCapture }: Cam
                 cy="50"
                 r={circlePct / 2}
                 fill="none"
-                stroke="hsl(var(--primary))"
-                strokeWidth="0.6"
+                stroke={guideColor}
+                strokeWidth="0.9"
                 strokeDasharray="1.5 1.5"
+                style={{ transition: "stroke 200ms linear" }}
               />
               {/* Center dot for macro mode */}
-              {mode === "macro" && (
-                <circle cx="50" cy="50" r="0.8" fill="hsl(var(--primary))" />
-              )}
+              {mode === "macro" && <circle cx="50" cy="50" r="0.8" fill={guideColor} />}
             </svg>
           )}
 
@@ -170,6 +198,11 @@ const CameraCapture = ({ open, onOpenChange, mode, title, hint, onCapture }: Cam
             <div className="text-white">
               <p className="font-display text-sm font-semibold">{title}</p>
               <p className="font-body text-[11px] opacity-80 max-w-[260px]">{hint}</p>
+              {!previewUrl && permission === "unknown" && (
+                <p className="font-body text-[11px] opacity-80 max-w-[260px]">
+                  Motion access is used to check the phone is flat above the record.
+                </p>
+              )}
             </div>
             <button
               onClick={() => onOpenChange(false)}
@@ -179,6 +212,28 @@ const CameraCapture = ({ open, onOpenChange, mode, title, hint, onCapture }: Cam
               <X size={18} />
             </button>
           </div>
+
+          {/* Level feedback + notices */}
+          {!previewUrl && (
+            <div className="absolute inset-x-0 bottom-24 flex flex-col items-center gap-2 px-4">
+              {gated && !isLevel && (
+                <p className="rounded-full bg-black/70 px-3 py-1.5 font-body text-xs font-medium text-white">
+                  Hold the phone flat above the record.
+                </p>
+              )}
+              {!gated && (
+                <p className="flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 font-body text-[11px] text-white">
+                  <AlertTriangle size={13} className="text-primary" />
+                  Levelness couldn&apos;t be verified on this device.
+                </p>
+              )}
+              {supported && (
+                <p className="font-body text-[10px] text-white/60">
+                  Tilt {Math.abs(level.beta).toFixed(0)}° / {Math.abs(level.gamma).toFixed(0)}°
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Footer controls */}
           <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-4 flex items-center justify-center gap-4">
@@ -194,8 +249,9 @@ const CameraCapture = ({ open, onOpenChange, mode, title, hint, onCapture }: Cam
             ) : (
               <button
                 onClick={shoot}
-                disabled={!ready || capturing}
-                className="h-16 w-16 rounded-full bg-white ring-4 ring-white/40 disabled:opacity-50 flex items-center justify-center"
+                disabled={shutterDisabled}
+                className="h-16 w-16 rounded-full bg-white ring-4 ring-white/40 disabled:opacity-40 flex items-center justify-center"
+                style={{ boxShadow: `0 0 0 2px ${guideColor}` }}
                 aria-label="Capture"
               >
                 <Camera size={26} className="text-black" />
