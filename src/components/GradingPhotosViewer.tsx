@@ -146,6 +146,8 @@ const SideBlock = ({
 }) => {
   const judged = scan?.judgedPct;
   const lowCoverage = typeof judged === "number" && judged < MIN_JUDGED_PCT;
+  const [thumbFailed, setThumbFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   return (
     <div>
@@ -155,18 +157,39 @@ const SideBlock = ({
 
       {url ? (
         <div className="flex items-start gap-3">
-          <button
-            type="button"
-            onClick={onOpen}
-            className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted"
-            aria-label={`View side ${side} analysis image full screen`}
-          >
-            <img
-              src={url}
-              alt={`Detected marks on side ${side}`}
-              className="h-full w-full object-cover transition-transform active:scale-95"
-            />
-          </button>
+          {thumbFailed ? (
+            <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-lg bg-muted p-1 text-center">
+              <p className="font-body text-[10px] leading-tight text-muted-foreground">
+                Image could not be loaded
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setThumbFailed(false);
+                  setAttempt((a) => a + 1);
+                }}
+                className="font-body text-[10px] font-semibold text-primary underline"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpen}
+              className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted"
+              aria-label={`View side ${side} analysis image full screen`}
+            >
+              <img
+                key={attempt}
+                src={url}
+                alt={`Detected marks on side ${side}`}
+                className="h-full w-full object-cover transition-transform active:scale-95"
+                onError={() => setThumbFailed(true)}
+              />
+            </button>
+          )}
+
 
           <div className="flex-1 space-y-1">
             <p className="font-display text-sm font-bold text-foreground">
