@@ -108,9 +108,15 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     onOpenChange(o);
   };
 
+  /**
+   * Regular users must capture grading photos live in-app, so tapping a slot
+   * opens the camera directly. Admins get the source picker (camera / library /
+   * file) for testing and for reviewing sample images.
+   */
   const openPickerFor = (idx: number) => {
     setActiveSlot(idx);
-    setPickerOpen(true);
+    if (isAdmin) setPickerOpen(true);
+    else setCameraOpen(true);
   };
 
   const chooseCamera = () => {
@@ -132,15 +138,20 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    handleCapture(file);
+    // Admin-only path: no live capture, so levelness was never verified.
+    handleCapture(file, { levelVerified: false });
   };
 
-  const handleCapture = (file: File) => {
+  const handleCapture = (file: File, meta: CaptureMeta = { levelVerified: false }) => {
     const idx = activeSlot;
     setSlots((prev) => {
       const next = [...prev];
       if (next[idx]) URL.revokeObjectURL(next[idx]!.previewUrl);
-      next[idx] = { file, previewUrl: URL.createObjectURL(file) };
+      next[idx] = {
+        file,
+        previewUrl: URL.createObjectURL(file),
+        levelVerified: meta.levelVerified,
+      };
       return next;
     });
   };
