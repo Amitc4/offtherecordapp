@@ -395,10 +395,13 @@ export type Database = {
           analysis_id: string | null
           created_at: string
           grade: string | null
+          history_id: string | null
           id: string
           judged_pct: number | null
           mark_count: number | null
           marks: Json
+          overlay_url: string | null
+          raw_photo_url: string | null
           record_id: string | null
           side: string
           user_id: string
@@ -407,10 +410,13 @@ export type Database = {
           analysis_id?: string | null
           created_at?: string
           grade?: string | null
+          history_id?: string | null
           id?: string
           judged_pct?: number | null
           mark_count?: number | null
           marks?: Json
+          overlay_url?: string | null
+          raw_photo_url?: string | null
           record_id?: string | null
           side: string
           user_id: string
@@ -419,15 +425,25 @@ export type Database = {
           analysis_id?: string | null
           created_at?: string
           grade?: string | null
+          history_id?: string | null
           id?: string
           judged_pct?: number | null
           mark_count?: number | null
           marks?: Json
+          overlay_url?: string | null
+          raw_photo_url?: string | null
           record_id?: string | null
           side?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "record_surface_scans_history_id_fkey"
+            columns: ["history_id"]
+            isOneToOne: false
+            referencedRelation: "grading_history"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "record_surface_scans_record_id_fkey"
             columns: ["record_id"]
