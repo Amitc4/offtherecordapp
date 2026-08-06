@@ -464,11 +464,6 @@ const DiscoverScreen = ({ onNavigateToChat }: DiscoverScreenProps) => {
                   )}
                   {(item as any).sealed && <SealedDiamond />}
                   <GradeBadge condition={item.condition} />
-                  {item.condition && (
-                    <span className="absolute bottom-1.5 left-1.5 inline-flex items-center gap-1 rounded-md bg-card/90 px-1.5 py-0.5 font-body text-[9px] font-bold text-foreground shadow">
-                      <Sparkles size={10} /> {item.condition}
-                    </span>
-                  )}
                 </div>
 
                 <RecordCardInfo
