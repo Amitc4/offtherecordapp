@@ -16,7 +16,6 @@
  * @param onContactSeller – Called when the user taps "Contact Seller".
  */
 import { useState } from "react";
-import SealedDiamond from "@/components/SealedDiamond";
 import GradeBadge from "@/components/GradeBadge";
 import { displayName, textDirClass } from "@/lib/utils";
 
@@ -109,7 +108,6 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
                     <Disc3 size={48} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
                   </div>
                 )}
-                {(record as any).sealed && <SealedDiamond />}
                 <GradeBadge condition={record.condition} />
               </div>
               <div className="flex flex-1 flex-col justify-center min-w-0">
