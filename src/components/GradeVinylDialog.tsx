@@ -13,6 +13,7 @@
  *      analysis is persisted to `record_surface_scans` for later admin review.
  */
 import { useState, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Camera, Loader2, Star, X, CheckCircle2, ImageIcon, FileUp } from "lucide-react";
@@ -98,6 +99,7 @@ interface SlotPhoto {
 
 const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArtist }: GradeVinylDialogProps) => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [stage, setStage] = useState<Stage>("capture");
   const [slots, setSlots] = useState<(SlotPhoto | null)[]>(Array(REQUIRED_PHOTOS).fill(null));
   const [analyzing, setAnalyzing] = useState(false);
@@ -248,6 +250,20 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
         summary: "Surface mark analysis (visible marks only).",
         photo_urls: publicUrls,
       } as any);
+
+      // Store the resulting grade on the record itself so the grade badge shows
+      // on cards / list rows / details. Sealed records are never graded.
+      if (recordId && overallGrade) {
+        const { error: condErr } = await supabase
+          .from("user_records")
+          .update({ condition: overallGrade })
+          .eq("id", recordId);
+        if (condErr) console.warn("Saving record condition failed", condErr);
+        queryClient.invalidateQueries({ queryKey: ["user_records"] });
+        queryClient.invalidateQueries({ queryKey: ["discover_records"] });
+      }
+
+
 
       if (recordId && publicUrls.length) {
         // Only replace previous grading scans — user-uploaded sleeve photos stay.
