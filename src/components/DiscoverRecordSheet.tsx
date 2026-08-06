@@ -16,6 +16,7 @@
  * @param onContactSeller – Called when the user taps "Contact Seller".
  */
 import { useState } from "react";
+import GradeBadge from "@/components/GradeBadge";
 import { displayName, textDirClass } from "@/lib/utils";
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -107,6 +108,7 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
                     <Disc3 size={48} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
                   </div>
                 )}
+                <GradeBadge condition={record.condition} />
               </div>
               <div className="flex flex-1 flex-col justify-center min-w-0">
                 <h2 className={`font-display text-base font-bold text-foreground leading-tight ${textDirClass(displayName(record.title))}`}>{displayName(record.title)}</h2>

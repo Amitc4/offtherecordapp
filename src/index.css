@@ -55,6 +55,12 @@
     --cream: 32 70% 93%;
     --burnt-sienna: 14 60% 38%;
 
+    /* Condition-grade badge tints (orange family, deeper = worse grade) */
+    --grade-light: 32 100% 66%;
+    --grade-mid: 26 95% 54%;
+    --grade-deep: 18 88% 42%;
+    --grade-badge-foreground: 20 20% 8%;
+
     --font-display: 'Inter', sans-serif;
     --font-body: 'Inter', sans-serif;
   }

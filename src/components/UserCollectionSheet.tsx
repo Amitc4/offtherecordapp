@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Disc3, ShieldCheck, Sparkles } from "lucide-react";
+import GradeBadge from "@/components/GradeBadge";
 import { displayName } from "@/lib/utils";
 
 interface UserCollectionSheetProps {
@@ -89,12 +90,13 @@ const UserCollectionSheet = ({ open, onOpenChange, userId, userName }: UserColle
             <div className="grid grid-cols-2 gap-2.5">
               {displayed.map((record) => (
                 <div key={record.id} className="rounded-xl bg-card p-2.5 vinyl-shadow">
-                  <div className="mb-2 flex aspect-square items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
+                  <div className="relative mb-2 flex aspect-square items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
                     {record.cover_image ? (
                       <img src={record.cover_image} alt={record.title} className="h-full w-full object-cover" />
                     ) : (
                       <Disc3 size={36} className="text-primary" />
                     )}
+                    <GradeBadge condition={record.condition} />
                   </div>
                   <h3 className="font-display text-sm font-semibold leading-tight text-foreground truncate">{displayName(record.title)}</h3>
                   <p className="mt-0.5 font-display text-xs text-muted-foreground truncate">{displayName(record.artist)}</p>

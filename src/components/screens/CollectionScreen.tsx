@@ -24,6 +24,7 @@ import RecordCardInfo from "@/components/RecordCardInfo";
 
 import { Disc3, Plus, Camera, RefreshCw, CheckSquare, X, Tag, Trash2, ArrowUp, ArrowDown, Filter, Archive, Star, Diamond } from "lucide-react";
 import SealedDiamond from "@/components/SealedDiamond";
+import GradeBadge from "@/components/GradeBadge";
 import { usePerfectRecords } from "@/hooks/usePerfectRecords";
 import {
   AlertDialog,
@@ -383,6 +384,7 @@ const CollectionScreen = () => {
                   )}
                   {perfectIds.has(record.id) && <PerfectStar small />}
                   {(record as any).sealed && <SealedDiamond small offset={perfectIds.has(record.id)} />}
+                  <GradeBadge small condition={record.condition} offset={perfectIds.has(record.id)} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <RecordCardInfo
@@ -432,6 +434,7 @@ const CollectionScreen = () => {
                   )}
                   {perfectIds.has(record.id) && <PerfectStar />}
                   {(record as any).sealed && <SealedDiamond offset={perfectIds.has(record.id)} />}
+                  <GradeBadge condition={record.condition} offset={perfectIds.has(record.id)} />
                 </div>
                 <RecordCardInfo
                   title={record.title}
