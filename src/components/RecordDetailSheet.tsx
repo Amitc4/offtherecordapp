@@ -96,6 +96,7 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
         .from("record_photos")
         .select("id, photo_url")
         .eq("record_id", record.id)
+        .eq("photo_type", "user_upload")
         .order("created_at", { ascending: true });
       setPhotos(photoData || []);
 
