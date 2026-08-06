@@ -28,13 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -107,7 +101,6 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
     fetchData();
   }, [record?.id, open, gradeOpen]);
 
-
   const recordStatus = record?.status;
   const recordPrice = record?.price;
 
@@ -151,7 +144,7 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
       setLocalStatus(oldStatus);
       toast.error("Failed to update status");
     } else {
-      const label = STATUS_OPTIONS.find(o => o.value === newStatus)?.label || newStatus;
+      const label = STATUS_OPTIONS.find((o) => o.value === newStatus)?.label || newStatus;
       toast.success(`Marked as ${label}`, { position: "top-center" });
       queryClient.invalidateQueries({ queryKey: ["user_records"] });
     }
@@ -180,12 +173,15 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
 
   const graded = hasGrade(record.condition);
 
-  const currentOption = STATUS_OPTIONS.find(o => o.value === localStatus) || STATUS_OPTIONS[1];
+  const currentOption = STATUS_OPTIONS.find((o) => o.value === localStatus) || STATUS_OPTIONS[1];
   const StatusIcon = currentOption.icon;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="flex max-h-[90vh] flex-col rounded-t-2xl border-t border-border bg-card px-0 pb-0">
+      <SheetContent
+        side="bottom"
+        className="flex max-h-[90vh] flex-col rounded-t-2xl border-t border-border bg-card px-0 pb-0"
+      >
         <SheetHeader className="shrink-0 px-5 pb-2">
           <SheetTitle className="font-display text-lg text-foreground">Record Details</SheetTitle>
         </SheetHeader>
@@ -204,8 +200,14 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
               <GradeBadge condition={record.condition} />
             </div>
             <div className="flex flex-1 flex-col justify-center min-w-0">
-              <h2 className={`font-display text-base font-bold text-foreground leading-tight ${textDirClass(displayName(record.title))}`}>{displayName(record.title)}</h2>
-              <p className={`mt-1 font-body text-sm text-muted-foreground ${textDirClass(displayName(record.artist))}`}>{displayName(record.artist)}</p>
+              <h2
+                className={`font-display text-base font-bold text-foreground leading-tight ${textDirClass(displayName(record.title))}`}
+              >
+                {displayName(record.title)}
+              </h2>
+              <p className={`mt-1 font-body text-sm text-muted-foreground ${textDirClass(displayName(record.artist))}`}>
+                {displayName(record.artist)}
+              </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {record.year && (
                   <span className="flex items-center gap-1 font-body text-xs text-muted-foreground">
@@ -226,8 +228,6 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
             </div>
           </div>
 
-
-
           {record.notes && (
             <div>
               <p className="mb-1 font-body text-xs font-medium text-muted-foreground">Notes</p>
@@ -235,12 +235,7 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
             </div>
           )}
           {/* Record & cover photos */}
-          <RecordPhotoUpload
-            recordId={record.id}
-            existingPhotos={photos}
-            onPhotosChange={setPhotos}
-            minPhotos={0}
-          />
+          <RecordPhotoUpload recordId={record.id} existingPhotos={photos} onPhotosChange={setPhotos} minPhotos={0} />
 
           {/* AI Grade button — unavailable while the record is marked sealed */}
           <button
@@ -264,7 +259,7 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
             <div className="text-left">
               <p className="font-body text-sm font-semibold text-foreground">Grade this record</p>
               <p className="font-body text-xs text-muted-foreground">
-                {sealed ? SEALED_BLOCKS_GRADING : "8 photos (4 per side) including the center label"}
+                {sealed ? SEALED_BLOCKS_GRADING : "Show buyers the real condition, not just your word."}
               </p>
             </div>
           </button>
@@ -295,12 +290,7 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
             </button>
           )}
 
-          <GradingPhotosViewer
-            open={viewerOpen}
-            onOpenChange={setViewerOpen}
-            sides={sideScans}
-          />
-
+          <GradingPhotosViewer open={viewerOpen} onOpenChange={setViewerOpen} sides={sideScans} />
 
           {/* Sealed toggle */}
           <label
@@ -380,7 +370,9 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
                   <p className="mb-2 font-body text-xs font-medium text-muted-foreground">Listing Price</p>
                   <div className="flex items-center gap-2">
                     <div className="relative flex-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 font-body text-sm font-semibold text-muted-foreground">₪</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 font-body text-sm font-semibold text-muted-foreground">
+                        ₪
+                      </span>
                       <Input
                         type="number"
                         min="0"
@@ -418,7 +410,8 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
               <AlertDialogHeader>
                 <AlertDialogTitle>Remove Record</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to remove "{displayName(record.title)}" from your collection? This action cannot be undone.
+                  Are you sure you want to remove "{displayName(record.title)}" from your collection? This action cannot
+                  be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -426,10 +419,7 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
                 <AlertDialogAction
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   onClick={async () => {
-                    const { error } = await supabase
-                      .from("user_records")
-                      .delete()
-                      .eq("id", record.id);
+                    const { error } = await supabase.from("user_records").delete().eq("id", record.id);
                     if (error) {
                       toast.error("Failed to remove record");
                     } else {
