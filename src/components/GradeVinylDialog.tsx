@@ -21,7 +21,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import CameraCapture, { type CaptureMode } from "@/components/CameraCapture";
+import CameraCapture, { type CaptureMode, type CaptureMeta } from "@/components/CameraCapture";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import ScanSideResultCard from "@/components/ScanSideResultCard";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { analyzeImage, formatGrade, worstGrade, type SideResult } from "@/lib/scannerApi";
@@ -71,10 +72,13 @@ const SLOTS: SlotSpec[] = [
 interface SlotPhoto {
   file: File;
   previewUrl: string;
+  /** False when the phone's levelness couldn't be verified at capture time. */
+  levelVerified: boolean;
 }
 
 const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArtist }: GradeVinylDialogProps) => {
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const queryClient = useQueryClient();
   const [stage, setStage] = useState<Stage>("capture");
   const [slots, setSlots] = useState<(SlotPhoto | null)[]>(Array(REQUIRED_PHOTOS).fill(null));
@@ -106,9 +110,15 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     onOpenChange(o);
   };
 
+  /**
+   * Regular users must capture grading photos live in-app, so tapping a slot
+   * opens the camera directly. Admins get the source picker (camera / library /
+   * file) for testing and for reviewing sample images.
+   */
   const openPickerFor = (idx: number) => {
     setActiveSlot(idx);
-    setPickerOpen(true);
+    if (isAdmin) setPickerOpen(true);
+    else setCameraOpen(true);
   };
 
   const chooseCamera = () => {
@@ -130,15 +140,20 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    handleCapture(file);
+    // Admin-only path: no live capture, so levelness was never verified.
+    handleCapture(file, { levelVerified: false });
   };
 
-  const handleCapture = (file: File) => {
+  const handleCapture = (file: File, meta: CaptureMeta = { levelVerified: false }) => {
     const idx = activeSlot;
     setSlots((prev) => {
       const next = [...prev];
       if (next[idx]) URL.revokeObjectURL(next[idx]!.previewUrl);
-      next[idx] = { file, previewUrl: URL.createObjectURL(file) };
+      next[idx] = {
+        file,
+        previewUrl: URL.createObjectURL(file),
+        levelVerified: meta.levelVerified,
+      };
       return next;
     });
   };
@@ -252,6 +267,8 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
             marks: (a.marks ?? []) as unknown,
             overlay_url: overlayUrls[i],
             raw_photo_url: rawUrls[i],
+            // Flags photos captured without a verified-level device.
+            level_verified: slots[i]?.levelVerified ?? false,
           };
         })
         .filter(Boolean);
@@ -282,11 +299,18 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
         await supabase
           .from("record_photos")
           .insert(
-            publicUrls.map((url) => ({
-              record_id: recordId,
-              photo_url: url,
-              photo_type: "grading",
-            })) as any
+            rawUrls
+              .map((url, i) =>
+                url
+                  ? {
+                      record_id: recordId,
+                      photo_url: url,
+                      photo_type: "grading",
+                      level_verified: slots[i]?.levelVerified ?? false,
+                    }
+                  : null
+              )
+              .filter(Boolean) as any
           );
       }
     } catch (e) {
@@ -502,6 +526,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                 <p className="font-body text-xs text-muted-foreground">Take a photo with the guide</p>
               </div>
             </button>
+            {isAdmin && (
             <button
               type="button"
               onClick={chooseLibrary}
@@ -515,6 +540,8 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                 <p className="font-body text-xs text-muted-foreground">Pick an existing image</p>
               </div>
             </button>
+            )}
+            {isAdmin && (
             <button
               type="button"
               onClick={chooseFile}
@@ -528,6 +555,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                 <p className="font-body text-xs text-muted-foreground">Browse files on device</p>
               </div>
             </button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

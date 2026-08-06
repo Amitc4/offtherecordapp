@@ -362,6 +362,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          level_verified: boolean
           photo_type: string
           photo_url: string
           record_id: string
@@ -369,6 +370,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          level_verified?: boolean
           photo_type?: string
           photo_url: string
           record_id: string
@@ -376,6 +378,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          level_verified?: boolean
           photo_type?: string
           photo_url?: string
           record_id?: string
@@ -398,6 +401,7 @@ export type Database = {
           history_id: string | null
           id: string
           judged_pct: number | null
+          level_verified: boolean
           mark_count: number | null
           marks: Json
           overlay_url: string | null
@@ -413,6 +417,7 @@ export type Database = {
           history_id?: string | null
           id?: string
           judged_pct?: number | null
+          level_verified?: boolean
           mark_count?: number | null
           marks?: Json
           overlay_url?: string | null
@@ -428,6 +433,7 @@ export type Database = {
           history_id?: string | null
           id?: string
           judged_pct?: number | null
+          level_verified?: boolean
           mark_count?: number | null
           marks?: Json
           overlay_url?: string | null
