@@ -362,18 +362,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          photo_type: string
           photo_url: string
           record_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          photo_type?: string
           photo_url: string
           record_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          photo_type?: string
           photo_url?: string
           record_id?: string
         }
@@ -792,6 +795,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_read_grading_object: {
+        Args: { _object_name: string }
+        Returns: boolean
+      }
+      can_read_upload_object: {
+        Args: { _object_name: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
