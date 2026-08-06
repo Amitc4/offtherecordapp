@@ -1,0 +1,2 @@
+ALTER TABLE public.record_surface_scans ADD COLUMN IF NOT EXISTS level_verified boolean NOT NULL DEFAULT true;
+ALTER TABLE public.record_photos ADD COLUMN IF NOT EXISTS level_verified boolean NOT NULL DEFAULT true;
