@@ -20,7 +20,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import GradeVinylDialog from "@/components/GradeVinylDialog";
 import GradeBadge, { hasGrade } from "@/components/GradeBadge";
 import RecordPhotoUpload from "@/components/RecordPhotoUpload";
-import GradingPhotosViewer from "@/components/GradingPhotosViewer";
+import GradingPhotosViewer, { type SideScanSummary } from "@/components/GradingPhotosViewer";
+import { fetchScansByRecord } from "@/lib/gradingScans";
+
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
