@@ -21,7 +21,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import CameraCapture, { type CaptureMode } from "@/components/CameraCapture";
+import CameraCapture, { type CaptureMode, type CaptureMeta } from "@/components/CameraCapture";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import ScanSideResultCard from "@/components/ScanSideResultCard";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { analyzeImage, formatGrade, worstGrade, type SideResult } from "@/lib/scannerApi";
@@ -77,6 +78,7 @@ interface SlotPhoto {
 
 const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArtist }: GradeVinylDialogProps) => {
   const { user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const queryClient = useQueryClient();
   const [stage, setStage] = useState<Stage>("capture");
   const [slots, setSlots] = useState<(SlotPhoto | null)[]>(Array(REQUIRED_PHOTOS).fill(null));
