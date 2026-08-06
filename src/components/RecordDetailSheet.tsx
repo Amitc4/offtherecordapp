@@ -18,6 +18,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive, Images, Diamond } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import GradeVinylDialog from "@/components/GradeVinylDialog";
+import GradeBadge, { hasGrade } from "@/components/GradeBadge";
 import RecordPhotoUpload from "@/components/RecordPhotoUpload";
 import GradingPhotosViewer from "@/components/GradingPhotosViewer";
 import { Input } from "@/components/ui/input";
@@ -67,6 +68,12 @@ const STATUS_OPTIONS = [
   { value: "personal", label: "Personal Collection", icon: Package, description: "Private to you" },
   { value: "sold", label: "Sold", icon: Archive, description: "Archived as sold" },
 ];
+
+/** Mutual-exclusion messages: a sealed record cannot have been graded. */
+const SEALED_BLOCKS_GRADING =
+  "A sealed record cannot be graded — grading requires opening the sleeve. Remove the Sealed mark first.";
+const GRADED_BLOCKS_SEALED =
+  "This record has a condition grade, so it has been opened. Remove the grade to mark it as sealed.";
 
 const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProps) => {
   const queryClient = useQueryClient();
@@ -174,6 +181,8 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
     setSavingPrice(false);
   };
 
+  const graded = hasGrade(record.condition);
+
   const currentOption = STATUS_OPTIONS.find(o => o.value === localStatus) || STATUS_OPTIONS[1];
   const StatusIcon = currentOption.icon;
 
@@ -195,6 +204,7 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
                   <Disc3 size={48} className="text-primary" fill="hsl(var(--primary) / 0.2)" />
                 </div>
               )}
+              <GradeBadge condition={record.condition} />
             </div>
             <div className="flex flex-1 flex-col justify-center min-w-0">
               <h2 className={`font-display text-base font-bold text-foreground leading-tight ${textDirClass(displayName(record.title))}`}>{displayName(record.title)}</h2>
@@ -235,10 +245,20 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
             minPhotos={0}
           />
 
-          {/* AI Grade button */}
+          {/* AI Grade button — unavailable while the record is marked sealed */}
           <button
-            onClick={() => setGradeOpen(true)}
-            className="flex w-full items-center gap-3 rounded-xl bg-primary/10 p-4 transition-colors active:bg-primary/20"
+            onClick={() => {
+              if (sealed) {
+                toast.info(SEALED_BLOCKS_GRADING, { position: "top-center" });
+                return;
+              }
+              setGradeOpen(true);
+            }}
+            aria-disabled={sealed}
+            title={sealed ? SEALED_BLOCKS_GRADING : undefined}
+            className={`flex w-full items-center gap-3 rounded-xl bg-primary/10 p-4 transition-colors ${
+              sealed ? "cursor-not-allowed opacity-50" : "active:bg-primary/20"
+            }`}
           >
             <div className="relative flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
               <Camera size={20} />
@@ -246,7 +266,9 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
             </div>
             <div className="text-left">
               <p className="font-body text-sm font-semibold text-foreground">Grade this record</p>
-              <p className="font-body text-xs text-muted-foreground">8 photos (4 per side) including the center label</p>
+              <p className="font-body text-xs text-muted-foreground">
+                {sealed ? SEALED_BLOCKS_GRADING : "8 photos (4 per side) including the center label"}
+              </p>
             </div>
           </button>
 
@@ -283,7 +305,18 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
           />
 
           {/* Sealed toggle */}
-          <label className="flex w-full cursor-pointer items-center gap-3 rounded-xl bg-background p-4 transition-colors active:bg-accent">
+          <label
+            title={graded ? GRADED_BLOCKS_SEALED : undefined}
+            onClick={(e) => {
+              if (graded) {
+                e.preventDefault();
+                toast.info(GRADED_BLOCKS_SEALED, { position: "top-center" });
+              }
+            }}
+            className={`flex w-full items-center gap-3 rounded-xl bg-background p-4 transition-colors ${
+              graded ? "cursor-not-allowed opacity-60" : "cursor-pointer active:bg-accent"
+            }`}
+          >
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-blue-500/20">
               {/* Round brilliant-cut diamond, side profile (matches collection badge) */}
               <svg width={22} height={22} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -297,12 +330,14 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
             </div>
             <div className="flex-1">
               <p className="font-body text-sm font-semibold text-foreground">Sealed Record</p>
-              <p className="font-body text-xs text-muted-foreground">Still in original shrink wrap (never opened)</p>
+              <p className="font-body text-xs text-muted-foreground">
+                {graded ? GRADED_BLOCKS_SEALED : "Still in original shrink wrap (never opened)"}
+              </p>
             </div>
             <Checkbox
               checked={sealed}
               onCheckedChange={(c) => handleSealedToggle(!!c)}
-              disabled={sealedSaving}
+              disabled={sealedSaving || graded}
               className="h-5 w-5"
             />
           </label>
