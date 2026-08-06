@@ -90,7 +90,7 @@ const UserCollectionSheet = ({ open, onOpenChange, userId, userName }: UserColle
             <div className="grid grid-cols-2 gap-2.5">
               {displayed.map((record) => (
                 <div key={record.id} className="rounded-xl bg-card p-2.5 vinyl-shadow">
-                  <div className="mb-2 flex aspect-square items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
+                  <div className="relative mb-2 flex aspect-square items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
                     {record.cover_image ? (
                       <img src={record.cover_image} alt={record.title} className="h-full w-full object-cover" />
                     ) : (
