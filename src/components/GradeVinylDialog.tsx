@@ -65,32 +65,8 @@ const SLOTS: SlotSpec[] = [
   },
 ];
 
-/**
- * Crop the center label region from a full-disc photo. The label sits at the
- * geometric center of the disc; we extract a square that's ~38% of the shorter
- * side, then upscale to a clean 800px square for the macro view.
- */
-async function generateMacroCrop(sourceFile: File): Promise<File> {
-  const bitmap = await createImageBitmap(sourceFile);
-  const side = Math.min(bitmap.width, bitmap.height);
-  const cropSize = Math.round(side * 0.38);
-  const sx = Math.round((bitmap.width - cropSize) / 2);
-  const sy = Math.round((bitmap.height - cropSize) / 2);
 
-  const out = 800;
-  const canvas = document.createElement("canvas");
-  canvas.width = out;
-  canvas.height = out;
-  const ctx = canvas.getContext("2d")!;
-  ctx.imageSmoothingQuality = "high";
-  ctx.drawImage(bitmap, sx, sy, cropSize, cropSize, 0, 0, out, out);
-  bitmap.close?.();
 
-  const blob: Blob = await new Promise((resolve) =>
-    canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.92)
-  );
-  return new File([blob], `macro-${Date.now()}.jpg`, { type: "image/jpeg" });
-}
 
 interface SlotPhoto {
   file: File;
