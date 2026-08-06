@@ -13,6 +13,7 @@
  *      analysis is persisted to `record_surface_scans` for later admin review.
  */
 import { useState, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Camera, Loader2, Star, X, CheckCircle2, ImageIcon, FileUp } from "lucide-react";
