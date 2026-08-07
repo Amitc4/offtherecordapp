@@ -20,12 +20,15 @@ import GradeBadge from "@/components/GradeBadge";
 import { displayName, textDirClass } from "@/lib/utils";
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Disc3, Calendar, MessageCircle, Flag, ShieldCheck, Sparkles } from "lucide-react";
+import { Disc3, Calendar, MessageCircle, Flag, ShieldCheck, Sparkles, Images } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import ReportBlockDialog from "@/components/ReportBlockDialog";
 import PhotoLightbox, { useSignedRecordPhotoUrls } from "@/components/PhotoLightbox";
+import GradingPhotosViewer from "@/components/GradingPhotosViewer";
+import { useRecordSideScans } from "@/lib/gradingScans";
+
 
 interface DiscoverRecord {
   id: string;
@@ -83,6 +86,12 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
 
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const photoUrls = useSignedRecordPhotoUrls((recordPhotos as any[]).map((p) => p.photo_url));
+
+  // Seller's AI grading results (before/after images) for this record, when graded.
+  const [gradingOpen, setGradingOpen] = useState(false);
+  const sideScans = useRecordSideScans(record?.id, open);
+  const hasGradingPhotos = sideScans.some((s) => s.overlayUrl || s.rawUrl);
+
 
   if (!record) return null;
 
@@ -198,6 +207,24 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
               </button>
             </div>
 
+            {/* Seller's AI grading photos — before & after, so buyers can judge condition */}
+            {hasGradingPhotos && (
+              <button
+                onClick={() => setGradingOpen(true)}
+                className="flex w-full items-center gap-3 rounded-xl border border-border bg-background p-4 transition-colors active:bg-accent"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+                  <Images size={20} />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="font-body text-sm font-semibold text-foreground">View grading photos</p>
+                  <p className="font-body text-xs text-muted-foreground">
+                    Original photos and the analysed images showing detected scratches
+                  </p>
+                </div>
+              </button>
+            )}
+
             {/* Contact seller */}
             <Button
               onClick={() => onContactSeller(record, sellerName)}
@@ -206,6 +233,7 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
               <MessageCircle size={18} />
               Contact Seller
             </Button>
+
           </div>
         </SheetContent>
       </Sheet>
@@ -223,6 +251,14 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
         onClose={() => setLightboxIndex(null)}
         onIndexChange={setLightboxIndex}
       />
+
+      <GradingPhotosViewer
+        open={gradingOpen}
+        onOpenChange={setGradingOpen}
+        sides={sideScans}
+        title="Seller's grading photos"
+      />
+
     </>
 
   );

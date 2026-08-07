@@ -12,6 +12,7 @@ interface ScanRow {
   mark_count: number | null;
   judged_pct: number | null;
   overlay_url: string | null;
+  raw_photo_url: string | null;
 }
 
 const toSummary = (rows: ScanRow[]): SideScanSummary[] => {
@@ -24,6 +25,7 @@ const toSummary = (rows: ScanRow[]): SideScanSummary[] => {
     out.push({
       side,
       overlayUrl: r.overlay_url,
+      rawUrl: r.raw_photo_url,
       grade: r.grade,
       markCount: r.mark_count,
       judgedPct: r.judged_pct != null ? Number(r.judged_pct) : null,
@@ -32,7 +34,8 @@ const toSummary = (rows: ScanRow[]): SideScanSummary[] => {
   return out;
 };
 
-const SELECT = "side, grade, mark_count, judged_pct, overlay_url, created_at";
+const SELECT = "side, grade, mark_count, judged_pct, overlay_url, raw_photo_url, created_at";
+
 
 /** Latest scan per side for one grading-history entry. */
 export const fetchScansByHistory = async (historyId: string): Promise<SideScanSummary[]> => {
