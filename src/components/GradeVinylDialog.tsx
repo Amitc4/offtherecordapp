@@ -27,6 +27,7 @@ import ScanSideResultCard from "@/components/ScanSideResultCard";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { analyzeImage, formatGrade, worstGrade, type SideResult } from "@/lib/scannerApi";
 import { SCANNER_COLD_START_NOTICE } from "@/config/scanner";
+import { sideKey } from "@/lib/recordFormat";
 
 interface GradeVinylDialogProps {
   open: boolean;
@@ -34,6 +35,10 @@ interface GradeVinylDialogProps {
   recordId?: string;
   recordTitle?: string;
   recordArtist?: string;
+  /** Which disc of the set is being graded (1-based). Defaults to 1. */
+  disc?: number;
+  /** Total discs in the set — >1 switches the copy to per-disc wording. */
+  discTotal?: number;
 }
 
 type Stage = "capture" | "results";
@@ -48,23 +53,27 @@ interface SlotSpec {
   hint: string;
 }
 
-/** Slot definitions — index 0 is Side A, index 1 is Side B. */
-const SLOTS: SlotSpec[] = [
-  {
-    label: "Side A — Full disc",
-    short: "Side A",
-    side: "A",
-    mode: "full",
-    hint: "Fit the whole record inside the circle. Include the center label.",
-  },
-  {
-    label: "Side B — Full disc",
-    short: "Side B",
-    side: "B",
-    mode: "full",
-    hint: "Flip the record. Fit the whole disc inside the circle.",
-  },
-];
+/** Slot definitions for one disc — index 0 is Side A, index 1 is Side B. */
+const slotsForDisc = (disc: number, discTotal: number): SlotSpec[] => {
+  const prefix = discTotal > 1 ? `Disc ${disc} · ` : "";
+  return [
+    {
+      label: `${prefix}Side A — Full disc`,
+      short: `${prefix}Side A`,
+      side: sideKey(disc, "A"),
+      mode: "full",
+      hint: "Fit the whole record inside the circle. Include the center label.",
+    },
+    {
+      label: `${prefix}Side B — Full disc`,
+      short: `${prefix}Side B`,
+      side: sideKey(disc, "B"),
+      mode: "full",
+      hint: "Flip the record. Fit the whole disc inside the circle.",
+    },
+  ];
+};
+
 
 
 
