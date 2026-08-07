@@ -128,7 +128,7 @@ const HomePage = () => {
       </main>
 
       <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-md -translate-x-1/2 border-t border-primary/20 bg-card/95 backdrop-blur-md">
-        <div className="flex h-14 items-center justify-around px-2">
+        <div className="flex h-14 items-stretch px-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -136,7 +136,7 @@ const HomePage = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className="relative flex flex-col items-center gap-0.5"
+                className="relative flex flex-1 basis-0 min-w-0 flex-col items-center justify-center gap-0.5"
               >
                 <div className="relative flex flex-col items-center">
                   {isActive && (
@@ -157,7 +157,7 @@ const HomePage = () => {
                     </span>
                   )}
                 </div>
-                <span className={`font-body text-xs transition-colors ${isActive ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+                <span className={`w-full truncate text-center font-body text-xs leading-none transition-colors ${isActive ? "font-semibold text-primary" : "text-muted-foreground"}`}>
                   {tab.label}
                 </span>
               </button>
