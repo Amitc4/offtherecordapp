@@ -87,6 +87,12 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const photoUrls = useSignedRecordPhotoUrls((recordPhotos as any[]).map((p) => p.photo_url));
 
+  // Seller's AI grading results (before/after images) for this record, when graded.
+  const [gradingOpen, setGradingOpen] = useState(false);
+  const sideScans = useRecordSideScans(record?.id, open);
+  const hasGradingPhotos = sideScans.some((s) => s.overlayUrl || s.rawUrl);
+
+
   if (!record) return null;
 
   const sellerName = sellerProfile?.display_name || "User";
