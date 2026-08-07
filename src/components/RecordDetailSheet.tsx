@@ -237,43 +237,68 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
           {/* Record & cover photos */}
           <RecordPhotoUpload recordId={record.id} existingPhotos={photos} onPhotosChange={setPhotos} minPhotos={0} />
 
-          {/* AI Grade button — unavailable while the record is marked sealed */}
-          <button
-            onClick={() => {
-              if (sealed) {
-                toast.info(SEALED_BLOCKS_GRADING, { position: "top-center" });
-                return;
-              }
-              setGradeOpen(true);
-            }}
-            aria-disabled={sealed}
-            title={sealed ? SEALED_BLOCKS_GRADING : undefined}
-            className={`flex w-full items-center gap-3 rounded-xl bg-primary/10 p-4 transition-colors ${
-              sealed ? "cursor-not-allowed opacity-50" : "active:bg-primary/20"
-            }`}
-          >
-            <div className="relative flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <Camera size={20} />
-              <Star size={10} className="absolute -top-0.5 -right-0.5 text-primary fill-primary" />
-            </div>
-            <div className="text-left">
-              <p className="font-body text-sm font-semibold text-foreground">Grade this record</p>
-              <p className="font-body text-xs text-muted-foreground">
-                {sealed ? SEALED_BLOCKS_GRADING : "Show buyers the real condition, not just your word."}
-              </p>
-            </div>
-          </button>
+          {/* Grading — vinyl only. CDs are not graded by the surface scanner. */}
+          {!isCd && (
+            <div className="space-y-3">
+              {discs > 1 && (
+                <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {discs}-disc set — grade each disc
+                </p>
+              )}
 
-          <GradeVinylDialog
-            open={gradeOpen}
-            onOpenChange={setGradeOpen}
-            recordId={record.id}
-            recordTitle={record.title}
-            recordArtist={record.artist}
-          />
+              {discList.map((d) => {
+                const discGraded = gradedDiscs.has(d);
+                const title = discs > 1 ? `${discGraded ? "Re-grade" : "Grade"} disc ${d}` : discGraded || graded ? "Re-grade this record" : "Grade this record";
+                return (
+                  <button
+                    key={d}
+                    onClick={() => {
+                      if (sealed) {
+                        toast.info(SEALED_BLOCKS_GRADING, { position: "top-center" });
+                        return;
+                      }
+                      setGradeDisc(d);
+                    }}
+                    aria-disabled={sealed}
+                    title={sealed ? SEALED_BLOCKS_GRADING : undefined}
+                    className={`flex w-full items-center gap-3 rounded-xl bg-primary/10 p-4 transition-colors ${
+                      sealed ? "cursor-not-allowed opacity-50" : "active:bg-primary/20"
+                    }`}
+                  >
+                    <div className="relative flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <Camera size={20} />
+                      <Star size={10} className="absolute -top-0.5 -right-0.5 text-primary fill-primary" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-body text-sm font-semibold text-foreground">{title}</p>
+                      <p className="font-body text-xs text-muted-foreground">
+                        {sealed
+                          ? SEALED_BLOCKS_GRADING
+                          : discGraded
+                            ? "Re-shoot both sides to update the grade."
+                            : "Show buyers the real condition, not just your word."}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {!isCd && (
+            <GradeVinylDialog
+              open={gradeDisc !== null}
+              onOpenChange={(o) => setGradeDisc(o ? gradeDisc ?? 1 : null)}
+              recordId={record.id}
+              recordTitle={record.title}
+              recordArtist={record.artist}
+              disc={gradeDisc ?? 1}
+              discTotal={discs}
+            />
+          )}
 
           {/* View grading photos button - only shown if available */}
-          {sideScans.some((s) => s.overlayUrl || s.rawUrl) && (
+          {!isCd && sideScans.some((s) => s.overlayUrl || s.rawUrl) && (
             <button
               onClick={() => setViewerOpen(true)}
               className="flex w-full items-center gap-3 rounded-xl border border-border bg-background p-4 transition-colors active:bg-accent"
@@ -284,11 +309,12 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
               <div className="flex-1 text-left">
                 <p className="font-body text-sm font-semibold text-foreground">View grading photos</p>
                 <p className="font-body text-xs text-muted-foreground">
-                  Side A &amp; B — original photos and the analysed images showing scratches
+                  Original photos and the analysed images showing scratches
                 </p>
               </div>
             </button>
           )}
+
 
           <GradingPhotosViewer open={viewerOpen} onOpenChange={setViewerOpen} sides={sideScans} />
 
