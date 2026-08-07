@@ -22,6 +22,7 @@ import GradeBadge, { hasGrade } from "@/components/GradeBadge";
 import RecordPhotoUpload from "@/components/RecordPhotoUpload";
 import GradingPhotosViewer, { type SideScanSummary } from "@/components/GradingPhotosViewer";
 import { fetchScansByRecord } from "@/lib/gradingScans";
+import { discCount, isCdFormat, discOfSideKey } from "@/lib/recordFormat";
 
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,7 +78,8 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const [localStatus, setLocalStatus] = useState("personal");
   const [price, setPrice] = useState("");
   const [savingPrice, setSavingPrice] = useState(false);
-  const [gradeOpen, setGradeOpen] = useState(false);
+  /** Disc currently being graded (1-based); null = grading dialog closed. */
+  const [gradeDisc, setGradeDisc] = useState<number | null>(null);
   const [photos, setPhotos] = useState<{ id: string; photo_url: string }[]>([]);
   const [sideScans, setSideScans] = useState<SideScanSummary[]>([]);
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -99,7 +101,7 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
       setSideScans(await fetchScansByRecord(record.id));
     };
     fetchData();
-  }, [record?.id, open, gradeOpen]);
+  }, [record?.id, open, gradeDisc]);
 
   const recordStatus = record?.status;
   const recordPrice = record?.price;
@@ -172,6 +174,11 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   };
 
   const graded = hasGrade(record.condition);
+  const isCd = isCdFormat(record.format);
+  const discs = discCount(record.format);
+  const discList = Array.from({ length: discs }, (_, i) => i + 1);
+  /** Discs that already have at least one stored surface scan. */
+  const gradedDiscs = new Set(sideScans.map((s) => discOfSideKey(s.side)));
 
   const currentOption = STATUS_OPTIONS.find((o) => o.value === localStatus) || STATUS_OPTIONS[1];
   const StatusIcon = currentOption.icon;
