@@ -17,6 +17,8 @@ import { Disc3, X, AlertTriangle } from "lucide-react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { supabase } from "@/integrations/supabase/client";
 import { MIN_JUDGED_PCT } from "@/config/scanner";
+import { discOfSideKey, sideKeyLabel } from "@/lib/recordFormat";
+
 
 const BUCKET = "record-photos";
 
@@ -94,17 +96,28 @@ interface GradingPhotosViewerProps {
   title?: string;
 }
 
-const SIDES = ["A", "B"];
+const DEFAULT_SIDES = ["A", "B"];
+
+/** Ordered side keys to render: the stored ones (disc 1 first), or A/B when empty. */
+const orderedSideKeys = (sides: SideScanSummary[]): string[] => {
+  const keys = Array.from(
+    new Set(sides.map((s) => (s.side || "").toUpperCase()).filter(Boolean)),
+  );
+  if (!keys.length) return DEFAULT_SIDES;
+  const rank = (k: string) => discOfSideKey(k) * 10 + (k.startsWith("B") ? 1 : 0);
+  return keys.sort((a, b) => rank(a) - rank(b));
+};
 
 const GradingPhotosViewer = ({ open, onOpenChange, sides, title }: GradingPhotosViewerProps) => {
   const [zoom, setZoom] = useState<{ url: string; label: string } | null>(null);
 
-  const bySide = SIDES.map((s) => sides.find((x) => (x.side || "").toUpperCase() === s));
+  const sideKeys = orderedSideKeys(sides);
+  const bySide = sideKeys.map((s) => sides.find((x) => (x.side || "").toUpperCase() === s));
 
-  // Flat list of every image we may show, in slot order: A-before, A-after, B-before, B-after.
+  // Flat list of every image we may show, in slot order: before, after per side.
   const slots = bySide.flatMap((s, i) => [
-    { side: SIDES[i], kind: "before" as const, url: s?.rawUrl || "" },
-    { side: SIDES[i], kind: "after" as const, url: s?.overlayUrl || "" },
+    { side: sideKeys[i], kind: "before" as const, url: s?.rawUrl || "" },
+    { side: sideKeys[i], kind: "after" as const, url: s?.overlayUrl || "" },
   ]);
   const present = slots.filter((s) => s.url).map((s) => s.url);
   const signed = useSignedUrls(present, open);
@@ -127,10 +140,10 @@ const GradingPhotosViewer = ({ open, onOpenChange, sides, title }: GradingPhotos
           </DialogHeader>
 
           <div className="space-y-5">
-            {SIDES.map((side, i) => (
+            {sideKeys.map((side, i) => (
               <SideBlock
                 key={side}
-                side={side}
+                side={sideKeyLabel(side)}
                 beforeUrl={displayUrls[i * 2]}
                 afterUrl={displayUrls[i * 2 + 1]}
                 hasBefore={!!slots[i * 2].url}
@@ -141,6 +154,7 @@ const GradingPhotosViewer = ({ open, onOpenChange, sides, title }: GradingPhotos
               />
             ))}
           </div>
+
 
         </DialogContent>
       </Dialog>
@@ -248,7 +262,7 @@ const SideBlock = ({
     return (
       <div>
         <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-          Side {side}
+          {side}
         </p>
         <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
           <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-muted">
@@ -263,7 +277,7 @@ const SideBlock = ({
   return (
     <div>
       <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-        Side {side}
+        {side}
       </p>
 
       <div className="flex gap-3">
@@ -272,16 +286,16 @@ const SideBlock = ({
           hasImage={hasBefore}
           loading={loading}
           label="Before grading"
-          alt={`original photo of side ${side}`}
-          onOpen={() => beforeUrl && onOpen(beforeUrl, `Side ${side} — before grading`)}
+          alt={`original photo of ${side}`}
+          onOpen={() => beforeUrl && onOpen(beforeUrl, `${side} — before grading`)}
         />
         <Thumb
           url={afterUrl}
           hasImage={hasAfter}
           loading={loading}
           label="After grading"
-          alt={`detected marks on side ${side}`}
-          onOpen={() => afterUrl && onOpen(afterUrl, `Side ${side} — detected marks`)}
+          alt={`detected marks on ${side}`}
+          onOpen={() => afterUrl && onOpen(afterUrl, `${side} — detected marks`)}
         />
       </div>
 

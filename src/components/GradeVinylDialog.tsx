@@ -27,6 +27,7 @@ import ScanSideResultCard from "@/components/ScanSideResultCard";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { analyzeImage, formatGrade, worstGrade, type SideResult } from "@/lib/scannerApi";
 import { SCANNER_COLD_START_NOTICE } from "@/config/scanner";
+import { sideKey } from "@/lib/recordFormat";
 
 interface GradeVinylDialogProps {
   open: boolean;
@@ -34,6 +35,10 @@ interface GradeVinylDialogProps {
   recordId?: string;
   recordTitle?: string;
   recordArtist?: string;
+  /** Which disc of the set is being graded (1-based). Defaults to 1. */
+  disc?: number;
+  /** Total discs in the set — >1 switches the copy to per-disc wording. */
+  discTotal?: number;
 }
 
 type Stage = "capture" | "results";
@@ -48,23 +53,27 @@ interface SlotSpec {
   hint: string;
 }
 
-/** Slot definitions — index 0 is Side A, index 1 is Side B. */
-const SLOTS: SlotSpec[] = [
-  {
-    label: "Side A — Full disc",
-    short: "Side A",
-    side: "A",
-    mode: "full",
-    hint: "Fit the whole record inside the circle. Include the center label.",
-  },
-  {
-    label: "Side B — Full disc",
-    short: "Side B",
-    side: "B",
-    mode: "full",
-    hint: "Flip the record. Fit the whole disc inside the circle.",
-  },
-];
+/** Slot definitions for one disc — index 0 is Side A, index 1 is Side B. */
+const slotsForDisc = (disc: number, discTotal: number): SlotSpec[] => {
+  const prefix = discTotal > 1 ? `Disc ${disc} · ` : "";
+  return [
+    {
+      label: `${prefix}Side A — Full disc`,
+      short: `${prefix}Side A`,
+      side: sideKey(disc, "A"),
+      mode: "full",
+      hint: "Fit the whole record inside the circle. Include the center label.",
+    },
+    {
+      label: `${prefix}Side B — Full disc`,
+      short: `${prefix}Side B`,
+      side: sideKey(disc, "B"),
+      mode: "full",
+      hint: "Flip the record. Fit the whole disc inside the circle.",
+    },
+  ];
+};
+
 
 
 
@@ -76,10 +85,20 @@ interface SlotPhoto {
   levelVerified: boolean;
 }
 
-const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArtist }: GradeVinylDialogProps) => {
+const GradeVinylDialog = ({
+  open,
+  onOpenChange,
+  recordId,
+  recordTitle,
+  recordArtist,
+  disc = 1,
+  discTotal = 1,
+}: GradeVinylDialogProps) => {
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin();
   const queryClient = useQueryClient();
+  const SLOTS = slotsForDisc(disc, discTotal);
+
   const [stage, setStage] = useState<Stage>("capture");
   const [slots, setSlots] = useState<(SlotPhoto | null)[]>(Array(REQUIRED_PHOTOS).fill(null));
   const [analyzing, setAnalyzing] = useState(false);
@@ -279,10 +298,22 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
 
       // Store the resulting grade on the record itself so the grade badge shows
       // on cards / list rows / details. Sealed records are never graded.
+      // For a multi-disc set the record's grade is the worst grade across all
+      // discs graded so far, not just the disc that was scanned now.
       if (recordId && overallGrade) {
+        let recordGrade = overallGrade;
+        if (discTotal > 1) {
+          const { data: allScans } = await supabase
+            .from("record_surface_scans")
+            .select("grade")
+            .eq("record_id", recordId);
+          recordGrade =
+            worstGrade([...((allScans as any[]) || []).map((s) => s.grade), overallGrade]) ||
+            overallGrade;
+        }
         const { error: condErr } = await supabase
           .from("user_records")
-          .update({ condition: overallGrade })
+          .update({ condition: recordGrade })
           .eq("id", recordId);
         if (condErr) console.warn("Saving record condition failed", condErr);
         queryClient.invalidateQueries({ queryKey: ["user_records"] });
@@ -291,11 +322,15 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
 
       if (recordId && publicUrls.length) {
         // Only replace previous grading scans — user-uploaded sleeve photos stay.
-        await supabase
-          .from("record_photos")
-          .delete()
-          .eq("record_id", recordId)
-          .eq("photo_type", "grading");
+        // On multi-disc sets each disc keeps its own photos, so nothing is removed.
+        if (discTotal <= 1) {
+          await supabase
+            .from("record_photos")
+            .delete()
+            .eq("record_id", recordId)
+            .eq("photo_type", "grading");
+        }
+
         await supabase
           .from("record_photos")
           .insert(
@@ -482,7 +517,7 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                 {results.map((r, i) => (
                   <ScanSideResultCard
                     key={i}
-                    side={SLOTS[i].side}
+                    side={discTotal > 1 ? `${i === 0 ? "A" : "B"} · Disc ${disc}` : SLOTS[i].side}
                     result={r}
                     onViewOverlay={setOverlayUrl}
                   />

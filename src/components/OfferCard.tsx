@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { displayName } from "@/lib/utils";
+import OfferRecordSheet from "@/components/OfferRecordSheet";
 
 interface OfferItem {
   id: string;
@@ -63,6 +64,8 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate, onCounterOffer }
   const [reviewText, setReviewText] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
+  /** Record opened from a pill in this offer (details + grading photos). */
+  const [openRecordId, setOpenRecordId] = useState<string | null>(null);
 
   const isSender = user?.id === offer.sender_id;
   const isReceiver = user?.id === offer.receiver_id;
@@ -206,7 +209,12 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate, onCounterOffer }
   const receiverItems = items.filter((i) => i.owner_id === offer.receiver_id);
 
   const RecordPill = ({ item }: { item: OfferItem }) => (
-    <div className="flex items-center gap-1.5 rounded-lg bg-muted px-2 py-1">
+    <button
+      type="button"
+      onClick={() => setOpenRecordId(item.record_id)}
+      aria-label={`View details of ${displayName(item.record?.title) || "record"}`}
+      className="flex w-full items-center gap-1.5 rounded-lg bg-muted px-2 py-1 text-left transition-colors active:bg-accent"
+    >
       <div className="h-7 w-7 shrink-0 overflow-hidden rounded bg-card">
         {item.record?.cover_image ? (
           <img src={item.record.cover_image} alt="" className="h-full w-full object-cover" />
@@ -218,7 +226,7 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate, onCounterOffer }
         <p className="truncate font-body text-[10px] font-semibold text-foreground">{displayName(item.record?.title) || "Unknown"}</p>
         <p className="truncate font-body text-[9px] text-muted-foreground">{displayName(item.record?.artist)}</p>
       </div>
-    </div>
+    </button>
   );
 
   /** Resolves the display name for a side, falling back to the passed-in names. */
@@ -374,6 +382,11 @@ const OfferCard = ({ offer, senderName, receiverName, onUpdate, onCounterOffer }
           </Button>
         </div>
       )}
+      <OfferRecordSheet
+        recordId={openRecordId}
+        open={openRecordId !== null}
+        onOpenChange={(o) => !o && setOpenRecordId(null)}
+      />
     </div>
   );
 };
