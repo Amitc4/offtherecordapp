@@ -94,17 +94,28 @@ interface GradingPhotosViewerProps {
   title?: string;
 }
 
-const SIDES = ["A", "B"];
+const DEFAULT_SIDES = ["A", "B"];
+
+/** Ordered side keys to render: the stored ones (disc 1 first), or A/B when empty. */
+const orderedSideKeys = (sides: SideScanSummary[]): string[] => {
+  const keys = Array.from(
+    new Set(sides.map((s) => (s.side || "").toUpperCase()).filter(Boolean)),
+  );
+  if (!keys.length) return DEFAULT_SIDES;
+  const rank = (k: string) => discOfSideKey(k) * 10 + (k.startsWith("B") ? 1 : 0);
+  return keys.sort((a, b) => rank(a) - rank(b));
+};
 
 const GradingPhotosViewer = ({ open, onOpenChange, sides, title }: GradingPhotosViewerProps) => {
   const [zoom, setZoom] = useState<{ url: string; label: string } | null>(null);
 
-  const bySide = SIDES.map((s) => sides.find((x) => (x.side || "").toUpperCase() === s));
+  const sideKeys = orderedSideKeys(sides);
+  const bySide = sideKeys.map((s) => sides.find((x) => (x.side || "").toUpperCase() === s));
 
-  // Flat list of every image we may show, in slot order: A-before, A-after, B-before, B-after.
+  // Flat list of every image we may show, in slot order: before, after per side.
   const slots = bySide.flatMap((s, i) => [
-    { side: SIDES[i], kind: "before" as const, url: s?.rawUrl || "" },
-    { side: SIDES[i], kind: "after" as const, url: s?.overlayUrl || "" },
+    { side: sideKeys[i], kind: "before" as const, url: s?.rawUrl || "" },
+    { side: sideKeys[i], kind: "after" as const, url: s?.overlayUrl || "" },
   ]);
   const present = slots.filter((s) => s.url).map((s) => s.url);
   const signed = useSignedUrls(present, open);
@@ -127,10 +138,10 @@ const GradingPhotosViewer = ({ open, onOpenChange, sides, title }: GradingPhotos
           </DialogHeader>
 
           <div className="space-y-5">
-            {SIDES.map((side, i) => (
+            {sideKeys.map((side, i) => (
               <SideBlock
                 key={side}
-                side={side}
+                side={sideKeyLabel(side)}
                 beforeUrl={displayUrls[i * 2]}
                 afterUrl={displayUrls[i * 2 + 1]}
                 hasBefore={!!slots[i * 2].url}
@@ -141,6 +152,7 @@ const GradingPhotosViewer = ({ open, onOpenChange, sides, title }: GradingPhotos
               />
             ))}
           </div>
+
 
         </DialogContent>
       </Dialog>
