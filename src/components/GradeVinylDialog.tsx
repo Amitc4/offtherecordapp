@@ -517,7 +517,7 @@ const GradeVinylDialog = ({
                 {results.map((r, i) => (
                   <ScanSideResultCard
                     key={i}
-                    side={SLOTS[i].side}
+                    side={discTotal > 1 ? `${i === 0 ? "A" : "B"} · Disc ${disc}` : SLOTS[i].side}
                     result={r}
                     onViewOverlay={setOverlayUrl}
                   />
