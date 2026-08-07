@@ -17,6 +17,8 @@ import { Disc3, X, AlertTriangle } from "lucide-react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { supabase } from "@/integrations/supabase/client";
 import { MIN_JUDGED_PCT } from "@/config/scanner";
+import { discOfSideKey, sideKeyLabel } from "@/lib/recordFormat";
+
 
 const BUCKET = "record-photos";
 
