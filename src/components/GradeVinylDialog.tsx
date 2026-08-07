@@ -298,10 +298,22 @@ const GradeVinylDialog = ({
 
       // Store the resulting grade on the record itself so the grade badge shows
       // on cards / list rows / details. Sealed records are never graded.
+      // For a multi-disc set the record's grade is the worst grade across all
+      // discs graded so far, not just the disc that was scanned now.
       if (recordId && overallGrade) {
+        let recordGrade = overallGrade;
+        if (discTotal > 1) {
+          const { data: allScans } = await supabase
+            .from("record_surface_scans")
+            .select("grade")
+            .eq("record_id", recordId);
+          recordGrade =
+            worstGrade([...((allScans as any[]) || []).map((s) => s.grade), overallGrade]) ||
+            overallGrade;
+        }
         const { error: condErr } = await supabase
           .from("user_records")
-          .update({ condition: overallGrade })
+          .update({ condition: recordGrade })
           .eq("id", recordId);
         if (condErr) console.warn("Saving record condition failed", condErr);
         queryClient.invalidateQueries({ queryKey: ["user_records"] });
@@ -310,11 +322,15 @@ const GradeVinylDialog = ({
 
       if (recordId && publicUrls.length) {
         // Only replace previous grading scans — user-uploaded sleeve photos stay.
-        await supabase
-          .from("record_photos")
-          .delete()
-          .eq("record_id", recordId)
-          .eq("photo_type", "grading");
+        // On multi-disc sets each disc keeps its own photos, so nothing is removed.
+        if (discTotal <= 1) {
+          await supabase
+            .from("record_photos")
+            .delete()
+            .eq("record_id", recordId)
+            .eq("photo_type", "grading");
+        }
+
         await supabase
           .from("record_photos")
           .insert(
