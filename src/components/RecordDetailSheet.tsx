@@ -273,7 +273,7 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
           />
 
           {/* View grading photos button - only shown if available */}
-          {sideScans.some((s) => s.overlayUrl) && (
+          {sideScans.some((s) => s.overlayUrl || s.rawUrl) && (
             <button
               onClick={() => setViewerOpen(true)}
               className="flex w-full items-center gap-3 rounded-xl border border-border bg-background p-4 transition-colors active:bg-accent"
@@ -284,13 +284,14 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
               <div className="flex-1 text-left">
                 <p className="font-body text-sm font-semibold text-foreground">View grading photos</p>
                 <p className="font-body text-xs text-muted-foreground">
-                  Side A &amp; Side B analysis from the latest AI grading
+                  Side A &amp; B — original photos and the analysed images showing scratches
                 </p>
               </div>
             </button>
           )}
 
           <GradingPhotosViewer open={viewerOpen} onOpenChange={setViewerOpen} sides={sideScans} />
+
 
           {/* Sealed toggle */}
           <label
