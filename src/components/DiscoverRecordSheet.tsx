@@ -20,12 +20,15 @@ import GradeBadge from "@/components/GradeBadge";
 import { displayName, textDirClass } from "@/lib/utils";
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Disc3, Calendar, MessageCircle, Flag, ShieldCheck, Sparkles } from "lucide-react";
+import { Disc3, Calendar, MessageCircle, Flag, ShieldCheck, Sparkles, Images } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import ReportBlockDialog from "@/components/ReportBlockDialog";
 import PhotoLightbox, { useSignedRecordPhotoUrls } from "@/components/PhotoLightbox";
+import GradingPhotosViewer from "@/components/GradingPhotosViewer";
+import { useRecordSideScans } from "@/lib/gradingScans";
+
 
 interface DiscoverRecord {
   id: string;
