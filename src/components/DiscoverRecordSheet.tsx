@@ -251,6 +251,14 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
         onClose={() => setLightboxIndex(null)}
         onIndexChange={setLightboxIndex}
       />
+
+      <GradingPhotosViewer
+        open={gradingOpen}
+        onOpenChange={setGradingOpen}
+        sides={sideScans}
+        title="Seller's grading photos"
+      />
+
     </>
 
   );
