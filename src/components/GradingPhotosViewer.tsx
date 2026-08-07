@@ -262,7 +262,7 @@ const SideBlock = ({
     return (
       <div>
         <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-          Side {side}
+          {side}
         </p>
         <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
           <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-muted">
@@ -277,7 +277,7 @@ const SideBlock = ({
   return (
     <div>
       <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-        Side {side}
+        {side}
       </p>
 
       <div className="flex gap-3">
@@ -286,16 +286,16 @@ const SideBlock = ({
           hasImage={hasBefore}
           loading={loading}
           label="Before grading"
-          alt={`original photo of side ${side}`}
-          onOpen={() => beforeUrl && onOpen(beforeUrl, `Side ${side} — before grading`)}
+          alt={`original photo of ${side}`}
+          onOpen={() => beforeUrl && onOpen(beforeUrl, `${side} — before grading`)}
         />
         <Thumb
           url={afterUrl}
           hasImage={hasAfter}
           loading={loading}
           label="After grading"
-          alt={`detected marks on side ${side}`}
-          onOpen={() => afterUrl && onOpen(afterUrl, `Side ${side} — detected marks`)}
+          alt={`detected marks on ${side}`}
+          onOpen={() => afterUrl && onOpen(afterUrl, `${side} — detected marks`)}
         />
       </div>
 
