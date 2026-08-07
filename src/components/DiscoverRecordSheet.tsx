@@ -207,6 +207,24 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
               </button>
             </div>
 
+            {/* Seller's AI grading photos — before & after, so buyers can judge condition */}
+            {hasGradingPhotos && (
+              <button
+                onClick={() => setGradingOpen(true)}
+                className="flex w-full items-center gap-3 rounded-xl border border-border bg-background p-4 transition-colors active:bg-accent"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+                  <Images size={20} />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="font-body text-sm font-semibold text-foreground">View grading photos</p>
+                  <p className="font-body text-xs text-muted-foreground">
+                    Original photos and the analysed images showing detected scratches
+                  </p>
+                </div>
+              </button>
+            )}
+
             {/* Contact seller */}
             <Button
               onClick={() => onContactSeller(record, sellerName)}
@@ -215,6 +233,7 @@ const DiscoverRecordSheet = ({ record, open, onOpenChange, onContactSeller }: Di
               <MessageCircle size={18} />
               Contact Seller
             </Button>
+
           </div>
         </SheetContent>
       </Sheet>
