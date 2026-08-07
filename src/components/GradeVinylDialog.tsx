@@ -85,10 +85,20 @@ interface SlotPhoto {
   levelVerified: boolean;
 }
 
-const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArtist }: GradeVinylDialogProps) => {
+const GradeVinylDialog = ({
+  open,
+  onOpenChange,
+  recordId,
+  recordTitle,
+  recordArtist,
+  disc = 1,
+  discTotal = 1,
+}: GradeVinylDialogProps) => {
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin();
   const queryClient = useQueryClient();
+  const SLOTS = slotsForDisc(disc, discTotal);
+
   const [stage, setStage] = useState<Stage>("capture");
   const [slots, setSlots] = useState<(SlotPhoto | null)[]>(Array(REQUIRED_PHOTOS).fill(null));
   const [analyzing, setAnalyzing] = useState(false);
