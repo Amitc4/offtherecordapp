@@ -375,6 +375,27 @@ const GradeVinylDialog = ({ open, onOpenChange, recordId, recordTitle, recordArt
                   </p>
                 </div>
 
+                {/* Capture instructions — shown before the user picks a side */}
+                <div className="rounded-xl border border-border bg-background p-3">
+                  <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                    Before you shoot
+                  </p>
+                  <ol className="flex flex-col gap-1.5 font-body text-xs text-foreground">
+                    <li className="flex gap-2">
+                      <span className="font-semibold text-primary">1.</span>
+                      <span>Shoot in a dark place with a direct light on the vinyl at a low angle.</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="font-semibold text-primary">2.</span>
+                      <span>Hold the camera directly above the vinyl and keep the disc centered.</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="font-semibold text-primary">3.</span>
+                      <span>Clean the surface of the vinyl beforehand.</span>
+                    </li>
+                  </ol>
+                </div>
+
                 {error && (
                   <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2">
                     <p className="font-body text-xs text-destructive">{error}</p>
