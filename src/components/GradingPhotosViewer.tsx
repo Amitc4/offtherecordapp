@@ -78,6 +78,8 @@ export interface SideScanSummary {
   side: string;
   /** Annotated overlay image URL (marks highlighted). */
   overlayUrl?: string | null;
+  /** The original photo captured before analysis. */
+  rawUrl?: string | null;
   grade?: string | null;
   markCount?: number | null;
   judgedPct?: number | null;
@@ -88,24 +90,30 @@ interface GradingPhotosViewerProps {
   onOpenChange: (open: boolean) => void;
   /** Stored per-side results. Missing sides are rendered as empty slots. */
   sides: SideScanSummary[];
+  /** Optional heading override, e.g. "Seller's grading photos". */
+  title?: string;
 }
 
 const SIDES = ["A", "B"];
 
-const GradingPhotosViewer = ({ open, onOpenChange, sides }: GradingPhotosViewerProps) => {
-  const [zoomSide, setZoomSide] = useState<string | null>(null);
+const GradingPhotosViewer = ({ open, onOpenChange, sides, title }: GradingPhotosViewerProps) => {
+  const [zoom, setZoom] = useState<{ url: string; label: string } | null>(null);
 
   const bySide = SIDES.map((s) => sides.find((x) => (x.side || "").toUpperCase() === s));
-  const overlayUrls = bySide.map((s) => s?.overlayUrl || "");
-  const signed = useSignedUrls(overlayUrls.filter(Boolean) as string[], open);
 
-  // Re-align signed URLs back to their side slots.
+  // Flat list of every image we may show, in slot order: A-before, A-after, B-before, B-after.
+  const slots = bySide.flatMap((s, i) => [
+    { side: SIDES[i], kind: "before" as const, url: s?.rawUrl || "" },
+    { side: SIDES[i], kind: "after" as const, url: s?.overlayUrl || "" },
+  ]);
+  const present = slots.filter((s) => s.url).map((s) => s.url);
+  const signed = useSignedUrls(present, open);
+
   let cursor = 0;
-  const displayUrls = overlayUrls.map((u) => (u ? (signed ? signed[cursor++] || u : "") : ""));
+  const displayUrls = slots.map((s) => (s.url ? (signed ? signed[cursor++] || s.url : "") : ""));
 
-  const loading = signed === null && overlayUrls.some(Boolean);
-  const count = overlayUrls.filter(Boolean).length;
-  const zoomIdx = zoomSide ? SIDES.indexOf(zoomSide) : -1;
+  const loading = signed === null && present.length > 0;
+  const count = present.length;
 
   return (
     <>
@@ -114,20 +122,22 @@ const GradingPhotosViewer = ({ open, onOpenChange, sides }: GradingPhotosViewerP
           <DialogHeader>
             <DialogTitle className="font-display flex items-center gap-2">
               <Disc3 size={18} className="text-primary" />
-              Grading photos ({count})
+              {title || "Grading photos"} ({count})
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             {SIDES.map((side, i) => (
               <SideBlock
                 key={side}
                 side={side}
-                url={displayUrls[i]}
-                hasImage={!!overlayUrls[i]}
+                beforeUrl={displayUrls[i * 2]}
+                afterUrl={displayUrls[i * 2 + 1]}
+                hasBefore={!!slots[i * 2].url}
+                hasAfter={!!slots[i * 2 + 1].url}
                 loading={loading}
                 scan={bySide[i]}
-                onOpen={() => setZoomSide(side)}
+                onOpen={(url, label) => setZoom({ url, label })}
               />
             ))}
           </div>
@@ -135,42 +145,120 @@ const GradingPhotosViewer = ({ open, onOpenChange, sides }: GradingPhotosViewerP
         </DialogContent>
       </Dialog>
 
-      {zoomIdx !== -1 && displayUrls[zoomIdx] && (
-        <ZoomViewer
-          url={displayUrls[zoomIdx]}
-          label={`Side ${SIDES[zoomIdx]}`}
-          onClose={() => setZoomSide(null)}
-        />
-      )}
+      {zoom && <ZoomViewer url={zoom.url} label={zoom.label} onClose={() => setZoom(null)} />}
     </>
   );
 };
 
-/** One side: heading, overlay thumbnail (or empty slot) and its stored result. */
-const SideBlock = ({
-  side,
+/** A single thumbnail with its own loading / failure handling. */
+const Thumb = ({
   url,
   hasImage,
+  loading,
+  label,
+  alt,
+  onOpen,
+}: {
+  url?: string;
+  hasImage?: boolean;
+  loading?: boolean;
+  label: string;
+  alt: string;
+  onOpen: () => void;
+}) => {
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
+  // A new source is a fresh chance: never keep a stale failure flag.
+  useEffect(() => {
+    setFailed(false);
+  }, [url]);
+
+  return (
+    <div className="flex-1">
+      <p className="mb-1 font-body text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      {!hasImage ? (
+        <div className="flex aspect-square w-full items-center justify-center rounded-lg bg-muted">
+          <Disc3 size={18} className="text-muted-foreground" />
+        </div>
+      ) : !url || loading ? (
+        <div className="aspect-square w-full animate-pulse rounded-lg bg-muted" />
+      ) : failed ? (
+        <div className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-lg bg-muted p-2 text-center">
+          <p className="font-body text-[10px] leading-tight text-muted-foreground">
+            Image could not be loaded
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setFailed(false);
+              setAttempt((a) => a + 1);
+            }}
+            className="font-body text-[10px] font-semibold text-primary underline"
+          >
+            Retry
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={onOpen}
+          className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted"
+          aria-label={`View ${alt} full screen`}
+        >
+          <img
+            key={attempt}
+            src={url}
+            alt={alt}
+            className="h-full w-full object-cover transition-transform active:scale-95"
+            onError={() => setFailed(true)}
+          />
+        </button>
+      )}
+    </div>
+  );
+};
+
+/** One side: heading, before/after thumbnails and the stored result. */
+const SideBlock = ({
+  side,
+  beforeUrl,
+  afterUrl,
+  hasBefore,
+  hasAfter,
   loading,
   scan,
   onOpen,
 }: {
   side: string;
-  url?: string;
-  hasImage?: boolean;
+  beforeUrl?: string;
+  afterUrl?: string;
+  hasBefore?: boolean;
+  hasAfter?: boolean;
   loading?: boolean;
   scan?: SideScanSummary;
-  onOpen: () => void;
+  onOpen: (url: string, label: string) => void;
 }) => {
   const judged = scan?.judgedPct;
   const lowCoverage = typeof judged === "number" && judged < MIN_JUDGED_PCT;
-  const [thumbFailed, setThumbFailed] = useState(false);
-  const [attempt, setAttempt] = useState(0);
 
-  // A new source is a fresh chance: never keep a stale failure flag.
-  useEffect(() => {
-    setThumbFailed(false);
-  }, [url]);
+  if (!hasBefore && !hasAfter) {
+    return (
+      <div>
+        <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+          Side {side}
+        </p>
+        <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-muted">
+            <Disc3 size={20} className="text-muted-foreground" />
+          </div>
+          <p className="font-body text-xs text-muted-foreground">Not graded yet</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -178,76 +266,46 @@ const SideBlock = ({
         Side {side}
       </p>
 
-      {hasImage ? (
-        <div className="flex items-start gap-3">
-          {!url || loading ? (
-            <div className="h-20 w-20 shrink-0 animate-pulse rounded-lg bg-muted" />
-          ) : thumbFailed ? (
-            <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-lg bg-muted p-1 text-center">
-              <p className="font-body text-[10px] leading-tight text-muted-foreground">
-                Image could not be loaded
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setThumbFailed(false);
-                  setAttempt((a) => a + 1);
-                }}
-                className="font-body text-[10px] font-semibold text-primary underline"
-              >
-                Retry
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={onOpen}
-              className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted"
-              aria-label={`View side ${side} analysis image full screen`}
-            >
-              <img
-                key={attempt}
-                src={url}
-                alt={`Detected marks on side ${side}`}
-                className="h-full w-full object-cover transition-transform active:scale-95"
-                onError={() => setThumbFailed(true)}
-              />
-            </button>
-          )}
+      <div className="flex gap-3">
+        <Thumb
+          url={beforeUrl}
+          hasImage={hasBefore}
+          loading={loading}
+          label="Before grading"
+          alt={`original photo of side ${side}`}
+          onOpen={() => beforeUrl && onOpen(beforeUrl, `Side ${side} — before grading`)}
+        />
+        <Thumb
+          url={afterUrl}
+          hasImage={hasAfter}
+          loading={loading}
+          label="After grading"
+          alt={`detected marks on side ${side}`}
+          onOpen={() => afterUrl && onOpen(afterUrl, `Side ${side} — detected marks`)}
+        />
+      </div>
 
-
-
-          <div className="flex-1 space-y-1">
-            <p className="font-display text-sm font-bold text-foreground">
-              {scan?.grade || "—"}
-            </p>
-            <p className="font-body text-xs text-muted-foreground">
-              {scan?.markCount ?? 0} {(scan?.markCount ?? 0) === 1 ? "mark" : "marks"} detected
-            </p>
-            {typeof judged === "number" && (
-              <p className="font-body text-xs text-muted-foreground">
-                Surface assessed: {Math.round(judged)}%
-              </p>
-            )}
-            {lowCoverage && (
-              <p className="font-body text-[11px] text-amber-700 flex items-start gap-1">
-                <AlertTriangle size={12} className="mt-0.5 shrink-0 text-amber-600" />
-                Photo could not be fully assessed — a re-shoot is advised.
-              </p>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-muted">
-            <Disc3 size={20} className="text-muted-foreground" />
-          </div>
-          <p className="font-body text-xs text-muted-foreground">Not graded yet</p>
-        </div>
-      )}
+      <div className="mt-2 space-y-1">
+        <p className="font-display text-sm font-bold text-foreground">{scan?.grade || "—"}</p>
+        <p className="font-body text-xs text-muted-foreground">
+          {scan?.markCount ?? 0} {(scan?.markCount ?? 0) === 1 ? "mark" : "marks"} detected
+        </p>
+        {typeof judged === "number" && (
+          <p className="font-body text-xs text-muted-foreground">
+            Surface assessed: {Math.round(judged)}%
+          </p>
+        )}
+        {lowCoverage && (
+          <p className="font-body text-[11px] text-amber-700 flex items-start gap-1">
+            <AlertTriangle size={12} className="mt-0.5 shrink-0 text-amber-600" />
+            Photo could not be fully assessed — a re-shoot is advised.
+          </p>
+        )}
+      </div>
     </div>
   );
 };
+
 
 /**
  * Full-screen image viewer with pinch-to-zoom and free panning.
