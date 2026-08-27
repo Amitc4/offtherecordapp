@@ -41,14 +41,15 @@ const AccessibilityMenu = () => {
       {/* Floating buttons stack - right side above nav */}
       {hidden ? (
         <button
+          data-a11y-floating
           onClick={show}
-          className="fixed right-3 bottom-20 z-[60] flex h-11 w-11 items-center justify-center rounded-full bg-primary/25 text-primary shadow-sm backdrop-blur-sm transition-opacity hover:opacity-100 opacity-60 [body.chat-open_&]:hidden [body.camera-open_&]:hidden"
+          className="fixed right-3 bottom-20 z-[200] flex h-11 w-11 items-center justify-center rounded-full bg-primary/25 text-primary shadow-sm backdrop-blur-sm transition-opacity hover:opacity-100 opacity-60 [body.chat-open_&]:hidden [body.camera-open_&]:hidden"
           aria-label="Show accessibility and notification buttons"
         >
           <Accessibility size={18} />
         </button>
       ) : (
-        <div className="fixed right-3 bottom-20 z-[60] flex flex-col items-center gap-2 [body.chat-open_&]:hidden [body.camera-open_&]:hidden">
+        <div data-a11y-floating className="fixed right-3 bottom-20 z-[200] flex flex-col items-center gap-2 [body.chat-open_&]:hidden [body.camera-open_&]:hidden">
           <button
             onClick={hide}
             className="flex h-11 w-11 items-center justify-center rounded-full bg-muted text-muted-foreground shadow-md transition-transform hover:scale-105 active:scale-95"
@@ -71,6 +72,7 @@ const AccessibilityMenu = () => {
       )}
 
 
+
       {/* Menu panel */}
       <AnimatePresence>
         {open && (
@@ -79,7 +81,8 @@ const AccessibilityMenu = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[61] bg-black/40"
+              data-a11y-floating
+              className="fixed inset-0 z-[201] bg-black/40"
               onClick={() => setOpen(false)}
             />
             <motion.div
@@ -87,7 +90,8 @@ const AccessibilityMenu = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 80, scale: 0.95 }}
               transition={settings.reduceAnimations ? { duration: 0 } : { type: "spring", stiffness: 400, damping: 30 }}
-              className="fixed right-3 bottom-[9rem] z-[62] w-[min(18rem,calc(100vw-1.5rem))] max-h-[min(70dvh,calc(100dvh-12rem))] overflow-y-auto overscroll-contain rounded-2xl border border-border bg-card p-4 shadow-xl"
+              data-a11y-floating
+              className="fixed right-3 bottom-[9rem] z-[202] w-[min(18rem,calc(100vw-1.5rem))] max-h-[min(70dvh,calc(100dvh-12rem))] overflow-y-auto overscroll-contain rounded-2xl border border-border bg-card p-4 shadow-xl"
             >
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="font-display text-sm font-bold text-foreground flex items-center gap-2">

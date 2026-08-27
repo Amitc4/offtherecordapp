@@ -212,3 +212,9 @@ html {
 }
 
 [dir="rtl"], .dir-rtl { direction: rtl; }
+
+/* Floating accessibility & notification buttons must stay clickable above modals/sheets */
+[data-a11y-floating],
+[data-a11y-floating] * {
+  pointer-events: auto !important;
+}
