@@ -544,46 +544,6 @@ const ProfileScreen = ({ focusFriendRequests = 0 }: { focusFriendRequests?: numb
         )}
       </div>
 
-      {/* Discogs Connection */}
-      <div className="mb-6 rounded-xl bg-card p-4 vinyl-shadow">
-        <div className="mb-3 flex items-center gap-2">
-          <Disc3 size={18} className="text-primary" />
-          <h3 className="font-display text-sm font-semibold text-foreground">Discogs</h3>
-        </div>
-
-        {profile?.discogs_connected ? (
-          <div className="space-y-3">
-            <p className="font-body text-xs text-muted-foreground">
-              Connected as <span className="font-semibold text-primary">{profile.discogs_username}</span>
-            </p>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => syncCollection.mutate()} disabled={syncCollection.isPending} className="flex-1 border-border font-body text-xs">
-                <RefreshCw size={14} className={`mr-1 ${syncCollection.isPending ? "animate-spin" : ""}`} />
-                Sync Collection
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => syncWishlist.mutate()} disabled={syncWishlist.isPending} className="flex-1 border-border font-body text-xs">
-                <RefreshCw size={14} className={`mr-1 ${syncWishlist.isPending ? "animate-spin" : ""}`} />
-                Sync Wishlist
-              </Button>
-            </div>
-            <Button size="sm" variant="outline" onClick={() => disconnect.mutate()} disabled={disconnect.isPending} className="w-full border-border font-body text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
-              <Unlink size={14} className="mr-1" />
-              Disconnect Discogs
-            </Button>
-          </div>
-        ) : (
-          <div>
-            <p className="mb-3 font-body text-xs text-muted-foreground">
-              Connect your Discogs account to import your collection and wishlist.
-            </p>
-            <Button size="sm" onClick={handleConnectDiscogs} disabled={connecting} className="w-full bg-primary font-body text-xs font-semibold text-primary-foreground">
-              <Disc3 size={14} className={`mr-1 ${connecting ? "animate-spin" : ""}`} />
-              {connecting ? "Connecting..." : "Connect Discogs Account"}
-            </Button>
-          </div>
-        )}
-      </div>
-
       {/* Spotify Connection */}
       <div className="mb-6 rounded-xl bg-card p-4 vinyl-shadow">
         <div className="mb-3 flex items-center gap-2">
@@ -624,6 +584,46 @@ const ProfileScreen = ({ focusFriendRequests = 0 }: { focusFriendRequests?: numb
             >
               <SpotifyIcon className="mr-1.5 h-4 w-4 text-white" />
               {spotifyConnecting ? "Connecting..." : "Connect Spotify"}
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Discogs Connection */}
+      <div className="mb-6 rounded-xl bg-card p-4 vinyl-shadow">
+        <div className="mb-3 flex items-center gap-2">
+          <Disc3 size={18} className="text-primary" />
+          <h3 className="font-display text-sm font-semibold text-foreground">Discogs</h3>
+        </div>
+
+        {profile?.discogs_connected ? (
+          <div className="space-y-3">
+            <p className="font-body text-xs text-muted-foreground">
+              Connected as <span className="font-semibold text-primary">{profile.discogs_username}</span>
+            </p>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => syncCollection.mutate()} disabled={syncCollection.isPending} className="flex-1 border-border font-body text-xs">
+                <RefreshCw size={14} className={`mr-1 ${syncCollection.isPending ? "animate-spin" : ""}`} />
+                Sync Collection
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => syncWishlist.mutate()} disabled={syncWishlist.isPending} className="flex-1 border-border font-body text-xs">
+                <RefreshCw size={14} className={`mr-1 ${syncWishlist.isPending ? "animate-spin" : ""}`} />
+                Sync Wishlist
+              </Button>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => disconnect.mutate()} disabled={disconnect.isPending} className="w-full border-border font-body text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+              <Unlink size={14} className="mr-1" />
+              Disconnect Discogs
+            </Button>
+          </div>
+        ) : (
+          <div>
+            <p className="mb-3 font-body text-xs text-muted-foreground">
+              Connect your Discogs account to import your collection and wishlist.
+            </p>
+            <Button size="sm" onClick={handleConnectDiscogs} disabled={connecting} className="w-full bg-primary font-body text-xs font-semibold text-primary-foreground">
+              <Disc3 size={14} className={`mr-1 ${connecting ? "animate-spin" : ""}`} />
+              {connecting ? "Connecting..." : "Connect Discogs Account"}
             </Button>
           </div>
         )}
