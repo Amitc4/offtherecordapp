@@ -399,6 +399,8 @@ const ZoomViewer = ({
 
     return () => {
       document.body.style.overflow = prev;
+      document.body.classList.remove("photo-viewer-open");
+
       document.removeEventListener("keydown", onKeyDown, true);
       window.removeEventListener("popstate", onPopState);
       if (window.history.state?.zoomViewer) window.history.back();
