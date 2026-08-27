@@ -1,16 +1,16 @@
 /**
- * @file GradeVinylDialog.tsx — Vinyl surface grading dialog (2-photo workflow).
+ * @file GradeVinylDialog.tsx — Vinyl surface grading dialog (4-photo workflow).
  *
  * **Flow:**
- *   1. The user adds 2 photos: Side A (full disc) and Side B (full disc).
- *   2. "Grade Record" sends each side to the external surface-analysis API as a
+ *   1. The user adds 4 photos: Side A1, Side A2, Side B1 and Side B2 (two angles per side).
+ *   2. "Grade Record" sends each angle to the external surface-analysis API as a
  *      separate `multipart/form-data` request (see `src/lib/scannerApi.ts`).
- *      Each side is analysed independently — if one fails the other is still shown.
- *   3. Results show a suggested overall grade (the worse of the two sides) plus a
- *      card per side with the detection overlay, mark list, coverage and warnings.
+ *      Each angle is analysed independently — if one fails the others are still shown.
+ *   3. Results show a suggested overall grade (the worse of the four angles) plus a
+ *      card per angle with the detection overlay, mark list, coverage and warnings.
  *   4. In the background the photos (plus auto-generated centre-label macro crops)
- *      are uploaded to storage and attached to the record, and each side's
- *      analysis is persisted to `record_surface_scans` for later admin review.
+ *      are uploaded to storage and attached to the record, and each angle's
+ *      analysis is persisted to `record_surface_scans` for later review.
  */
 import { useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -43,7 +43,7 @@ interface GradeVinylDialogProps {
 
 type Stage = "capture" | "results";
 
-const REQUIRED_PHOTOS = 2;
+const REQUIRED_PHOTOS = 4;
 
 interface SlotSpec {
   label: string;
@@ -53,23 +53,37 @@ interface SlotSpec {
   hint: string;
 }
 
-/** Slot definitions for one disc — index 0 is Side A, index 1 is Side B. */
+/** Slot definitions for one disc — Side A and Side B, each from two angles. */
 const slotsForDisc = (disc: number, discTotal: number): SlotSpec[] => {
   const prefix = discTotal > 1 ? `Disc ${disc} · ` : "";
   return [
     {
-      label: `${prefix}Side A — Full disc`,
-      short: `${prefix}Side A`,
-      side: sideKey(disc, "A"),
+      label: `${prefix}Side A1 — Full disc`,
+      short: `${prefix}Side A1`,
+      side: sideKey(disc, "A", 1),
       mode: "full",
-      hint: "Fit the whole record inside the circle. Include the center label.",
+      hint: "Fit the whole record inside the circle. Take the first angle of Side A.",
     },
     {
-      label: `${prefix}Side B — Full disc`,
-      short: `${prefix}Side B`,
-      side: sideKey(disc, "B"),
+      label: `${prefix}Side A2 — Full disc`,
+      short: `${prefix}Side A2`,
+      side: sideKey(disc, "A", 2),
       mode: "full",
-      hint: "Flip the record. Fit the whole disc inside the circle.",
+      hint: "Take Side A again from a different angle so hidden scratches are visible.",
+    },
+    {
+      label: `${prefix}Side B1 — Full disc`,
+      short: `${prefix}Side B1`,
+      side: sideKey(disc, "B", 1),
+      mode: "full",
+      hint: "Flip the record. Fit the whole disc inside the circle. First angle of Side B.",
+    },
+    {
+      label: `${prefix}Side B2 — Full disc`,
+      short: `${prefix}Side B2`,
+      side: sideKey(disc, "B", 2),
+      mode: "full",
+      hint: "Take Side B again from a different angle so hidden scratches are visible.",
     },
   ];
 };
@@ -432,6 +446,10 @@ const GradeVinylDialog = ({
                         <span className="font-semibold text-primary">4.</span>
                         <span>The vinyl grading feature is only available to black vinyl records!</span>
                       </li>
+                      <li className="flex gap-2">
+                        <span className="font-semibold text-primary">5.</span>
+                        <span>Make sure you are taking a picture of the same side twice, from different angles.</span>
+                      </li>
                     </ol>
                     <Button onClick={() => setInstructionsAck(true)} className="w-full gap-2">
                       <Camera size={16} />
@@ -442,9 +460,10 @@ const GradeVinylDialog = ({
                   <>
                     <div className="rounded-xl bg-primary/10 p-3">
                       <p className="font-body text-xs text-foreground">
-                        Take <strong>2 photos</strong>: full shots of <strong>Side A</strong> and{" "}
-                        <strong>Side B</strong>. A circular guide will help you frame the disc. Close-up
-                        label shots are generated automatically after grading.
+                        Take <strong>4 photos</strong>: two different angles of <strong>Side A</strong>{" "}
+                        (A1, A2) and two different angles of <strong>Side B</strong> (B1, B2). A
+                        circular guide will help you frame the disc. Close-up label shots are
+                        generated automatically after grading.
                       </p>
                     </div>
 
@@ -456,10 +475,10 @@ const GradeVinylDialog = ({
 
                     <div>
                       <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                        Full disc — both sides
+                        Full disc — both sides, two angles each
                       </p>
                       <div className="grid grid-cols-2 gap-3">
-                        {[0, 1].map((i) => (
+                        {[0, 1, 2, 3].map((i) => (
                           <SlotButton
                             key={i}
                             spec={SLOTS[i]}
@@ -494,7 +513,7 @@ const GradeVinylDialog = ({
                       className="gap-2"
                     >
                       {analyzing ? <Loader2 size={16} className="animate-spin" /> : <Star size={16} />}
-                      {analyzing ? "Analyzing both sides..." : "Grade Record"}
+                      {analyzing ? "Analyzing all angles..." : "Grade Record"}
                     </Button>
 
                     {analyzing && (
@@ -536,7 +555,7 @@ const GradeVinylDialog = ({
                 {results.map((r, i) => (
                   <ScanSideResultCard
                     key={i}
-                    side={discTotal > 1 ? `${i === 0 ? "A" : "B"} · Disc ${disc}` : SLOTS[i].side}
+                    side={SLOTS[i].short}
                     result={r}
                     onViewOverlay={setOverlayUrl}
                   />
