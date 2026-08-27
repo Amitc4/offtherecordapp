@@ -102,8 +102,13 @@ const NotificationsBell = () => {
                       }`}
                     >
                       <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15">
-                        <Disc3 size={14} className="text-primary" />
+                        {n.type === "friend_request" ? (
+                          <UserPlus size={14} className="text-primary" />
+                        ) : (
+                          <Disc3 size={14} className="text-primary" />
+                        )}
                       </div>
+
                       <div className="min-w-0 flex-1">
                         <p className="font-body text-sm font-semibold text-foreground">{n.title}</p>
                         {n.body && <p className="mt-0.5 font-body text-xs text-muted-foreground">{n.body}</p>}
