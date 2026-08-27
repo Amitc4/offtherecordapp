@@ -230,6 +230,8 @@ const LoginPage = () => {
             {isRegister ? "Sign in" : "Register"}
           </button>
         </p>
+        </>
+        )}
       </motion.div>
     </div>
   );
