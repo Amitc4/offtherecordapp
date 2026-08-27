@@ -17,7 +17,7 @@ import { Disc3, X, AlertTriangle } from "lucide-react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { supabase } from "@/integrations/supabase/client";
 import { MIN_JUDGED_PCT } from "@/config/scanner";
-import { discOfSideKey, sideKeyLabel } from "@/lib/recordFormat";
+import { discOfSideKey, sideOfSideKey, angleOfSideKey, sideKeyLabel } from "@/lib/recordFormat";
 
 
 const BUCKET = "record-photos";
@@ -104,7 +104,10 @@ const orderedSideKeys = (sides: SideScanSummary[]): string[] => {
     new Set(sides.map((s) => (s.side || "").toUpperCase()).filter(Boolean)),
   );
   if (!keys.length) return DEFAULT_SIDES;
-  const rank = (k: string) => discOfSideKey(k) * 10 + (k.startsWith("B") ? 1 : 0);
+  const rank = (k: string) =>
+    discOfSideKey(k) * 100 +
+    (sideOfSideKey(k) === "B" ? 10 : 0) +
+    angleOfSideKey(k);
   return keys.sort((a, b) => rank(a) - rank(b));
 };
 
