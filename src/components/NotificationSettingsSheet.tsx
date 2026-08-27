@@ -60,6 +60,15 @@ const loadPrefs = (): NotificationPrefs => {
 
 const NotificationSettingsSheet = ({ open, onOpenChange }: NotificationSettingsSheetProps) => {
   const [prefs, setPrefs] = useState<NotificationPrefs>(defaultPrefs);
+  const push = usePushNotifications();
+
+  /** Turn device push notifications on/off. */
+  const togglePush = async (v: boolean) => {
+    const res = v ? await push.subscribe() : await push.unsubscribe();
+    if (res.ok) toast.success(v ? "Push notifications enabled" : "Push notifications disabled");
+    else toast.error(res.error ?? "Couldn't change push notifications");
+  };
+
 
   useEffect(() => {
     if (open) setPrefs(loadPrefs());
