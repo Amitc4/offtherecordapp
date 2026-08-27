@@ -60,7 +60,7 @@ const SpotifyIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ focusFriendRequests = 0 }: { focusFriendRequests?: number }) => {
   const { user, signOut } = useAuth();
   const { data: profile } = useDiscogsProfile();
   const { startConnect } = useDiscogsConnect();
