@@ -358,6 +358,36 @@ export type Database = {
         }
         Relationships: []
       }
+      push_preferences: {
+        Row: {
+          chat_message: boolean
+          created_at: string
+          friend_request: boolean
+          push_enabled: boolean
+          updated_at: string
+          user_id: string
+          wishlist_match: boolean
+        }
+        Insert: {
+          chat_message?: boolean
+          created_at?: string
+          friend_request?: boolean
+          push_enabled?: boolean
+          updated_at?: string
+          user_id: string
+          wishlist_match?: boolean
+        }
+        Update: {
+          chat_message?: boolean
+          created_at?: string
+          friend_request?: boolean
+          push_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+          wishlist_match?: boolean
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           auth: string
