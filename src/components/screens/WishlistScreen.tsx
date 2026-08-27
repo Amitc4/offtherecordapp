@@ -38,7 +38,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import RecordCardInfo from "@/components/RecordCardInfo";
+import { textDirClass, displayName } from "@/lib/utils";
 
 
 const WishlistScreen = () => {
@@ -183,7 +183,7 @@ const WishlistScreen = () => {
               <div
                 key={item.id}
                 onClick={() => selectMode ? toggleSelect(item.id) : setDetailItem(item)}
-                className={`flex items-center gap-4 rounded-xl p-4 vinyl-shadow transition-all cursor-pointer ${isSelected ? "bg-primary/10 ring-2 ring-primary/40" : "bg-card"}`}
+                className={`flex items-center gap-3 rounded-xl p-2.5 vinyl-shadow transition-all cursor-pointer ${isSelected ? "bg-primary/10 ring-2 ring-primary/40" : "bg-card"}`}
               >
                 {selectMode && (
                   <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
@@ -200,16 +200,16 @@ const WishlistScreen = () => {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <RecordCardInfo
-                    size="md"
-                    title={item.title}
-                    artist={item.artist}
-                    year={item.year}
-                    format={(item as any).format}
-                    genre={(item as any).genre}
-                  />
+                  <h3 className={`font-display text-base font-semibold leading-tight text-foreground truncate ${textDirClass(displayName(item.title))}`}>
+                    {displayName(item.title)}
+                  </h3>
+                  <p className={`font-display text-sm text-muted-foreground truncate ${textDirClass(displayName(item.artist))}`}>
+                    {displayName(item.artist)}
+                  </p>
+                  {item.year ? (
+                    <p className="font-body text-xs text-muted-foreground">{item.year}</p>
+                  ) : null}
                 </div>
-
               </div>
             );
           })}
@@ -222,11 +222,11 @@ const WishlistScreen = () => {
               <div
                 key={item.id}
                 onClick={() => selectMode ? toggleSelect(item.id) : setDetailItem(item)}
-                className={`group rounded-xl p-2.5 vinyl-shadow transition-all cursor-pointer ${
+                className={`group rounded-xl p-1.5 vinyl-shadow transition-all cursor-pointer ${
                   selectMode ? "" : "hover:scale-[1.02]"
                 } ${isSelected ? "bg-primary/10 ring-2 ring-primary/40" : "bg-card"}`}
               >
-                <div className="relative mb-2 flex aspect-square items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
+                <div className="relative mb-1 flex aspect-square items-center justify-center rounded-lg bg-primary/10 overflow-hidden">
                   {selectMode && (
                     <div className={`absolute top-1.5 left-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-md border-2 transition-colors ${
                       isSelected ? "border-primary bg-primary" : "border-white/60 bg-black/30"
@@ -240,15 +240,17 @@ const WishlistScreen = () => {
                     <Heart size={36} className="text-primary transition-transform group-hover:scale-110" fill="hsl(var(--primary))" />
                   )}
                 </div>
-                <RecordCardInfo
-                  title={item.title}
-                  artist={item.artist}
-                  year={item.year}
-                  format={(item as any).format}
-                  genre={(item as any).genre}
-
-                />
-
+                <div className="min-w-0 px-0.5">
+                  <h3 className={`font-display text-sm font-semibold leading-tight text-foreground truncate ${textDirClass(displayName(item.title))}`}>
+                    {displayName(item.title)}
+                  </h3>
+                  <p className={`font-display text-xs text-muted-foreground truncate ${textDirClass(displayName(item.artist))}`}>
+                    {displayName(item.artist)}
+                  </p>
+                  {item.year ? (
+                    <p className="font-body text-[10px] text-muted-foreground">{item.year}</p>
+                  ) : null}
+                </div>
               </div>
             );
           })}
