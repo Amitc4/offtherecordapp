@@ -64,7 +64,9 @@ Deno.serve(async (req) => {
     if (prefs.push_enabled === false) return json({ sent: 0, skipped: "push_disabled" });
     const typeKey: Record<string, keyof typeof prefs> = {
       chat_message: "chat_message",
+      trade_offer: "chat_message",
       friend_request: "friend_request",
+      friend_accepted: "friend_request",
       wishlist_match: "wishlist_match",
     };
     const key = typeKey[body.type ?? ""];
