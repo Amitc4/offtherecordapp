@@ -175,11 +175,21 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
 
   const graded = hasGrade(record.condition);
   const isCd = isCdFormat(record.format);
-  const discs = discCount(record.format);
-  const discList = Array.from({ length: discs }, (_, i) => i + 1);
   /** Discs that already have at least one stored surface scan. */
   const gradedDiscs = new Set(sideScans.map((s) => discOfSideKey(s.side)));
-  /** First disc of a multi-disc set that still has no scans (null when all graded). */
+  /**
+   * Total discs shown. Many releases (especially Hebrew pressings) are not tagged
+   * as multi-disc, so the count grows from the format string, any already-graded
+   * disc numbers, and discs the user added manually via "Grade another vinyl".
+   */
+  const discs = Math.max(
+    discCount(record.format),
+    ...Array.from(gradedDiscs),
+    extraDiscs,
+    1,
+  );
+  const discList = Array.from({ length: discs }, (_, i) => i + 1);
+  /** First disc that still has no scans (null when all graded). */
   const nextUngradedDisc = discList.find((d) => !gradedDiscs.has(d)) ?? null;
 
   const currentOption = STATUS_OPTIONS.find((o) => o.value === localStatus) || STATUS_OPTIONS[1];
