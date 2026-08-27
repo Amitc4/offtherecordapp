@@ -10,8 +10,9 @@
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
-import { Bell, Volume2, Vibrate, Clock, MessageSquare, Heart, Package, UserPlus } from "lucide-react";
+import { Bell, Volume2, Vibrate, Clock, MessageSquare, Heart, Package, UserPlus, BellRing } from "lucide-react";
 import { toast } from "sonner";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 /** Props for the Notification Settings bottom-sheet. */
 interface NotificationSettingsSheetProps {
