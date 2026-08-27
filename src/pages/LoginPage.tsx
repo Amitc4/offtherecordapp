@@ -149,6 +149,7 @@ const LoginPage = () => {
             </button>
           </div>
         ) : (
+        <>
         <motion.form
           onSubmit={handleSubmit}
           className="w-full space-y-4"
