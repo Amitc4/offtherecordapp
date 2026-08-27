@@ -22,7 +22,7 @@ import GradeBadge, { hasGrade } from "@/components/GradeBadge";
 import RecordPhotoUpload from "@/components/RecordPhotoUpload";
 import GradingPhotosViewer, { type SideScanSummary } from "@/components/GradingPhotosViewer";
 import { fetchScansByRecord } from "@/lib/gradingScans";
-import { discCount, isCdFormat, discOfSideKey } from "@/lib/recordFormat";
+import { isCdFormat, discOfSideKey } from "@/lib/recordFormat";
 
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
