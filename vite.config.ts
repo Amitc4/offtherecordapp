@@ -43,6 +43,8 @@ export default defineConfig(({ mode }) => ({
       manifest: false,
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        // Web Push handlers are merged into the generated service worker.
+        importScripts: ["push-sw.js"],
         navigateFallbackDenylist: [/^\/~oauth/],
         runtimeCaching: [
           {

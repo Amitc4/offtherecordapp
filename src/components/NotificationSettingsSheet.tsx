@@ -10,8 +10,9 @@
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
-import { Bell, Volume2, Vibrate, Clock, MessageSquare, Heart, Package, UserPlus } from "lucide-react";
+import { Bell, Volume2, Vibrate, Clock, MessageSquare, Heart, Package, UserPlus, BellRing } from "lucide-react";
 import { toast } from "sonner";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 /** Props for the Notification Settings bottom-sheet. */
 interface NotificationSettingsSheetProps {
@@ -59,6 +60,15 @@ const loadPrefs = (): NotificationPrefs => {
 
 const NotificationSettingsSheet = ({ open, onOpenChange }: NotificationSettingsSheetProps) => {
   const [prefs, setPrefs] = useState<NotificationPrefs>(defaultPrefs);
+  const push = usePushNotifications();
+
+  /** Turn device push notifications on/off. */
+  const togglePush = async (v: boolean) => {
+    const res = v ? await push.subscribe() : await push.unsubscribe();
+    if (res.ok) toast.success(v ? "Push notifications enabled" : "Push notifications disabled");
+    else toast.error(res.error ?? "Couldn't change push notifications");
+  };
+
 
   useEffect(() => {
     if (open) setPrefs(loadPrefs());
@@ -94,6 +104,22 @@ const NotificationSettingsSheet = ({ open, onOpenChange }: NotificationSettingsS
               General
             </h3>
             <div className="space-y-1">
+              <div className="flex items-center gap-3 rounded-xl p-4 hover:bg-card transition-colors">
+                <BellRing size={18} className="text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-body text-sm font-medium text-foreground">Push Notifications</p>
+                  <p className="font-body text-xs text-muted-foreground">
+                    {push.supported
+                      ? "Get alerts on this device even when the app is closed"
+                      : "Not supported on this device — install the app to your home screen"}
+                  </p>
+                </div>
+                <Switch
+                  checked={push.enabled}
+                  disabled={!push.supported || push.loading}
+                  onCheckedChange={togglePush}
+                />
+              </div>
               <SettingRow
                 icon={Volume2}
                 label="Sound"
