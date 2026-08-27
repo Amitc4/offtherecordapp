@@ -3,14 +3,14 @@
  *
  * **Flow:**
  *   1. The user adds 4 photos: Side A1, Side A2, Side B1 and Side B2 (two angles per side).
- *   2. "Grade Record" sends each side to the external surface-analysis API as a
+ *   2. "Grade Record" sends each angle to the external surface-analysis API as a
  *      separate `multipart/form-data` request (see `src/lib/scannerApi.ts`).
- *      Each side is analysed independently — if one fails the other is still shown.
- *   3. Results show a suggested overall grade (the worse of the two sides) plus a
- *      card per side with the detection overlay, mark list, coverage and warnings.
+ *      Each angle is analysed independently — if one fails the others are still shown.
+ *   3. Results show a suggested overall grade (the worse of the four angles) plus a
+ *      card per angle with the detection overlay, mark list, coverage and warnings.
  *   4. In the background the photos (plus auto-generated centre-label macro crops)
- *      are uploaded to storage and attached to the record, and each side's
- *      analysis is persisted to `record_surface_scans` for later admin review.
+ *      are uploaded to storage and attached to the record, and each angle's
+ *      analysis is persisted to `record_surface_scans` for later review.
  */
 import { useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
