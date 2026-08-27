@@ -15,7 +15,7 @@ import { useRef, useState, useEffect } from "react";
 import { displayName, textDirClass } from "@/lib/utils";
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive, Images, Diamond } from "lucide-react";
+import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive, Images, Diamond, Plus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import GradeVinylDialog from "@/components/GradeVinylDialog";
 import GradeBadge, { hasGrade } from "@/components/GradeBadge";
@@ -179,6 +179,8 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const discList = Array.from({ length: discs }, (_, i) => i + 1);
   /** Discs that already have at least one stored surface scan. */
   const gradedDiscs = new Set(sideScans.map((s) => discOfSideKey(s.side)));
+  /** First disc of a multi-disc set that still has no scans (null when all graded). */
+  const nextUngradedDisc = discList.find((d) => !gradedDiscs.has(d)) ?? null;
 
   const currentOption = STATUS_OPTIONS.find((o) => o.value === localStatus) || STATUS_OPTIONS[1];
   const StatusIcon = currentOption.icon;
@@ -289,8 +291,36 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
                   </button>
                 );
               })}
+
+              {/* Multi-disc sets: jump straight to the next disc that has no grade yet. */}
+              {discs > 1 && nextUngradedDisc !== null && (
+                <button
+                  onClick={() => {
+                    if (sealed) {
+                      toast.info(SEALED_BLOCKS_GRADING, { position: "top-center" });
+                      return;
+                    }
+                    setGradeDisc(nextUngradedDisc);
+                  }}
+                  aria-disabled={sealed}
+                  className={`flex w-full items-center gap-3 rounded-xl border border-primary/30 p-4 transition-colors ${
+                    sealed ? "cursor-not-allowed opacity-50" : "active:bg-primary/10"
+                  }`}
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+                    <Plus size={20} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-body text-sm font-semibold text-foreground">Grade another record</p>
+                    <p className="font-body text-xs text-muted-foreground">
+                      Continue with disc {nextUngradedDisc} of {discs}.
+                    </p>
+                  </div>
+                </button>
+              )}
             </div>
           )}
+
 
           {!isCd && (
             <GradeVinylDialog
