@@ -38,7 +38,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import RecordCardInfo from "@/components/RecordCardInfo";
+import { textDirClass, displayName } from "@/lib/utils";
 
 
 const WishlistScreen = () => {
