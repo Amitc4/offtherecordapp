@@ -104,6 +104,22 @@ const NotificationSettingsSheet = ({ open, onOpenChange }: NotificationSettingsS
               General
             </h3>
             <div className="space-y-1">
+              <div className="flex items-center gap-3 rounded-xl p-4 hover:bg-card transition-colors">
+                <BellRing size={18} className="text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-body text-sm font-medium text-foreground">Push Notifications</p>
+                  <p className="font-body text-xs text-muted-foreground">
+                    {push.supported
+                      ? "Get alerts on this device even when the app is closed"
+                      : "Not supported on this device — install the app to your home screen"}
+                  </p>
+                </div>
+                <Switch
+                  checked={push.enabled}
+                  disabled={!push.supported || push.loading}
+                  onCheckedChange={togglePush}
+                />
+              </div>
               <SettingRow
                 icon={Volume2}
                 label="Sound"
