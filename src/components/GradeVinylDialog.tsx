@@ -140,6 +140,12 @@ const GradeVinylDialog = ({
 
   const filledCount = slots.filter(Boolean).length;
 
+  // The scanner host sleeps when idle: wake it as soon as the dialog opens so
+  // the real request doesn't pay the 50s cold start.
+  useEffect(() => {
+    if (open) wakeScanner();
+  }, [open]);
+
   const reset = () => {
     slots.forEach((s) => s && URL.revokeObjectURL(s.previewUrl));
     setStage("capture");
@@ -147,9 +153,11 @@ const GradeVinylDialog = ({
     setResults([]);
     setOverall(null);
     setError(null);
+    setRecordWarnings([]);
     setAnalyzing(false);
     setInstructionsAck(false);
   };
+
 
   const handleOpenChange = (o: boolean) => {
     if (!o) reset();
