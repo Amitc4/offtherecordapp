@@ -1,0 +1,2 @@
+ALTER TABLE public.chats DROP CONSTRAINT chats_record_id_fkey;
+ALTER TABLE public.chats ADD CONSTRAINT chats_record_id_fkey FOREIGN KEY (record_id) REFERENCES public.user_records(id) ON DELETE SET NULL;
