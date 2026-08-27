@@ -41,14 +41,15 @@ const AccessibilityMenu = () => {
       {/* Floating buttons stack - right side above nav */}
       {hidden ? (
         <button
+          data-a11y-floating
           onClick={show}
-          className="fixed right-3 bottom-20 z-[60] flex h-11 w-11 items-center justify-center rounded-full bg-primary/25 text-primary shadow-sm backdrop-blur-sm transition-opacity hover:opacity-100 opacity-60 [body.chat-open_&]:hidden [body.camera-open_&]:hidden"
+          className="fixed right-3 bottom-20 z-[200] flex h-11 w-11 items-center justify-center rounded-full bg-primary/25 text-primary shadow-sm backdrop-blur-sm transition-opacity hover:opacity-100 opacity-60 [body.chat-open_&]:hidden [body.camera-open_&]:hidden"
           aria-label="Show accessibility and notification buttons"
         >
           <Accessibility size={18} />
         </button>
       ) : (
-        <div className="fixed right-3 bottom-20 z-[60] flex flex-col items-center gap-2 [body.chat-open_&]:hidden [body.camera-open_&]:hidden">
+        <div data-a11y-floating className="fixed right-3 bottom-20 z-[200] flex flex-col items-center gap-2 [body.chat-open_&]:hidden [body.camera-open_&]:hidden">
           <button
             onClick={hide}
             className="flex h-11 w-11 items-center justify-center rounded-full bg-muted text-muted-foreground shadow-md transition-transform hover:scale-105 active:scale-95"
@@ -69,6 +70,7 @@ const AccessibilityMenu = () => {
           <NotificationsBell />
         </div>
       )}
+
 
 
       {/* Menu panel */}
