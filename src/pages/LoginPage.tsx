@@ -125,6 +125,30 @@ const LoginPage = () => {
           Swap · Sell · Discover Vinyl
         </p>
 
+        {pendingEmail ? (
+          <div className="w-full rounded-lg border border-border bg-card p-5 text-center">
+            <h2 className="mb-2 font-body text-base font-semibold text-foreground">Confirm your email</h2>
+            <p className="font-body text-sm text-muted-foreground">
+              We sent a confirmation link to <span className="font-semibold text-foreground">{pendingEmail}</span>.
+              Open it to verify your address, then sign in.
+            </p>
+            <Button
+              type="button"
+              disabled={resending}
+              onClick={handleResend}
+              className="mt-4 h-12 w-full rounded-lg bg-primary font-body text-sm font-semibold tracking-wide text-primary-foreground hover:bg-accent"
+            >
+              {resending ? "Sending..." : "Resend confirmation email"}
+            </Button>
+            <button
+              type="button"
+              onClick={() => { setPendingEmail(null); setIsRegister(false); }}
+              className="mt-4 font-body text-sm font-semibold text-primary underline-offset-2 hover:underline"
+            >
+              Back to sign in
+            </button>
+          </div>
+        ) : (
         <motion.form
           onSubmit={handleSubmit}
           className="w-full space-y-4"
