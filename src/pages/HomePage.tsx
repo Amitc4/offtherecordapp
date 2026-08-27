@@ -35,6 +35,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUnreadChats } from "@/hooks/useUnreadChats";
 import { supabase } from "@/integrations/supabase/client";
 import { OPEN_CHAT_EVENT, type OpenChatDetail } from "@/lib/openChatWithSeller";
+import { OPEN_FRIEND_REQUESTS_EVENT } from "@/lib/friendRequests";
+
 
 type Tab = "collection" | "wishlist" | "discover" | "chats" | "profile" | "admin";
 
