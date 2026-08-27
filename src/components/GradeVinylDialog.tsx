@@ -12,11 +12,11 @@
  *      are uploaded to storage and attached to the record, and each angle's
  *      analysis is persisted to `record_surface_scans` for later review.
  */
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Camera, Loader2, Star, X, CheckCircle2, ImageIcon, FileUp } from "lucide-react";
+import { Camera, Loader2, Star, X, CheckCircle2, ImageIcon, FileUp, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -25,9 +25,17 @@ import CameraCapture, { type CaptureMode, type CaptureMeta } from "@/components/
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import ScanSideResultCard from "@/components/ScanSideResultCard";
 import PhotoLightbox from "@/components/PhotoLightbox";
-import { analyzeImage, formatGrade, worstGrade, type SideResult } from "@/lib/scannerApi";
-import { SCANNER_COLD_START_NOTICE } from "@/config/scanner";
+import {
+  analyzeRecord,
+  formatGrade,
+  gradeCode,
+  wakeScanner,
+  worstGrade,
+  type SideResult,
+} from "@/lib/scannerApi";
+import { SCANNER_COLD_START_NOTICE, SCANNER_MAX_PHOTO_BYTES } from "@/config/scanner";
 import { sideKey } from "@/lib/recordFormat";
+
 
 interface GradeVinylDialogProps {
   open: boolean;
