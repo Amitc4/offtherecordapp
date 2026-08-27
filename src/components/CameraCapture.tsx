@@ -223,9 +223,14 @@ const CameraCapture = ({ open, onOpenChange, mode, title, hint, onCapture }: Cam
           {/* ── BOTTOM ZONE: readouts + controls ─────────────────────────── */}
           <div className="shrink-0 space-y-2 px-4 pb-4 pt-3">
             {!previewUrl && (
-              <div className="flex flex-col items-center gap-1.5">
+              <div className="flex min-h-[3.25rem] flex-col items-center justify-center gap-1.5">
                 {gated && !isLevel && (
                   <p className="font-body text-xs font-medium text-white">
+                    Hold the phone flat above the record.
+                  </p>
+                )}
+                {gated && isLevel && (
+                  <p className="font-body text-xs font-medium text-white invisible" aria-hidden="true">
                     Hold the phone flat above the record.
                   </p>
                 )}
