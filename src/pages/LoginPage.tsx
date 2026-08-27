@@ -19,6 +19,7 @@ import VinylLogo from "@/components/VinylLogo";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { lovable } from "@/integrations/lovable";
+import { supabase } from "@/integrations/supabase/client";
 
 /** Official Google "G" mark (4-color), per Google Sign-In branding guidelines. */
 const GoogleIcon = ({ className = "h-5 w-5" }: { className?: string }) => (
