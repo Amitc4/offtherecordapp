@@ -53,6 +53,24 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  // Respect the user's push preferences (master switch + per-type opt-outs).
+  const { data: prefs } = await admin
+    .from("push_preferences")
+    .select("push_enabled, chat_message, friend_request, wishlist_match")
+    .eq("user_id", body.user_id)
+    .maybeSingle();
+
+  if (prefs) {
+    if (prefs.push_enabled === false) return json({ sent: 0, skipped: "push_disabled" });
+    const typeKey: Record<string, keyof typeof prefs> = {
+      chat_message: "chat_message",
+      friend_request: "friend_request",
+      wishlist_match: "wishlist_match",
+    };
+    const key = typeKey[body.type ?? ""];
+    if (key && prefs[key] === false) return json({ sent: 0, skipped: `type_disabled:${body.type}` });
+  }
+
   const { data: subs, error } = await admin
     .from("push_subscriptions")
     .select("id, endpoint, p256dh, auth")
