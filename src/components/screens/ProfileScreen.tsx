@@ -97,6 +97,19 @@ const ProfileScreen = ({ focusFriendRequests = 0 }: { focusFriendRequests?: numb
   const [reviewCount, setReviewCount] = useState(0);
   const [viewingReviewsOf, setViewingReviewsOf] = useState<{ id: string; name: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingRequestsRef = useRef<HTMLDivElement>(null);
+
+  // A friend-request notification was tapped: expand the section and scroll to it.
+  useEffect(() => {
+    if (!focusFriendRequests) return;
+    setShowPendingRequests(true);
+    loadFriends();
+    const t = setTimeout(() => {
+      pendingRequestsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 250);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusFriendRequests]);
 
   useEffect(() => {
     if (!user) return;
