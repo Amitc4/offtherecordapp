@@ -46,7 +46,11 @@ const AccessibilityMenu = () => {
           className="fixed right-3 bottom-20 z-[200] flex h-11 w-11 items-center justify-center rounded-full bg-primary/25 text-primary shadow-sm backdrop-blur-sm transition-opacity hover:opacity-100 opacity-60 [body.chat-open_&]:hidden [body.camera-open_&]:hidden"
           aria-label="Show accessibility and notification buttons"
         >
-          <Accessibility size={18} />
+          <span className="flex items-center gap-[1px]">
+            <Accessibility size={14} />
+            <span className="font-body text-[13px] leading-none -rotate-[0deg]">/</span>
+            <Bell size={14} />
+          </span>
         </button>
       ) : (
         <div data-a11y-floating className="fixed right-3 bottom-20 z-[200] flex flex-col items-center gap-2 [body.chat-open_&]:hidden [body.camera-open_&]:hidden">
