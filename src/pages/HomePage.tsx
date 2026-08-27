@@ -100,6 +100,15 @@ const HomePage = () => {
     return () => window.removeEventListener(OPEN_CHAT_EVENT, onOpenChat);
   }, []);
 
+  // Jump to the Profile tab with pending friend requests open.
+  useEffect(() => {
+    const onOpenFriendRequests = () => {
+      setActiveTab("profile");
+      setFriendRequestsFocus((n) => n + 1);
+    };
+    window.addEventListener(OPEN_FRIEND_REQUESTS_EVENT, onOpenFriendRequests);
+    return () => window.removeEventListener(OPEN_FRIEND_REQUESTS_EVENT, onOpenFriendRequests);
+  }, []);
 
   const renderScreen = () => {
     switch (activeTab) {
@@ -107,7 +116,8 @@ const HomePage = () => {
       case "wishlist": return <WishlistScreen />;
       case "discover": return <DiscoverScreen onNavigateToChat={handleNavigateToChat} />;
       case "chats": return <ChatsScreen initialChatId={openChatId} initialDraft={draftMessage} onChatOpened={() => { setOpenChatId(null); setDraftMessage(""); }} />;
-      case "profile": return <ProfileScreen />;
+      case "profile": return <ProfileScreen focusFriendRequests={friendRequestsFocus} />;
+
       case "admin": return <AdminScreen />;
     }
   };
