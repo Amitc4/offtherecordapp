@@ -15,12 +15,14 @@ import { Accessibility, Bell, X, Type, Eye, Zap, BookOpen, RotateCcw, Minus, Plu
 import { motion, AnimatePresence } from "framer-motion";
 import { useAccessibility } from "@/hooks/useAccessibility";
 import NotificationsBell from "@/components/NotificationsBell";
+import { useNotifications } from "@/hooks/useNotifications";
 
 const fontSizeLabels = ["Default", "Large", "Extra Large", "Huge", "Maximum"];
 
 const AccessibilityMenu = () => {
   const [open, setOpen] = useState(false);
   const [hidden, setHidden] = useState(() => sessionStorage.getItem("a11y-buttons-hidden") === "1");
+  const { unreadCount } = useNotifications();
   const { settings, setFontSize, toggleHighContrast, toggleReduceAnimations, toggleDyslexiaFont, resetAll } = useAccessibility();
 
   const hasChanges = settings.fontSize !== 0 || settings.highContrast || settings.reduceAnimations || settings.dyslexiaFont;
@@ -51,7 +53,13 @@ const AccessibilityMenu = () => {
             <span className="font-body text-[13px] leading-none -rotate-[0deg]">/</span>
             <Bell size={14} />
           </span>
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 font-body text-[10px] font-bold text-primary-foreground shadow-md">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
         </button>
+
       ) : (
         <div data-a11y-floating className="fixed right-3 bottom-20 z-[200] flex flex-col items-center gap-2 [body.chat-open_&]:hidden [body.camera-open_&]:hidden">
           <button
