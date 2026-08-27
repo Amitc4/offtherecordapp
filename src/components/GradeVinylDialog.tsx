@@ -418,15 +418,19 @@ const GradeVinylDialog = ({
                   <ol className="flex flex-col gap-1.5 font-body text-xs text-foreground">
                     <li className="flex gap-2">
                       <span className="font-semibold text-primary">1.</span>
-                      <span>Shoot in a dark place with a direct light on the vinyl at a low angle.</span>
+                      <span>Clean the surface of the vinyl before taking the picture.</span>
                     </li>
                     <li className="flex gap-2">
                       <span className="font-semibold text-primary">2.</span>
-                      <span>Hold the camera directly above the vinyl and keep the disc centered.</span>
+                      <span>Avoid submitting a photo with a lot of reflections to avoid false deductions to the grade.</span>
                     </li>
                     <li className="flex gap-2">
                       <span className="font-semibold text-primary">3.</span>
-                      <span>Clean the surface of the vinyl beforehand.</span>
+                      <span>Keep the camera steady above the vinyl according to the allowed angle degrees.</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="font-semibold text-primary">4.</span>
+                      <span>The vinyl grading feature is only available to black vinyl records!</span>
                     </li>
                   </ol>
                 </div>
