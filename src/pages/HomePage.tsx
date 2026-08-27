@@ -53,6 +53,9 @@ const HomePage = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [openChatId, setOpenChatId] = useState<number | null>(null);
   const [draftMessage, setDraftMessage] = useState<string>("");
+  /** Bumped when a friend-request notification asks the Profile tab to focus requests. */
+  const [friendRequestsFocus, setFriendRequestsFocus] = useState(0);
+
   const { user } = useAuth();
   const { total: unreadTotal } = useUnreadChats();
   const mainRef = useRef<HTMLElement>(null);
