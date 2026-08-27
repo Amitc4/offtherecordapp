@@ -6,8 +6,10 @@
  * bucket is private, so raw public URLs do not load).
  */
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
 
 const BUCKET = "record-photos";
 
