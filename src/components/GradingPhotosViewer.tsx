@@ -374,17 +374,38 @@ const ZoomViewer = ({
   }, []);
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] bg-foreground/95" style={{ touchAction: "none" }}>
+    <div
+      className="pointer-events-auto fixed inset-0 z-[200] bg-foreground/95"
+      style={{ touchAction: "none" }}
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+    >
       <button
-        className="absolute right-4 top-4 z-10 rounded-full bg-background/20 p-2 text-background"
-        onClick={onClose}
+        type="button"
+        className="pointer-events-auto absolute right-3 top-3 z-[210] flex h-11 w-11 items-center justify-center rounded-full bg-background/25 text-background active:bg-background/40"
+        onPointerDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onPointerUp={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
         aria-label="Close"
       >
-        <X size={20} />
+        <X size={22} />
       </button>
-      <span className="absolute left-4 top-4 z-10 rounded-full bg-background/20 px-3 py-1 font-body text-xs font-semibold text-background">
+      <span className="pointer-events-none absolute left-4 top-4 z-[210] rounded-full bg-background/20 px-3 py-1 font-body text-xs font-semibold text-background">
         {label}
       </span>
+
 
       {failed ? (
         <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-6 text-center">
