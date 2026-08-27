@@ -199,7 +199,13 @@ const GradeVinylDialog = ({
   };
 
   const handleCapture = (file: File, meta: CaptureMeta = { levelVerified: false }) => {
+    // The scanner rejects anything over 12 MB per photo (HTTP 413).
+    if (file.size > SCANNER_MAX_PHOTO_BYTES) {
+      toast.error("This photo is too large (max 12 MB). Please retake it.");
+      return;
+    }
     const idx = activeSlot;
+
     setSlots((prev) => {
       const next = [...prev];
       if (next[idx]) URL.revokeObjectURL(next[idx]!.previewUrl);
