@@ -880,21 +880,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_read_grading_object: {
-        Args: { _object_name: string }
-        Returns: boolean
-      }
-      can_read_upload_object: {
-        Args: { _object_name: string }
-        Returns: boolean
-      }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       app_role: "admin" | "user" | "main_admin"
