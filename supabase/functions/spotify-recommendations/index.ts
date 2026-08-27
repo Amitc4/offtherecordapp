@@ -1,7 +1,7 @@
 // Spotify recommendations: refreshes token if needed, fetches user's top artists,
 // then fuzzy-matches them against marketplace records (status = 'for_sale').
 // Matching is normalized, accent/punctuation-insensitive, and bilingual (EN <-> HE).
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
