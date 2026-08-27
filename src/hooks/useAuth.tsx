@@ -59,12 +59,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  /** Register a new user. Optionally stores `displayName` in user metadata. */
+  /**
+   * Register a new user. Optionally stores `displayName` in user metadata.
+   * Email confirmation is required: no session is returned until the user
+   * clicks the confirmation link sent to their address.
+   */
   const signUp = async (email: string, password: string, displayName?: string) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { display_name: displayName } },
+      options: {
+        data: { display_name: displayName },
+        emailRedirectTo: window.location.origin,
+      },
     });
     return { error };
   };
