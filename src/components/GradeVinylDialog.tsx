@@ -109,6 +109,7 @@ const GradeVinylDialog = ({
   const [cameraOpen, setCameraOpen] = useState(false);
   const [activeSlot, setActiveSlot] = useState<number>(0);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [instructionsAck, setInstructionsAck] = useState(false);
   const libraryInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -122,6 +123,7 @@ const GradeVinylDialog = ({
     setOverall(null);
     setError(null);
     setAnalyzing(false);
+    setInstructionsAck(false);
   };
 
   const handleOpenChange = (o: boolean) => {
