@@ -251,7 +251,7 @@ const GradeVinylDialog = ({
       return { blob: new Blob([bytes], { type }), ext, type };
     };
 
-    };
+
 
     const upload = async (path: string, body: Blob | File, contentType: string) => {
       const { error } = await supabase.storage
