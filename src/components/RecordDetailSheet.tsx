@@ -80,6 +80,8 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const [savingPrice, setSavingPrice] = useState(false);
   /** Disc currently being graded (1-based); null = grading dialog closed. */
   const [gradeDisc, setGradeDisc] = useState<number | null>(null);
+  /** Extra discs added manually when the format string understates the disc count. */
+  const [extraDiscs, setExtraDiscs] = useState(0);
   const [photos, setPhotos] = useState<{ id: string; photo_url: string }[]>([]);
   const [sideScans, setSideScans] = useState<SideScanSummary[]>([]);
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -175,11 +177,21 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
 
   const graded = hasGrade(record.condition);
   const isCd = isCdFormat(record.format);
-  const discs = discCount(record.format);
-  const discList = Array.from({ length: discs }, (_, i) => i + 1);
   /** Discs that already have at least one stored surface scan. */
   const gradedDiscs = new Set(sideScans.map((s) => discOfSideKey(s.side)));
-  /** First disc of a multi-disc set that still has no scans (null when all graded). */
+  /**
+   * Total discs shown. Many releases (especially Hebrew pressings) are not tagged
+   * as multi-disc, so the count grows from the format string, any already-graded
+   * disc numbers, and discs the user added manually via "Grade another vinyl".
+   */
+  const discs = Math.max(
+    discCount(record.format),
+    ...Array.from(gradedDiscs),
+    extraDiscs,
+    1,
+  );
+  const discList = Array.from({ length: discs }, (_, i) => i + 1);
+  /** First disc that still has no scans (null when all graded). */
   const nextUngradedDisc = discList.find((d) => !gradedDiscs.has(d)) ?? null;
 
   const currentOption = STATUS_OPTIONS.find((o) => o.value === localStatus) || STATUS_OPTIONS[1];
@@ -292,32 +304,40 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
                 );
               })}
 
-              {/* Multi-disc sets: jump straight to the next disc that has no grade yet. */}
-              {discs > 1 && nextUngradedDisc !== null && (
-                <button
-                  onClick={() => {
-                    if (sealed) {
-                      toast.info(SEALED_BLOCKS_GRADING, { position: "top-center" });
-                      return;
-                    }
+              {/* Always available: many releases aren't tagged as multi-disc.
+                  Jumps to the next ungraded disc, or adds one when all are graded. */}
+              <button
+                onClick={() => {
+                  if (sealed) {
+                    toast.info(SEALED_BLOCKS_GRADING, { position: "top-center" });
+                    return;
+                  }
+                  if (nextUngradedDisc !== null) {
                     setGradeDisc(nextUngradedDisc);
-                  }}
-                  aria-disabled={sealed}
-                  className={`flex w-full items-center gap-3 rounded-xl border border-primary/30 p-4 transition-colors ${
-                    sealed ? "cursor-not-allowed opacity-50" : "active:bg-primary/10"
-                  }`}
-                >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
-                    <Plus size={20} />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-body text-sm font-semibold text-foreground">Grade another record</p>
-                    <p className="font-body text-xs text-muted-foreground">
-                      Continue with disc {nextUngradedDisc} of {discs}.
-                    </p>
-                  </div>
-                </button>
-              )}
+                  } else {
+                    const next = discs + 1;
+                    setExtraDiscs(next);
+                    setGradeDisc(next);
+                  }
+                }}
+                aria-disabled={sealed}
+                className={`flex w-full items-center gap-3 rounded-xl border border-primary/30 p-4 transition-colors ${
+                  sealed ? "cursor-not-allowed opacity-50" : "active:bg-primary/10"
+                }`}
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+                  <Plus size={20} />
+                </div>
+                <div className="text-left">
+                  <p className="font-body text-sm font-semibold text-foreground">Grade another vinyl</p>
+                  <p className="font-body text-xs text-muted-foreground">
+                    {sealed
+                      ? SEALED_BLOCKS_GRADING
+                      : `For sets with more than one record — continue with disc ${nextUngradedDisc ?? discs + 1}.`}
+                  </p>
+                </div>
+              </button>
+
             </div>
           )}
 
