@@ -236,13 +236,21 @@ const GradeVinylDialog = ({
     const sessionId = crypto.randomUUID();
     
 
-    /** Turns a base64 data URI (or bare base64) into a Blob for storage upload. */
-    const toBlob = (data: string): Blob => {
+    /**
+     * Turns a base64 data URI (or bare base64) into a Blob for storage upload.
+     * The scanner returns JPEG data URIs, so the MIME type is read from the URI.
+     */
+    const toBlob = (data: string): { blob: Blob; ext: string; type: string } => {
+      const match = data.match(/^data:([^;,]+);base64,/);
+      const type = match?.[1] || "image/png";
       const base64 = data.includes(",") ? data.split(",")[1] : data;
       const bin = atob(base64);
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      return new Blob([bytes], { type: "image/png" });
+      const ext = type === "image/jpeg" ? "jpg" : type.split("/")[1] || "png";
+      return { blob: new Blob([bytes], { type }), ext, type };
+    };
+
     };
 
     const upload = async (path: string, body: Blob | File, contentType: string) => {
