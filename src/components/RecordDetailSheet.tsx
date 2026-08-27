@@ -80,6 +80,8 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const [savingPrice, setSavingPrice] = useState(false);
   /** Disc currently being graded (1-based); null = grading dialog closed. */
   const [gradeDisc, setGradeDisc] = useState<number | null>(null);
+  /** Extra discs added manually when the format string understates the disc count. */
+  const [extraDiscs, setExtraDiscs] = useState(0);
   const [photos, setPhotos] = useState<{ id: string; photo_url: string }[]>([]);
   const [sideScans, setSideScans] = useState<SideScanSummary[]>([]);
   const [viewerOpen, setViewerOpen] = useState(false);
