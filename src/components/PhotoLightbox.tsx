@@ -71,17 +71,39 @@ const PhotoLightbox = ({ urls, index, onClose, onIndexChange }: PhotoLightboxPro
   };
 
   return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/95 p-4"
-      onClick={onClose}
+      className="pointer-events-auto fixed inset-0 z-[200] flex items-center justify-center bg-foreground/95 p-4"
+      style={{ touchAction: "none" }}
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClose();
+      }}
     >
       <button
-        onClick={onClose}
+        type="button"
+        onPointerDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onPointerUp={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
         aria-label="Close photo"
-        className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-background/20 text-background"
+        className="pointer-events-auto absolute right-3 top-3 z-[210] flex h-11 w-11 items-center justify-center rounded-full bg-background/25 text-background active:bg-background/40"
       >
-        <X size={20} />
+        <X size={22} />
       </button>
+
 
       {urls.length > 1 && (
         <>
