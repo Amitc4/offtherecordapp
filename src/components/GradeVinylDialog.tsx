@@ -127,6 +127,9 @@ const GradeVinylDialog = ({
   const [results, setResults] = useState<SideResult[]>([]);
   const [overall, setOverall] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** Record-level warnings returned by the scanner (a 200 can still warn). */
+  const [recordWarnings, setRecordWarnings] = useState<string[]>([]);
+
   const [overlayUrl, setOverlayUrl] = useState<string | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [activeSlot, setActiveSlot] = useState<number>(0);
