@@ -15,7 +15,7 @@ import { useRef, useState, useEffect } from "react";
 import { displayName, textDirClass } from "@/lib/utils";
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive, Images, Diamond } from "lucide-react";
+import { Disc3, Camera, Calendar, Tag, Package, Star, Trash2, Archive, Images, Diamond, Plus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import GradeVinylDialog from "@/components/GradeVinylDialog";
 import GradeBadge, { hasGrade } from "@/components/GradeBadge";
