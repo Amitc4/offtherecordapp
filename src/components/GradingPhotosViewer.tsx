@@ -377,6 +377,9 @@ const ZoomViewer = ({
     // Lock scrolling behind the viewer.
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    // Hide floating a11y/notification buttons so a stray tap can't dismiss the viewer.
+    document.body.classList.add("photo-viewer-open");
+
 
     // Escape closes only this viewer: capture-phase + stopImmediatePropagation
     // runs before Radix's document-level (bubble) handler.
@@ -396,6 +399,8 @@ const ZoomViewer = ({
 
     return () => {
       document.body.style.overflow = prev;
+      document.body.classList.remove("photo-viewer-open");
+
       document.removeEventListener("keydown", onKeyDown, true);
       window.removeEventListener("popstate", onPopState);
       if (window.history.state?.zoomViewer) window.history.back();

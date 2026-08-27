@@ -63,7 +63,17 @@ interface PhotoLightboxProps {
 }
 
 const PhotoLightbox = ({ urls, index, onClose, onIndexChange }: PhotoLightboxProps) => {
+  const isOpen = index !== null && !!urls[index ?? 0];
+
+  // Hide floating a11y/notification buttons while open so a stray tap can't dismiss it.
+  useEffect(() => {
+    if (!isOpen) return;
+    document.body.classList.add("photo-viewer-open");
+    return () => document.body.classList.remove("photo-viewer-open");
+  }, [isOpen]);
+
   if (index === null || !urls[index]) return null;
+
 
   const go = (delta: number) => {
     const next = (index + delta + urls.length) % urls.length;
