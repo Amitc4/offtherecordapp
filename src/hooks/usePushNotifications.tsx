@@ -62,8 +62,24 @@ export function usePushNotifications() {
 
     setLoading(true);
     try {
+      // Blocked earlier (or blocked inside the editor preview iframe): requestPermission()
+      // resolves instantly with "denied", so explain how to recover instead.
+      if (Notification.permission === "denied") {
+        return {
+          ok: false,
+          error:
+            "Notifications are blocked for this site. Open the published app (or add it to your home screen), then allow notifications in your browser's site settings and try again.",
+        };
+      }
+
       const permission = await Notification.requestPermission();
-      if (permission !== "granted") return { ok: false, error: "Notification permission was denied." };
+      if (permission !== "granted") {
+        return {
+          ok: false,
+          error:
+            "Notification permission wasn't granted. Tap the toggle again and choose Allow — in the editor preview this is blocked, so use the published app.",
+        };
+      }
 
       const reg = await navigator.serviceWorker.getRegistration();
       if (!reg) {
