@@ -51,7 +51,13 @@ const AccessibilityMenu = () => {
             <span className="font-body text-[13px] leading-none -rotate-[0deg]">/</span>
             <Bell size={14} />
           </span>
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 font-body text-[10px] font-bold text-primary-foreground shadow-md">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
         </button>
+
       ) : (
         <div data-a11y-floating className="fixed right-3 bottom-20 z-[200] flex flex-col items-center gap-2 [body.chat-open_&]:hidden [body.camera-open_&]:hidden">
           <button
