@@ -70,7 +70,6 @@ const PhotoLightbox = ({ urls, index, onClose, onIndexChange }: PhotoLightboxPro
     onIndexChange?.(next);
   };
 
-  return (
   return createPortal(
     <div
       className="pointer-events-auto fixed inset-0 z-[200] flex items-center justify-center bg-foreground/95 p-4"
@@ -142,7 +141,8 @@ const PhotoLightbox = ({ urls, index, onClose, onIndexChange }: PhotoLightboxPro
           {index + 1} / {urls.length}
         </p>
       )}
-    </div>
+    </div>,
+    document.body
   );
 };
 
