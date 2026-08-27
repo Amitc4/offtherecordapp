@@ -35,6 +35,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUnreadChats } from "@/hooks/useUnreadChats";
 import { supabase } from "@/integrations/supabase/client";
 import { OPEN_CHAT_EVENT, type OpenChatDetail } from "@/lib/openChatWithSeller";
+import { OPEN_FRIEND_REQUESTS_EVENT } from "@/lib/friendRequests";
+
 
 type Tab = "collection" | "wishlist" | "discover" | "chats" | "profile" | "admin";
 
@@ -51,6 +53,9 @@ const HomePage = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [openChatId, setOpenChatId] = useState<number | null>(null);
   const [draftMessage, setDraftMessage] = useState<string>("");
+  /** Bumped when a friend-request notification asks the Profile tab to focus requests. */
+  const [friendRequestsFocus, setFriendRequestsFocus] = useState(0);
+
   const { user } = useAuth();
   const { total: unreadTotal } = useUnreadChats();
   const mainRef = useRef<HTMLElement>(null);
@@ -95,6 +100,15 @@ const HomePage = () => {
     return () => window.removeEventListener(OPEN_CHAT_EVENT, onOpenChat);
   }, []);
 
+  // Jump to the Profile tab with pending friend requests open.
+  useEffect(() => {
+    const onOpenFriendRequests = () => {
+      setActiveTab("profile");
+      setFriendRequestsFocus((n) => n + 1);
+    };
+    window.addEventListener(OPEN_FRIEND_REQUESTS_EVENT, onOpenFriendRequests);
+    return () => window.removeEventListener(OPEN_FRIEND_REQUESTS_EVENT, onOpenFriendRequests);
+  }, []);
 
   const renderScreen = () => {
     switch (activeTab) {
@@ -102,7 +116,8 @@ const HomePage = () => {
       case "wishlist": return <WishlistScreen />;
       case "discover": return <DiscoverScreen onNavigateToChat={handleNavigateToChat} />;
       case "chats": return <ChatsScreen initialChatId={openChatId} initialDraft={draftMessage} onChatOpened={() => { setOpenChatId(null); setDraftMessage(""); }} />;
-      case "profile": return <ProfileScreen />;
+      case "profile": return <ProfileScreen focusFriendRequests={friendRequestsFocus} />;
+
       case "admin": return <AdminScreen />;
     }
   };

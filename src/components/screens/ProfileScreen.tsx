@@ -60,7 +60,7 @@ const SpotifyIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ focusFriendRequests = 0 }: { focusFriendRequests?: number }) => {
   const { user, signOut } = useAuth();
   const { data: profile } = useDiscogsProfile();
   const { startConnect } = useDiscogsConnect();
@@ -97,6 +97,19 @@ const ProfileScreen = () => {
   const [reviewCount, setReviewCount] = useState(0);
   const [viewingReviewsOf, setViewingReviewsOf] = useState<{ id: string; name: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingRequestsRef = useRef<HTMLDivElement>(null);
+
+  // A friend-request notification was tapped: expand the section and scroll to it.
+  useEffect(() => {
+    if (!focusFriendRequests) return;
+    setShowPendingRequests(true);
+    loadFriends();
+    const t = setTimeout(() => {
+      pendingRequestsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 250);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusFriendRequests]);
 
   useEffect(() => {
     if (!user) return;
@@ -375,7 +388,7 @@ const ProfileScreen = () => {
 
       {/* Pending Friend Requests */}
       {pendingRequests.length > 0 && (
-        <div className="mb-4">
+        <div ref={pendingRequestsRef} className="mb-4 scroll-mt-24">
           <button
             onClick={() => setShowPendingRequests(!showPendingRequests)}
             className="flex w-full items-center gap-3 rounded-xl bg-primary/10 p-4 transition-colors hover:bg-primary/15"
