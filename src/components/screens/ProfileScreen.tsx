@@ -388,7 +388,7 @@ const ProfileScreen = ({ focusFriendRequests = 0 }: { focusFriendRequests?: numb
 
       {/* Pending Friend Requests */}
       {pendingRequests.length > 0 && (
-        <div className="mb-4">
+        <div ref={pendingRequestsRef} className="mb-4 scroll-mt-24">
           <button
             onClick={() => setShowPendingRequests(!showPendingRequests)}
             className="flex w-full items-center gap-3 rounded-xl bg-primary/10 p-4 transition-colors hover:bg-primary/15"
