@@ -285,15 +285,19 @@ const GradeVinylDialog = ({
 
         // Annotated overlay returned by the analysis server — this is what the gallery shows.
         const overlay = sideResults[i]?.analysis?.overlay_png;
-        overlayUrls.push(
-          overlay
-            ? await upload(
-                `${user.id}/grading/${sessionId}/overlay-${SLOTS[i].side}-${Date.now()}.png`,
-                toBlob(overlay),
-                "image/png"
-              )
-            : null
-        );
+        if (overlay) {
+          const { blob, ext: overlayExt, type } = toBlob(overlay);
+          overlayUrls.push(
+            await upload(
+              `${user.id}/grading/${sessionId}/overlay-${SLOTS[i].side}-${Date.now()}.${overlayExt}`,
+              blob,
+              type
+            )
+          );
+        } else {
+          overlayUrls.push(null);
+        }
+
       }
 
       const publicUrls = rawUrls.filter((u): u is string => !!u);
