@@ -9,31 +9,42 @@
  * Uses the `useNotifications()` hook for data and actions.
  */
 import { useState } from "react";
-import { Bell, Disc3 } from "lucide-react";
+import { Bell, Disc3, UserPlus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNotifications } from "@/hooks/useNotifications";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { openChatForRecord } from "@/lib/openChatWithSeller";
+import { requestFriendRequestsFocus } from "@/lib/friendRequests";
 
 const NotificationsBell = () => {
   const { notifications, unreadCount, markAsRead, markAllRead } = useNotifications();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
 
-  /** Tap handler: mark read and, for wishlist matches, open a chat with the seller. */
+  /**
+   * Tap handler:
+   * - `friend_request` → jump to the Profile tab with pending requests open.
+   * - `wishlist_match` → open a chat with the seller.
+   */
   const handleNotificationClick = async (n: {
     id: string;
     type: string;
     record_id: string | null;
   }) => {
     markAsRead(n.id);
+    if (n.type === "friend_request") {
+      setOpen(false);
+      requestFriendRequestsFocus();
+      return;
+    }
     if (n.type !== "wishlist_match" || !n.record_id || !user) return;
     setOpen(false);
     const ok = await openChatForRecord(n.record_id, user.id);
     if (!ok) toast.error("This record is no longer available");
   };
+
 
 
   return (
