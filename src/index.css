@@ -218,3 +218,9 @@ html {
 [data-a11y-floating] * {
   pointer-events: auto !important;
 }
+
+/* Hide the floating buttons while a full-screen photo viewer is open */
+body.photo-viewer-open [data-a11y-floating] {
+  display: none !important;
+}
+
