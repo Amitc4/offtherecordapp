@@ -1,14 +1,14 @@
 /**
- * @file GradingPhotosViewer.tsx — Modal showing exactly two images for a grading:
- * the annotated analysis overlay for Side A and for Side B.
+ * @file GradingPhotosViewer.tsx — Modal showing the original and annotated
+ * grading photos for each record side.
  *
- * Only the overlay images produced by the analysis server are displayed here (the
- * photo with detected marks highlighted). The raw photos the user took are kept in
- * storage — for re-analysis and future training data — but never shown here.
- *
- * Each side renders its own heading plus the stored result (grade, mark count and
- * assessed surface coverage). Sides with no result show a "Not graded yet" slot.
- * Tapping an image opens a full-screen viewer with pinch-to-zoom and free panning.
+ * Each side renders a pair of thumbnails: the original photo taken by the user
+ * and the overlay image returned by the analysis model with detected marks
+ * highlighted. Tapping either thumbnail opens a full-screen viewer with
+ * pinch-to-zoom and free panning, plus a toggle that instantly swaps between
+ * the original and marked-up versions of the same side without changing the
+ * viewport position — useful for quickly comparing where the model recognised
+ * scratches and imperfections.
  */
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -109,7 +109,7 @@ const orderedSideKeys = (sides: SideScanSummary[]): string[] => {
 };
 
 const GradingPhotosViewer = ({ open, onOpenChange, sides, title }: GradingPhotosViewerProps) => {
-  const [zoom, setZoom] = useState<{ url: string; label: string } | null>(null);
+  const [zoom, setZoom] = useState<{ side: string; mode: "before" | "after" } | null>(null);
 
   const sideKeys = orderedSideKeys(sides);
   const bySide = sideKeys.map((s) => sides.find((x) => (x.side || "").toUpperCase() === s));
@@ -127,6 +127,11 @@ const GradingPhotosViewer = ({ open, onOpenChange, sides, title }: GradingPhotos
 
   const loading = signed === null && present.length > 0;
   const count = present.length;
+
+  // Resolve the signed before/after URLs for the currently zoomed side.
+  const zoomIndex = zoom ? sideKeys.indexOf(zoom.side) : -1;
+  const zoomBeforeUrl = zoomIndex >= 0 ? displayUrls[zoomIndex * 2] : "";
+  const zoomAfterUrl = zoomIndex >= 0 ? displayUrls[zoomIndex * 2 + 1] : "";
 
   return (
     <>
@@ -150,7 +155,7 @@ const GradingPhotosViewer = ({ open, onOpenChange, sides, title }: GradingPhotos
                 hasAfter={!!slots[i * 2 + 1].url}
                 loading={loading}
                 scan={bySide[i]}
-                onOpen={(url, label) => setZoom({ url, label })}
+                onOpen={(mode) => setZoom({ side, mode })}
               />
             ))}
           </div>
@@ -159,7 +164,18 @@ const GradingPhotosViewer = ({ open, onOpenChange, sides, title }: GradingPhotos
         </DialogContent>
       </Dialog>
 
-      {zoom && <ZoomViewer url={zoom.url} label={zoom.label} onClose={() => setZoom(null)} />}
+      {zoom && (
+        <ZoomViewer
+          side={zoom.side}
+          mode={zoom.mode}
+          beforeUrl={zoomBeforeUrl}
+          afterUrl={zoomAfterUrl}
+          onToggle={() =>
+            setZoom((z) => (z ? { ...z, mode: z.mode === "before" ? "after" : "before" } : null))
+          }
+          onClose={() => setZoom(null)}
+        />
+      )}
     </>
   );
 };
@@ -253,7 +269,7 @@ const SideBlock = ({
   hasAfter?: boolean;
   loading?: boolean;
   scan?: SideScanSummary;
-  onOpen: (url: string, label: string) => void;
+  onOpen: (mode: "before" | "after") => void;
 }) => {
   const judged = scan?.judgedPct;
   const lowCoverage = typeof judged === "number" && judged < MIN_JUDGED_PCT;
@@ -287,7 +303,7 @@ const SideBlock = ({
           loading={loading}
           label="Before grading"
           alt={`original photo of ${side}`}
-          onOpen={() => beforeUrl && onOpen(beforeUrl, `${side} — before grading`)}
+          onOpen={() => beforeUrl && onOpen("before")}
         />
         <Thumb
           url={afterUrl}
@@ -295,7 +311,7 @@ const SideBlock = ({
           loading={loading}
           label="After grading"
           alt={`detected marks on ${side}`}
-          onOpen={() => afterUrl && onOpen(afterUrl, `${side} — detected marks`)}
+          onOpen={() => afterUrl && onOpen("after")}
         />
       </div>
 
@@ -329,19 +345,33 @@ const SideBlock = ({
  * scrolling, swallows Escape (so only the viewer closes, not the gallery
  * modal), and intercepts the device back gesture via a pushed history entry.
  *
- * It reuses the exact same `url` as the thumbnail — no second URL is built.
+ * A top-centre toggle swaps between the original photo and the model's
+ * annotated overlay for the same record side without remounting the zoom
+ * wrapper, so the current pan/zoom position is preserved and the user can
+ * rapidly flip back and forth to compare imperfections.
  */
 const ZoomViewer = ({
-  url,
-  label,
+  side,
+  mode,
+  beforeUrl,
+  afterUrl,
+  onToggle,
   onClose,
 }: {
-  url: string;
-  label: string;
+  side: string;
+  mode: "before" | "after";
+  beforeUrl: string;
+  afterUrl: string;
+  onToggle: () => void;
   onClose: () => void;
 }) => {
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+
+  const url = mode === "before" ? beforeUrl : afterUrl;
+  const label = `${sideKeyLabel(side)} — ${mode === "before" ? "before grading" : "detected marks"}`;
+  const canToggle = !!beforeUrl && !!afterUrl;
+  const toggleLabel = mode === "before" ? "Show marks" : "Show original";
 
   useEffect(() => {
     // Lock scrolling behind the viewer.
@@ -372,6 +402,12 @@ const ZoomViewer = ({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Reset the failure flag when the active source changes so a transient error
+  // on one image does not persist after toggling.
+  useEffect(() => {
+    setFailed(false);
+  }, [url]);
 
   return createPortal(
     <div
@@ -405,6 +441,29 @@ const ZoomViewer = ({
       <span className="pointer-events-none absolute left-4 top-4 z-[210] rounded-full bg-background/20 px-3 py-1 font-body text-xs font-semibold text-background">
         {label}
       </span>
+
+      {canToggle && (
+        <button
+          type="button"
+          className="pointer-events-auto absolute left-1/2 top-3 z-[210] -translate-x-1/2 rounded-full bg-background/25 px-4 py-2 font-body text-xs font-semibold text-background active:bg-background/40"
+          onPointerDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onPointerUp={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggle();
+          }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          aria-label={toggleLabel}
+        >
+          {toggleLabel}
+        </button>
+      )}
 
 
       {failed ? (
