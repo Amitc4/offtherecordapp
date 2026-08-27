@@ -80,8 +80,6 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const [savingPrice, setSavingPrice] = useState(false);
   /** Disc currently being graded (1-based); null = grading dialog closed. */
   const [gradeDisc, setGradeDisc] = useState<number | null>(null);
-  /** Extra discs added manually when the format string understates the disc count. */
-  const [extraDiscs, setExtraDiscs] = useState(0);
   const [photos, setPhotos] = useState<{ id: string; photo_url: string }[]>([]);
   const [sideScans, setSideScans] = useState<SideScanSummary[]>([]);
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -181,10 +179,10 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
   const gradedDiscs = new Set(sideScans.map((s) => discOfSideKey(s.side)));
   /**
    * Total discs shown. We default to one grading slot because most releases are
-   * single-disc; already-graded discs and any discs added by the user via
-   * "Grade another vinyl" are also shown.
+   * single-disc; already-graded discs are shown. "Grade another vinyl" does not
+   * add a slot until a new disc is actually graded.
    */
-  const discs = Math.max(1, ...Array.from(gradedDiscs), extraDiscs);
+  const discs = Math.max(1, ...Array.from(gradedDiscs));
   const discList = Array.from({ length: discs }, (_, i) => i + 1);
   /** First displayed disc that still has no scans (null when all are graded). */
   const nextUngradedDisc = discList.find((d) => !gradedDiscs.has(d)) ?? null;
@@ -299,35 +297,36 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
                 );
               })}
 
-              {/* Always available: many releases aren't tagged as multi-disc.
-                  Pressing it always adds a new disc slot for grading. */}
-              <button
-                onClick={() => {
-                  if (sealed) {
-                    toast.info(SEALED_BLOCKS_GRADING, { position: "top-center" });
-                    return;
-                  }
-                  const next = discs + 1;
-                  setExtraDiscs(next);
-                  setGradeDisc(next);
-                }}
-                aria-disabled={sealed}
-                className={`flex w-full items-center gap-3 rounded-xl border border-primary/30 p-4 transition-colors ${
-                  sealed ? "cursor-not-allowed opacity-50" : "active:bg-primary/10"
-                }`}
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
-                  <Plus size={20} />
-                </div>
-                <div className="text-left">
-                  <p className="font-body text-sm font-semibold text-foreground">Grade another vinyl</p>
-                  <p className="font-body text-xs text-muted-foreground">
-                    {sealed
-                      ? SEALED_BLOCKS_GRADING
-                      : `For sets with more than one record — add disc ${discs + 1}.`}
-                  </p>
-                </div>
-              </button>
+              {/* Only show once at least one disc has been graded. Pressing it
+                  opens the next disc for grading but does not add a slot until
+                  the grade is actually saved. */}
+              {gradedDiscs.size > 0 && (
+                <button
+                  onClick={() => {
+                    if (sealed) {
+                      toast.info(SEALED_BLOCKS_GRADING, { position: "top-center" });
+                      return;
+                    }
+                    setGradeDisc(discs + 1);
+                  }}
+                  aria-disabled={sealed}
+                  className={`flex w-full items-center gap-3 rounded-xl border border-primary/30 p-4 transition-colors ${
+                    sealed ? "cursor-not-allowed opacity-50" : "active:bg-primary/10"
+                  }`}
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+                    <Plus size={20} />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-body text-sm font-semibold text-foreground">Grade another vinyl</p>
+                    <p className="font-body text-xs text-muted-foreground">
+                      {sealed
+                        ? SEALED_BLOCKS_GRADING
+                        : `For sets with more than one record — add disc ${discs + 1}.`}
+                    </p>
+                  </div>
+                </button>
+              )}
 
             </div>
           )}
