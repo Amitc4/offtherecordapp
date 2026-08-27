@@ -588,14 +588,25 @@ const GradeVinylDialog = ({
                   </p>
                 </div>
 
+                {recordWarnings.map((w, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-1.5 rounded-lg border border-amber-500/50 bg-amber-500/15 px-3 py-2"
+                  >
+                    <AlertTriangle size={13} className="mt-0.5 shrink-0 text-amber-600" />
+                    <p className="font-body text-[11px] text-amber-700">{w}</p>
+                  </div>
+                ))}
+
                 {results.map((r, i) => (
                   <ScanSideResultCard
                     key={i}
-                    side={SLOTS[i].short}
+                    side={SLOTS[i].short.replace(/Side\s*/i, "")}
                     result={r}
                     onViewOverlay={setOverlayUrl}
                   />
                 ))}
+
 
                 <Button variant="outline" onClick={reset} className="mt-1">
                   Grade Another Record
