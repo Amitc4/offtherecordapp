@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Bell, Volume2, Vibrate, Clock, MessageSquare, Heart, Package, UserPlus, BellRing } from "lucide-react";
 import { toast } from "sonner";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { usePushPreferences } from "@/hooks/usePushPreferences";
 
 /** Props for the Notification Settings bottom-sheet. */
 interface NotificationSettingsSheetProps {
@@ -61,13 +62,30 @@ const loadPrefs = (): NotificationPrefs => {
 const NotificationSettingsSheet = ({ open, onOpenChange }: NotificationSettingsSheetProps) => {
   const [prefs, setPrefs] = useState<NotificationPrefs>(defaultPrefs);
   const push = usePushNotifications();
+  const pushPrefs = usePushPreferences();
 
-  /** Turn device push notifications on/off. */
+  /** Master switch: subscribe/unsubscribe this device and store the account-level choice. */
   const togglePush = async (v: boolean) => {
     const res = v ? await push.subscribe() : await push.unsubscribe();
-    if (res.ok) toast.success(v ? "Push notifications enabled" : "Push notifications disabled");
-    else toast.error(res.error ?? "Couldn't change push notifications");
+    if (!res.ok) {
+      toast.error(res.error ?? "Couldn't change push notifications");
+      return;
+    }
+    const saved = await pushPrefs.update({ push_enabled: v });
+    if (!saved.ok) {
+      toast.error(saved.error ?? "Couldn't save your push preference");
+      return;
+    }
+    toast.success(v ? "Push notifications enabled" : "Push notifications turned off");
   };
+
+  /** Per-type push opt-in (applies to all your devices). */
+  const togglePushType = async (key: "chat_message" | "friend_request" | "wishlist_match", v: boolean) => {
+    const res = await pushPrefs.update({ [key]: v });
+    if (!res.ok) toast.error(res.error ?? "Couldn't save your push preference");
+  };
+
+  const pushOn = push.enabled && pushPrefs.prefs.push_enabled;
 
 
   useEffect(() => {
@@ -115,11 +133,40 @@ const NotificationSettingsSheet = ({ open, onOpenChange }: NotificationSettingsS
                   </p>
                 </div>
                 <Switch
-                  checked={push.enabled}
-                  disabled={!push.supported || push.loading}
+                  checked={pushOn}
+                  disabled={!push.supported || push.loading || pushPrefs.loading}
                   onCheckedChange={togglePush}
                 />
               </div>
+
+              {pushOn && (
+                <div className="ml-4 space-y-1 border-l-2 border-primary/20 pl-2">
+                  <p className="font-body text-xs text-muted-foreground px-2 pt-2">
+                    Choose what you get pushed to your phone
+                  </p>
+                  <SettingRow
+                    icon={MessageSquare}
+                    label="Chat Messages"
+                    description="Push me when someone sends a message"
+                    checked={pushPrefs.prefs.chat_message}
+                    onChange={(v) => togglePushType("chat_message", v)}
+                  />
+                  <SettingRow
+                    icon={UserPlus}
+                    label="Friend Requests"
+                    description="Push me when someone adds me as a friend"
+                    checked={pushPrefs.prefs.friend_request}
+                    onChange={(v) => togglePushType("friend_request", v)}
+                  />
+                  <SettingRow
+                    icon={Heart}
+                    label="Wishlist Matches"
+                    description="Push me when a wanted record is listed"
+                    checked={pushPrefs.prefs.wishlist_match}
+                    onChange={(v) => togglePushType("wishlist_match", v)}
+                  />
+                </div>
+              )}
               <SettingRow
                 icon={Volume2}
                 label="Sound"
