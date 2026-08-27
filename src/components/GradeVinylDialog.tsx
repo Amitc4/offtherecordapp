@@ -404,92 +404,105 @@ const GradeVinylDialog = ({
                 exit={{ opacity: 0 }}
                 className="flex flex-col gap-4 py-2"
               >
-                <div className="rounded-xl bg-primary/10 p-3">
-                  <p className="font-body text-xs text-foreground">
-                    Take <strong>2 photos</strong>: full shots of <strong>Side A</strong> and <strong>Side B</strong>.
-                    A circular guide will help you frame the disc. Close-up label shots are generated automatically
-                    after grading.
-                  </p>
-                </div>
-
-                {/* Capture instructions — shown before the user picks a side */}
-                <div className="rounded-xl border border-border bg-background p-3">
-                  <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                    Before you shoot
-                  </p>
-                  <ol className="flex flex-col gap-1.5 font-body text-xs text-foreground">
-                    <li className="flex gap-2">
-                      <span className="font-semibold text-primary">1.</span>
-                      <span>Clean the surface of the vinyl before taking the picture.</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="font-semibold text-primary">2.</span>
-                      <span>Avoid submitting a photo with a lot of reflections to avoid false deductions to the grade.</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="font-semibold text-primary">3.</span>
-                      <span>Keep the camera steady above the vinyl according to the allowed angle degrees.</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="font-semibold text-primary">4.</span>
-                      <span>The vinyl grading feature is only available to black vinyl records!</span>
-                    </li>
-                  </ol>
-                </div>
-
-                {error && (
-                  <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2">
-                    <p className="font-body text-xs text-destructive">{error}</p>
+                {!instructionsAck ? (
+                  <div className="flex flex-col gap-4 rounded-xl border border-border bg-background p-5 text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
+                      <Camera size={24} />
+                    </div>
+                    <div>
+                      <p className="font-display text-base font-semibold text-foreground">Before you shoot</p>
+                      <p className="font-body text-xs text-muted-foreground mt-1">
+                        Follow these steps so the AI can grade accurately.
+                      </p>
+                    </div>
+                    <ol className="flex flex-col gap-2 text-left font-body text-xs text-foreground">
+                      <li className="flex gap-2">
+                        <span className="font-semibold text-primary">1.</span>
+                        <span>Clean the surface of the vinyl before taking the picture.</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-semibold text-primary">2.</span>
+                        <span>Avoid submitting a photo with a lot of reflections to avoid false deductions to the grade.</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-semibold text-primary">3.</span>
+                        <span>Keep the camera steady above the vinyl according to the allowed angle degrees.</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-semibold text-primary">4.</span>
+                        <span>The vinyl grading feature is only available to black vinyl records!</span>
+                      </li>
+                    </ol>
+                    <Button onClick={() => setInstructionsAck(true)} className="w-full gap-2">
+                      <Camera size={16} />
+                      Start Taking Pictures
+                    </Button>
                   </div>
-                )}
+                ) : (
+                  <>
+                    <div className="rounded-xl bg-primary/10 p-3">
+                      <p className="font-body text-xs text-foreground">
+                        Take <strong>2 photos</strong>: full shots of <strong>Side A</strong> and{" "}
+                        <strong>Side B</strong>. A circular guide will help you frame the disc. Close-up
+                        label shots are generated automatically after grading.
+                      </p>
+                    </div>
 
-                <div>
-                  <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                    Full disc — both sides
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[0, 1].map((i) => (
-                      <SlotButton
-                        key={i}
-                        spec={SLOTS[i]}
-                        slot={slots[i]}
-                        onClick={() => openPickerFor(i)}
-                        onRemove={() => handleRemoveSlot(i)}
-                      />
-                    ))}
-                  </div>
-                </div>
+                    {error && (
+                      <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2">
+                        <p className="font-body text-xs text-destructive">{error}</p>
+                      </div>
+                    )}
 
-                <div className="flex items-center justify-between pt-1">
-                  <p className="font-body text-xs text-muted-foreground">
-                    {filledCount}/{REQUIRED_PHOTOS} photos
-                  </p>
-                  {filledCount > 0 && !analyzing && (
-                    <button
-                      onClick={() => {
-                        slots.forEach((s) => s && URL.revokeObjectURL(s.previewUrl));
-                        setSlots(Array(REQUIRED_PHOTOS).fill(null));
-                      }}
-                      className="font-body text-xs text-muted-foreground hover:text-destructive"
+                    <div>
+                      <p className="font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                        Full disc — both sides
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[0, 1].map((i) => (
+                          <SlotButton
+                            key={i}
+                            spec={SLOTS[i]}
+                            slot={slots[i]}
+                            onClick={() => openPickerFor(i)}
+                            onRemove={() => handleRemoveSlot(i)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <p className="font-body text-xs text-muted-foreground">
+                        {filledCount}/{REQUIRED_PHOTOS} photos
+                      </p>
+                      {filledCount > 0 && !analyzing && (
+                        <button
+                          onClick={() => {
+                            slots.forEach((s) => s && URL.revokeObjectURL(s.previewUrl));
+                            setSlots(Array(REQUIRED_PHOTOS).fill(null));
+                          }}
+                          className="font-body text-xs text-muted-foreground hover:text-destructive"
+                        >
+                          Clear all
+                        </button>
+                      )}
+                    </div>
+
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={filledCount < REQUIRED_PHOTOS || analyzing}
+                      className="gap-2"
                     >
-                      Clear all
-                    </button>
-                  )}
-                </div>
+                      {analyzing ? <Loader2 size={16} className="animate-spin" /> : <Star size={16} />}
+                      {analyzing ? "Analyzing both sides..." : "Grade Record"}
+                    </Button>
 
-                <Button
-                  onClick={handleSubmit}
-                  disabled={filledCount < REQUIRED_PHOTOS || analyzing}
-                  className="gap-2"
-                >
-                  {analyzing ? <Loader2 size={16} className="animate-spin" /> : <Star size={16} />}
-                  {analyzing ? "Analyzing both sides..." : "Grade Record"}
-                </Button>
-
-                {analyzing && (
-                  <p className="font-body text-xs text-muted-foreground text-center px-2">
-                    {SCANNER_COLD_START_NOTICE}
-                  </p>
+                    {analyzing && (
+                      <p className="font-body text-xs text-muted-foreground text-center px-2">
+                        {SCANNER_COLD_START_NOTICE}
+                      </p>
+                    )}
+                  </>
                 )}
               </motion.div>
             )}
