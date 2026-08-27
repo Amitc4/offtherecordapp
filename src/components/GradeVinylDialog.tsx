@@ -12,11 +12,11 @@
  *      are uploaded to storage and attached to the record, and each angle's
  *      analysis is persisted to `record_surface_scans` for later review.
  */
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Camera, Loader2, Star, X, CheckCircle2, ImageIcon, FileUp } from "lucide-react";
+import { Camera, Loader2, Star, X, CheckCircle2, ImageIcon, FileUp, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -25,9 +25,17 @@ import CameraCapture, { type CaptureMode, type CaptureMeta } from "@/components/
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import ScanSideResultCard from "@/components/ScanSideResultCard";
 import PhotoLightbox from "@/components/PhotoLightbox";
-import { analyzeImage, formatGrade, worstGrade, type SideResult } from "@/lib/scannerApi";
-import { SCANNER_COLD_START_NOTICE } from "@/config/scanner";
+import {
+  analyzeRecord,
+  formatGrade,
+  gradeCode,
+  wakeScanner,
+  worstGrade,
+  type SideResult,
+} from "@/lib/scannerApi";
+import { SCANNER_COLD_START_NOTICE, SCANNER_MAX_PHOTO_BYTES } from "@/config/scanner";
 import { sideKey } from "@/lib/recordFormat";
+
 
 interface GradeVinylDialogProps {
   open: boolean;
@@ -119,6 +127,9 @@ const GradeVinylDialog = ({
   const [results, setResults] = useState<SideResult[]>([]);
   const [overall, setOverall] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** Record-level warnings returned by the scanner (a 200 can still warn). */
+  const [recordWarnings, setRecordWarnings] = useState<string[]>([]);
+
   const [overlayUrl, setOverlayUrl] = useState<string | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [activeSlot, setActiveSlot] = useState<number>(0);
@@ -129,6 +140,12 @@ const GradeVinylDialog = ({
 
   const filledCount = slots.filter(Boolean).length;
 
+  // The scanner host sleeps when idle: wake it as soon as the dialog opens so
+  // the real request doesn't pay the 50s cold start.
+  useEffect(() => {
+    if (open) wakeScanner();
+  }, [open]);
+
   const reset = () => {
     slots.forEach((s) => s && URL.revokeObjectURL(s.previewUrl));
     setStage("capture");
@@ -136,9 +153,11 @@ const GradeVinylDialog = ({
     setResults([]);
     setOverall(null);
     setError(null);
+    setRecordWarnings([]);
     setAnalyzing(false);
     setInstructionsAck(false);
   };
+
 
   const handleOpenChange = (o: boolean) => {
     if (!o) reset();
@@ -180,7 +199,13 @@ const GradeVinylDialog = ({
   };
 
   const handleCapture = (file: File, meta: CaptureMeta = { levelVerified: false }) => {
+    // The scanner rejects anything over 12 MB per photo (HTTP 413).
+    if (file.size > SCANNER_MAX_PHOTO_BYTES) {
+      toast.error("This photo is too large (max 12 MB). Please retake it.");
+      return;
+    }
     const idx = activeSlot;
+
     setSlots((prev) => {
       const next = [...prev];
       if (next[idx]) URL.revokeObjectURL(next[idx]!.previewUrl);
@@ -211,14 +236,22 @@ const GradeVinylDialog = ({
     const sessionId = crypto.randomUUID();
     
 
-    /** Turns a base64 data URI (or bare base64) into a Blob for storage upload. */
-    const toBlob = (data: string): Blob => {
+    /**
+     * Turns a base64 data URI (or bare base64) into a Blob for storage upload.
+     * The scanner returns JPEG data URIs, so the MIME type is read from the URI.
+     */
+    const toBlob = (data: string): { blob: Blob; ext: string; type: string } => {
+      const match = data.match(/^data:([^;,]+);base64,/);
+      const type = match?.[1] || "image/png";
       const base64 = data.includes(",") ? data.split(",")[1] : data;
       const bin = atob(base64);
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      return new Blob([bytes], { type: "image/png" });
+      const ext = type === "image/jpeg" ? "jpg" : type.split("/")[1] || "png";
+      return { blob: new Blob([bytes], { type }), ext, type };
     };
+
+
 
     const upload = async (path: string, body: Blob | File, contentType: string) => {
       const { error } = await supabase.storage
@@ -252,15 +285,19 @@ const GradeVinylDialog = ({
 
         // Annotated overlay returned by the analysis server — this is what the gallery shows.
         const overlay = sideResults[i]?.analysis?.overlay_png;
-        overlayUrls.push(
-          overlay
-            ? await upload(
-                `${user.id}/grading/${sessionId}/overlay-${SLOTS[i].side}-${Date.now()}.png`,
-                toBlob(overlay),
-                "image/png"
-              )
-            : null
-        );
+        if (overlay) {
+          const { blob, ext: overlayExt, type } = toBlob(overlay);
+          overlayUrls.push(
+            await upload(
+              `${user.id}/grading/${sessionId}/overlay-${SLOTS[i].side}-${Date.now()}.${overlayExt}`,
+              blob,
+              type
+            )
+          );
+        } else {
+          overlayUrls.push(null);
+        }
+
       }
 
       const publicUrls = rawUrls.filter((u): u is string => !!u);
@@ -369,7 +406,11 @@ const GradeVinylDialog = ({
     }
   };
 
-
+  /**
+   * Sends all four photos to the scanner in a single `/analyze-record` request.
+   * The record grade comes back from the server (already the worse of the two
+   * sides); the per-photo results feed the result cards and the gallery.
+   */
   const handleSubmit = async () => {
     if (filledCount < REQUIRED_PHOTOS) {
       toast.error(`Please add all ${REQUIRED_PHOTOS} photos`);
@@ -377,24 +418,31 @@ const GradeVinylDialog = ({
     }
 
     setError(null);
+    setRecordWarnings([]);
     setAnalyzing(true);
 
-    // Each side is analysed independently, one request per image.
-    const sideResults = await Promise.all(slots.map((s) => analyzeImage(s!.file)));
+    const files = slots.map((s) => s!.file) as [File, File, File, File];
+    const result = await analyzeRecord(files);
     setAnalyzing(false);
 
-    if (sideResults.every((r) => !r.ok)) {
-      setError(sideResults[0]?.error || "Analysis failed. Please try again.");
+    if (!result.ok) {
+      setError(result.error || "Analysis failed. Please try again.");
       return;
     }
 
-    const overallGrade = worstGrade(sideResults.map((r) => (r.ok ? r.analysis?.grade : undefined)));
+    const sideResults = result.photos;
+    const overallGrade =
+      gradeCode(result.grade) ||
+      worstGrade(sideResults.map((r) => (r.ok ? r.analysis?.grade : undefined)));
+
     setResults(sideResults);
     setOverall(overallGrade);
+    setRecordWarnings(result.warnings ?? []);
     setStage("results");
 
     void persist(sideResults, overallGrade);
   };
+
 
   const activeSpec = SLOTS[activeSlot];
 
@@ -552,14 +600,25 @@ const GradeVinylDialog = ({
                   </p>
                 </div>
 
+                {recordWarnings.map((w, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-1.5 rounded-lg border border-amber-500/50 bg-amber-500/15 px-3 py-2"
+                  >
+                    <AlertTriangle size={13} className="mt-0.5 shrink-0 text-amber-600" />
+                    <p className="font-body text-[11px] text-amber-700">{w}</p>
+                  </div>
+                ))}
+
                 {results.map((r, i) => (
                   <ScanSideResultCard
                     key={i}
-                    side={SLOTS[i].short}
+                    side={SLOTS[i].short.replace(/Side\s*/i, "")}
                     result={r}
                     onViewOverlay={setOverlayUrl}
                   />
                 ))}
+
 
                 <Button variant="outline" onClick={reset} className="mt-1">
                   Grade Another Record
