@@ -15,12 +15,14 @@ import { Accessibility, Bell, X, Type, Eye, Zap, BookOpen, RotateCcw, Minus, Plu
 import { motion, AnimatePresence } from "framer-motion";
 import { useAccessibility } from "@/hooks/useAccessibility";
 import NotificationsBell from "@/components/NotificationsBell";
+import { useNotifications } from "@/hooks/useNotifications";
 
 const fontSizeLabels = ["Default", "Large", "Extra Large", "Huge", "Maximum"];
 
 const AccessibilityMenu = () => {
   const [open, setOpen] = useState(false);
   const [hidden, setHidden] = useState(() => sessionStorage.getItem("a11y-buttons-hidden") === "1");
+  const { unreadCount } = useNotifications();
   const { settings, setFontSize, toggleHighContrast, toggleReduceAnimations, toggleDyslexiaFont, resetAll } = useAccessibility();
 
   const hasChanges = settings.fontSize !== 0 || settings.highContrast || settings.reduceAnimations || settings.dyslexiaFont;
