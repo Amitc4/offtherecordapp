@@ -377,7 +377,11 @@ const GradeVinylDialog = ({
     }
   };
 
-
+  /**
+   * Sends all four photos to the scanner in a single `/analyze-record` request.
+   * The record grade comes back from the server (already the worse of the two
+   * sides); the per-photo results feed the result cards and the gallery.
+   */
   const handleSubmit = async () => {
     if (filledCount < REQUIRED_PHOTOS) {
       toast.error(`Please add all ${REQUIRED_PHOTOS} photos`);
@@ -385,24 +389,31 @@ const GradeVinylDialog = ({
     }
 
     setError(null);
+    setRecordWarnings([]);
     setAnalyzing(true);
 
-    // Each side is analysed independently, one request per image.
-    const sideResults = await Promise.all(slots.map((s) => analyzeImage(s!.file)));
+    const files = slots.map((s) => s!.file) as [File, File, File, File];
+    const result = await analyzeRecord(files);
     setAnalyzing(false);
 
-    if (sideResults.every((r) => !r.ok)) {
-      setError(sideResults[0]?.error || "Analysis failed. Please try again.");
+    if (!result.ok) {
+      setError(result.error || "Analysis failed. Please try again.");
       return;
     }
 
-    const overallGrade = worstGrade(sideResults.map((r) => (r.ok ? r.analysis?.grade : undefined)));
+    const sideResults = result.photos;
+    const overallGrade =
+      gradeCode(result.grade) ||
+      worstGrade(sideResults.map((r) => (r.ok ? r.analysis?.grade : undefined)));
+
     setResults(sideResults);
     setOverall(overallGrade);
+    setRecordWarnings(result.warnings ?? []);
     setStage("results");
 
     void persist(sideResults, overallGrade);
   };
+
 
   const activeSpec = SLOTS[activeSlot];
 
