@@ -450,7 +450,7 @@ const ZoomViewer = ({
       {canToggle && (
         <button
           type="button"
-          className="pointer-events-auto absolute left-1/2 top-3 z-[210] -translate-x-1/2 rounded-full bg-background/25 px-4 py-2 font-body text-xs font-semibold text-background active:bg-background/40"
+          className="pointer-events-auto absolute left-1/2 top-16 z-[210] -translate-x-1/2 rounded-full bg-background/25 px-4 py-2 font-body text-xs font-semibold text-background active:bg-background/40"
           onPointerDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
