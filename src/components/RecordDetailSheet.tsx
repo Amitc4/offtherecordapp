@@ -300,20 +300,16 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
               })}
 
               {/* Always available: many releases aren't tagged as multi-disc.
-                  Jumps to the next ungraded disc, or adds one when all are graded. */}
+                  Pressing it always adds a new disc slot for grading. */}
               <button
                 onClick={() => {
                   if (sealed) {
                     toast.info(SEALED_BLOCKS_GRADING, { position: "top-center" });
                     return;
                   }
-                  if (nextUngradedDisc !== null) {
-                    setGradeDisc(nextUngradedDisc);
-                  } else {
-                    const next = discs + 1;
-                    setExtraDiscs(next);
-                    setGradeDisc(next);
-                  }
+                  const next = discs + 1;
+                  setExtraDiscs(next);
+                  setGradeDisc(next);
                 }}
                 aria-disabled={sealed}
                 className={`flex w-full items-center gap-3 rounded-xl border border-primary/30 p-4 transition-colors ${
@@ -328,7 +324,7 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
                   <p className="font-body text-xs text-muted-foreground">
                     {sealed
                       ? SEALED_BLOCKS_GRADING
-                      : `For sets with more than one record — continue with disc ${nextUngradedDisc ?? discs + 1}.`}
+                      : `For sets with more than one record — add disc ${discs + 1}.`}
                   </p>
                 </div>
               </button>
