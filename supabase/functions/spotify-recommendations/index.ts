@@ -1,7 +1,7 @@
 // Spotify recommendations: refreshes token if needed, fetches user's top artists,
 // then fuzzy-matches them against marketplace records (status = 'for_sale').
 // Matching is normalized, accent/punctuation-insensitive, and bilingual (EN <-> HE).
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -113,19 +113,29 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
 
+    const token = authHeader.replace("Bearer ", "");
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } },
     );
-    const { data: userData, error: claimsErr } = await supabase.auth.getUser(
-      authHeader.replace("Bearer ", ""),
-    );
-    if (claimsErr || !userData?.user?.id) {
-      console.error("Auth failed", claimsErr);
-      return json({ error: "Unauthorized" }, 401);
+
+    // Verify the JWT locally (signature + expiry). Avoids relying on the
+    // auth server's session record, which can be revoked/rotated while the
+    // access token is still valid (error: session_not_found).
+    let userId: string | null = null;
+    const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token);
+    if (!claimsErr && claimsData?.claims?.sub) {
+      userId = claimsData.claims.sub as string;
+    } else {
+      const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+      if (userErr || !userData?.user?.id) {
+        console.error("Auth failed", claimsErr ?? userErr);
+        return json({ error: "Unauthorized" }, 401);
+      }
+      userId = userData.user.id;
     }
-    const userId = userData.user.id;
+
 
 
 
