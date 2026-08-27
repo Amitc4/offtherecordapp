@@ -304,32 +304,40 @@ const RecordDetailSheet = ({ record, open, onOpenChange }: RecordDetailSheetProp
                 );
               })}
 
-              {/* Multi-disc sets: jump straight to the next disc that has no grade yet. */}
-              {discs > 1 && nextUngradedDisc !== null && (
-                <button
-                  onClick={() => {
-                    if (sealed) {
-                      toast.info(SEALED_BLOCKS_GRADING, { position: "top-center" });
-                      return;
-                    }
+              {/* Always available: many releases aren't tagged as multi-disc.
+                  Jumps to the next ungraded disc, or adds one when all are graded. */}
+              <button
+                onClick={() => {
+                  if (sealed) {
+                    toast.info(SEALED_BLOCKS_GRADING, { position: "top-center" });
+                    return;
+                  }
+                  if (nextUngradedDisc !== null) {
                     setGradeDisc(nextUngradedDisc);
-                  }}
-                  aria-disabled={sealed}
-                  className={`flex w-full items-center gap-3 rounded-xl border border-primary/30 p-4 transition-colors ${
-                    sealed ? "cursor-not-allowed opacity-50" : "active:bg-primary/10"
-                  }`}
-                >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
-                    <Plus size={20} />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-body text-sm font-semibold text-foreground">Grade another record</p>
-                    <p className="font-body text-xs text-muted-foreground">
-                      Continue with disc {nextUngradedDisc} of {discs}.
-                    </p>
-                  </div>
-                </button>
-              )}
+                  } else {
+                    const next = discs + 1;
+                    setExtraDiscs(next);
+                    setGradeDisc(next);
+                  }
+                }}
+                aria-disabled={sealed}
+                className={`flex w-full items-center gap-3 rounded-xl border border-primary/30 p-4 transition-colors ${
+                  sealed ? "cursor-not-allowed opacity-50" : "active:bg-primary/10"
+                }`}
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+                  <Plus size={20} />
+                </div>
+                <div className="text-left">
+                  <p className="font-body text-sm font-semibold text-foreground">Grade another vinyl</p>
+                  <p className="font-body text-xs text-muted-foreground">
+                    {sealed
+                      ? SEALED_BLOCKS_GRADING
+                      : `For sets with more than one record — continue with disc ${nextUngradedDisc ?? discs + 1}.`}
+                  </p>
+                </div>
+              </button>
+
             </div>
           )}
 
