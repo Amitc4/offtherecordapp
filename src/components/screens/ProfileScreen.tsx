@@ -432,11 +432,6 @@ const ProfileScreen = ({ focusFriendRequests = 0 }: { focusFriendRequests?: numb
           <h3 className="flex-1 text-left font-display text-sm font-semibold text-foreground">
             Friends ({friends.length})
           </h3>
-          {pendingRequests.length > 0 && (
-            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 font-body text-[10px] font-bold text-primary-foreground">
-              {pendingRequests.length}
-            </span>
-          )}
           <ChevronRight size={16} className={`text-muted-foreground transition-transform ${showFriends ? "rotate-90" : ""}`} />
         </button>
 
