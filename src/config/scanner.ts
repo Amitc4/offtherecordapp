@@ -7,7 +7,7 @@
  */
 
 /** Base URL of the surface-analysis service. Change this in one place only. */
-export const SCANNER_API_BASE_URL = "https://off-the-record-scanner.onrender.com";
+export const SCANNER_API_BASE_URL = "https://off-the-record-scanner-249738759188.me-west1.run.app";
 
 /**
  * Full-record endpoint: one `multipart/form-data` request with four files
