@@ -125,15 +125,16 @@ Deno.serve(async (req) => {
       let me: any = {};
       try { me = JSON.parse(meText); } catch { /* non-JSON */ }
       if (!meRes.ok) {
-        console.error("Spotify /me failed", meRes.status, meText);
+        console.error("Spotify /me failed", meRes.status, meText, "clientId prefix:", clientId.slice(0, 8));
         return json({
           error: meRes.status === 403
-            ? "Spotify rejected your account. If the Spotify app is in Development Mode, the user's email must be added to the app's allowlist in the Spotify Developer Dashboard."
+            ? `Spotify blocked this account. The app is in Development Mode, so this Spotify account's email must be added under User Management for the Spotify app with Client ID starting "${clientId.slice(0, 8)}…". Make sure the email matches the one on that person's Spotify account (Spotify > Account > Profile), not their Off The Record login.`
             : "Failed to fetch Spotify profile",
           status: meRes.status,
           details: meText,
         }, 400);
       }
+
 
       const expiresAt = new Date(Date.now() + (tokenJson.expires_in - 60) * 1000).toISOString();
 
