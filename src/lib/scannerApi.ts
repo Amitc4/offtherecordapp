@@ -35,6 +35,9 @@ export interface ScanPhoto {
 
 /** Per-side payload returned by the scanner. */
 export interface ScanSide {
+  status?: string;
+  needs_retake?: boolean;
+  message?: string;
   grade?: string;
   quality_score?: number;
   mark_count?: number;
@@ -45,9 +48,13 @@ export interface ScanSide {
   [key: string]: unknown;
 }
 
+
 /** Analysis payload shown in the UI for one photo (one card). */
 export interface ScanAnalysis {
   analysis_id?: string;
+  status?: string;
+  needs_retake?: boolean;
+  message?: string;
   grade?: string;
   quality_score?: number;
   mark_count?: number;
@@ -69,7 +76,14 @@ export interface SideResult {
 export interface RecordScanResult {
   ok: boolean;
   error?: string;
-  /** Record grade — already the worse of the two sides. */
+  /** Scanner status: "ok" for a successful analysis, or "alignment_failed" when a side could not be matched. */
+  status?: string;
+  /** Human-readable explanation when `status` is not "ok". */
+  message?: string;
+  needs_retake?: boolean;
+  /** Letters of the sides that must be re-photographed (e.g. ["A"]). */
+  sides_to_retake?: string[];
+  /** Record grade — already the worse of the two sides, only present when `status` is "ok". */
   grade?: string;
   quality_score?: number;
   graded_from_side?: string;
@@ -80,6 +94,10 @@ export interface RecordScanResult {
 
 /** Raw whole-record response shape. */
 interface RecordResponse {
+  status?: string;
+  needs_retake?: boolean;
+  sides_to_retake?: string[];
+  message?: string;
   grade?: string;
   quality_score?: number;
   graded_from_side?: string;
@@ -87,6 +105,7 @@ interface RecordResponse {
   sides?: { A?: ScanSide; B?: ScanSide };
   [key: string]: unknown;
 }
+
 
 /** Human-readable message for the scanner's documented error statuses. */
 const errorForStatus = (status: number): string => {
