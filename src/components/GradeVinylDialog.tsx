@@ -126,9 +126,13 @@ const GradeVinylDialog = ({
   const [analyzing, setAnalyzing] = useState(false);
   const [results, setResults] = useState<SideResult[]>([]);
   const [overall, setOverall] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>("ok");
+  const [sidesToRetake, setSidesToRetake] = useState<string[]>([]);
+  const [alignmentMessage, setAlignmentMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   /** Record-level warnings returned by the scanner (a 200 can still warn). */
   const [recordWarnings, setRecordWarnings] = useState<string[]>([]);
+
 
   const [overlayUrl, setOverlayUrl] = useState<string | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -152,11 +156,15 @@ const GradeVinylDialog = ({
     setSlots(Array(REQUIRED_PHOTOS).fill(null));
     setResults([]);
     setOverall(null);
+    setStatus("ok");
+    setSidesToRetake([]);
+    setAlignmentMessage(null);
     setError(null);
     setRecordWarnings([]);
     setAnalyzing(false);
     setInstructionsAck(false);
   };
+
 
 
   const handleOpenChange = (o: boolean) => {
