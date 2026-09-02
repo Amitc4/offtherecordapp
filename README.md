@@ -24,14 +24,14 @@ Off The Record uses computer vision and multimodal AI to inspect vinyl surfaces 
 
 ## 📌 Key Highlights
 
-* **Objective AI Grading:** Inspects surface photos, classifies optical hairline scratches and groove wear, and maps results to Goldmine standards.
+* **Objective Vinyl Grading:** Inspects surface photos, classifies optical hairline scratches and groove wear, and maps results to Goldmine standards.
 * **Wishlist Easy Match:** Instant background alerts notify collectors when targeted pressings are listed near them in their preferred condition.
 * **Powered by Spotify:** Syncs listening trends to suggest authentic, cataloged vinyl available for trade.
 * **Peer-to-Peer Trading:** Real-time messaging, condition transparency, and trade negotiation built directly into the app shell.
 
 ---
 
-## 🔬 AI Grading Pipeline (Goldmine Standard Mapping)
+## 🔬 Vinyl Grading Pipeline (Goldmine Standard Mapping)
 
 Our multi-step inspection pipeline scores optical surface defects out of 100 and maps them directly to standardized collector conditions:
 
@@ -101,7 +101,7 @@ User Action
 | Flow | Tables Involved | Description |
 | :--- | :--- | :--- |
 | **Auth** | `auth.users`, `profiles` | Profile auto-created on first sign-up |
-| **Collection** | `user_records`, `record_photos` | Up to 4 photos per record with AI scan inspection |
+| **Collection** | `user_records`, `record_photos` | Up to 4 photos per record with Vinyl grading scan inspection |
 | **Wishlist** | `user_wishlist`, `notifications` | Automatic matches dispatch alerts |
 | **Trading** | `chats`, `chat_messages`, `trade_offers`, `trade_offer_items` | Realtime-enabled P2P negotiations |
 | **Social** | `friends`, `user_blocks`, `user_reports`, `user_reviews` | Community trust scores and review system |
@@ -113,7 +113,7 @@ User Action
 
 * **Row-Level Security (RLS):** Strict RLS on every table — users can only access their own records unless explicitly exposed to the marketplace.
 * **Role-Based Access Control:** Managed through `user_roles` with `has_role()` PostgreSQL function (`SECURITY DEFINER`). Supported roles: `user`, `admin`, `main_admin`.
-* **Edge Functions for Sensitive Operations:** Discogs OAuth token exchanges, AI grading runs, and administrative actions execute server-side.
+* **Edge Functions for Sensitive Operations:** Discogs OAuth token exchanges, Vinyl grading runs, and administrative actions execute server-side.
 
 ---
 
@@ -138,24 +138,6 @@ User Action
 | **Backend & Database** | Lovable Cloud (PostgreSQL, Supabase Auth & Storage, Edge Functions) |
 | **Animation** | Framer Motion |
 | **Mobile & PWA** | Capacitor, vite-plugin-pwa |
-
----
-
-## 🚀 Local Development
-
-```sh
-# Clone repository
-git clone <YOUR_GIT_URL>
-cd <YOUR_PROJECT_NAME>
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
-The application runs locally at `http://localhost:8080`.
 
 ---
 
