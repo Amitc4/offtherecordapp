@@ -1,12 +1,56 @@
-# Off The Record — Vinyl Trading App
+<div align="center">
 
-A mobile-first vinyl record trading platform built with React, TypeScript, and Lovable Cloud.
+# 🎵 Off The Record
+
+**AI-Powered Vinyl Marketplace & Objective Condition Grading**
+
+[![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript_5-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite_5-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_3-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Supabase](https://img.shields.io/badge/Lovable_Cloud-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Discogs](https://img.shields.io/badge/Discogs_API-333333?style=for-the-badge&logo=discogs&logoColor=white)](https://www.discogs.com/developers)
+[![Spotify](https://img.shields.io/badge/Spotify_API-1ED760?style=for-the-badge&logo=spotify&logoColor=white)](https://developer.spotify.com/)
+
+<p align="center">
+  <img src="./assets/off-the-record-logo.png" alt="Off The Record Logo" width="180"/>
+</p>
+
+*Buying second-hand vinyl online is a gamble when relying solely on subjective seller grading.  
+Off The Record uses computer vision and multimodal AI to inspect vinyl surfaces objectively, automate wishlist matching, and facilitate secure peer-to-peer trades.*
+
+---
+</div>
+
+## 📌 Key Highlights
+
+* **Objective AI Grading:** Inspects surface photos, classifies optical hairline scratches and groove wear, and maps results to Goldmine standards.
+* **Wishlist Easy Match:** Instant background alerts notify collectors when targeted pressings are listed near them in their preferred condition.
+* **Powered by Spotify:** Syncs listening trends to suggest authentic, cataloged vinyl available for trade.
+* **Peer-to-Peer Trading:** Real-time messaging, condition transparency, and trade negotiation built directly into the app shell.
+
+---
+
+## 🔬 AI Grading Pipeline (Goldmine Standard Mapping)
+
+Our multi-step inspection pipeline scores optical surface defects out of 100 and maps them directly to standardized collector conditions:
+
+| Visual Score (%) | Goldmine Grade | Condition Summary |
+| :--- | :--- | :--- |
+| **98% – 100%** | **M (Mint)** | Absolutely flawless, unplayed, zero visible hairlines or sleeve friction under direct light. |
+| **90% – 97%** | **NM (Near Mint)** | Nearly perfect; at most 1–2 microscopic paper scuffs that do not affect playback. |
+| **80% – 89%** | **VG+ (Very Good Plus)** | Clean vinyl; minor cosmetic hairlines that do not degrade listening. |
+| **65% – 79%** | **VG (Very Good)** | Noticeable light scratches and minor surface noise during playback. |
+| **50% – 64%** | **G / G+ (Good Plus)** | Visible groove wear; surface noise present throughout but plays through without skipping. |
+| **0% – 49%** | **P / F (Poor / Fair)** | Severe wear, warping, or deep scratches prone to sticking and skipping. |
+
+---
 
 ## 🏗 Architecture Overview
 
 ```
 src/
-├── main.tsx                  # Entry point — mounts <App /> into #root
+├── main.tsx                  # Entry point — mounts <App/> into #root
 ├── App.tsx                   # Provider hierarchy + routing
 ├── pages/
 │   ├── Index.tsx             # Auth gate: loading → login → home
@@ -16,7 +60,7 @@ src/
 │   └── NotFound.tsx          # 404 fallback
 ├── components/
 │   ├── screens/              # Full-screen tab content
-│   │   ├── CollectionScreen  # User's vinyl records (CRUD, photos, grading)
+│   │   ├── CollectionScreen  # User's vinyl records (CRUD, photos, AI grading)
 │   │   ├── WishlistScreen    # Records the user wants to find
 │   │   ├── DiscoverScreen    # Browse other users' for-sale records
 │   │   ├── ChatsScreen       # Messaging + trade offers
@@ -38,74 +82,86 @@ src/
 └── index.css                 # Design tokens (CSS variables) + Tailwind base
 ```
 
+---
+
 ## 🔄 Data Flow
 
 ```
 User Action
-  → React Component (useState / useEffect)
+  → React Component (useState / React Query)
     → Supabase JS Client (query / mutation)
       → Lovable Cloud (Postgres + RLS policies)
-        → Response
-          → React state update → UI re-render
+        → Edge Functions (Discogs OAuth / Multimodal AI Grading)
+          → Response
+            → React state update → UI re-render
 ```
 
-### Key data paths
+### Key Data Paths
 
-| Flow | Tables involved | Notes |
-|------|----------------|-------|
-| Auth | `auth.users`, `profiles` | Profile auto-created on first sign-up |
-| Collection | `user_records`, `record_photos` | Up to 4 photos per record |
-| Wishlist | `user_wishlist` | Matches notify via `notifications` |
-| Trading | `chats`, `chat_messages`, `trade_offers`, `trade_offer_items` | Realtime-enabled |
-| Social | `friends`, `user_blocks`, `user_reports`, `user_reviews` | |
-| Admin | `user_roles`, `admin_requests`, `profiles.account_status` | Role-gated via `has_role()` |
+| Flow | Tables Involved | Description |
+| :--- | :--- | :--- |
+| **Auth** | `auth.users`, `profiles` | Profile auto-created on first sign-up |
+| **Collection** | `user_records`, `record_photos` | Up to 4 photos per record with AI scan inspection |
+| **Wishlist** | `user_wishlist`, `notifications` | Automatic matches dispatch alerts |
+| **Trading** | `chats`, `chat_messages`, `trade_offers`, `trade_offer_items` | Realtime-enabled P2P negotiations |
+| **Social** | `friends`, `user_blocks`, `user_reports`, `user_reviews` | Community trust scores and review system |
+| **Admin** | `user_roles`, `admin_requests`, `profiles.account_status` | Role-gated via `has_role()` |
 
-## 🔐 Security Model
+---
 
-- **Row-Level Security (RLS)** on every table — users can only access their own data unless explicitly shared.
-- **Role-based access** via `user_roles` table + `has_role()` Postgres function (SECURITY DEFINER).
-- Roles: `user`, `admin`, `main_admin`.
-- Admin status is checked server-side, never from client storage.
+## 🔐 Security & Access Control
 
-## 🎨 Design System
+* **Row-Level Security (RLS):** Strict RLS on every table — users can only access their own records unless explicitly exposed to the marketplace.
+* **Role-Based Access Control:** Managed through `user_roles` with `has_role()` PostgreSQL function (`SECURITY DEFINER`). Supported roles: `user`, `admin`, `main_admin`.
+* **Edge Functions for Sensitive Operations:** Discogs OAuth token exchanges, AI grading runs, and administrative actions execute server-side.
 
-- **Tailwind CSS v3** with semantic HSL tokens defined in `index.css` (`:root` variables).
-- **shadcn/ui** components in `src/components/ui/` — customised via `components.json`.
-- All colours use CSS variables (`--primary`, `--background`, etc.) for theme consistency.
-- Mobile-first layout: `max-w-md` centred container with fixed bottom nav.
+---
 
-## 🛠 Key Design Decisions
+## 🎨 Design System & Decisions
 
-1. **Single-page tab shell** — `HomePage.tsx` manages tabs via local state instead of URL routes. This gives native-app feel with Framer Motion transitions.
+* **Design Tokens:** Tailwind CSS v3 with semantic HSL tokens defined in `index.css` (`:root` variables) driving dark and light consistency.
+* **Component Library:** Customized `shadcn/ui` primitives managed via `components.json`.
+* **Single-Page Tab Shell:** `HomePage.tsx` coordinates tab state locally with Framer Motion transitions for native mobile responsiveness.
+* **Auth Gate Pattern:** `Index.tsx` acts as a top-level gate switching directly between login and home without nested wrapper delays.
+* **PWA & Native Support:** Integrated `vite-plugin-pwa` with static asset caching and `capacitor.config.ts` for iOS/Android builds.
 
-2. **Auth gate pattern** — `Index.tsx` renders login or home based on auth state. No protected route wrappers needed.
-
-3. **Edge functions for sensitive ops** — Discogs OAuth, AI grading, and admin user management run server-side to protect secrets.
-
-4. **PWA support** — Service worker via `vite-plugin-pwa` with offline caching for fonts and static assets.
-
-5. **Capacitor-ready** — `capacitor.config.ts` present for native mobile builds (iOS/Android).
+---
 
 ## 📦 Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| Framework | React 18 + TypeScript 5 |
-| Build | Vite 5 |
-| Styling | Tailwind CSS 3 + shadcn/ui |
-| State | React Query + React Context |
-| Backend | Lovable Cloud (Postgres, Auth, Storage, Edge Functions) |
-| Animation | Framer Motion |
-| PWA | vite-plugin-pwa |
-| Mobile | Capacitor |
+| :--- | :--- |
+| **Framework** | React 18 + TypeScript 5 |
+| **Build Tool** | Vite 5 |
+| **Styling & UI** | Tailwind CSS 3, shadcn/ui, Lucide Icons |
+| **State Management** | TanStack Query (React Query) + React Context |
+| **Backend & Database** | Lovable Cloud (PostgreSQL, Supabase Auth & Storage, Edge Functions) |
+| **Animation** | Framer Motion |
+| **Mobile & PWA** | Capacitor, vite-plugin-pwa |
+
+---
 
 ## 🚀 Local Development
 
 ```sh
+# Clone repository
 git clone <YOUR_GIT_URL>
 cd <YOUR_PROJECT_NAME>
+
+# Install dependencies
 npm install
+
+# Start development server
 npm run dev
 ```
 
-The dev server runs at `http://localhost:8080`.
+The application runs locally at `http://localhost:8080`.
+
+---
+
+## 👥 Project Credits
+
+* **Academic Institution:** The Academic College of Tel Aviv-Yaffo (MTA)
+* **Project Number:** 15001229
+* **Mentor:** Amir Kirsh
+* **Authors:** Ido Raphaeli & Amit Chen
