@@ -17,7 +17,7 @@
 </p>
 
 *Buying second-hand vinyl online is a gamble when relying solely on subjective seller grading.  
-Off The Record uses computer vision and multimodal AI to inspect vinyl surfaces objectively, automate wishlist matching, and facilitate secure peer-to-peer trades.*
+Off The Record uses computer vision and multimodal Vinyl grading to inspect vinyl surfaces objectively, automate wishlist matching, and facilitate secure peer-to-peer trades.*
 
 ---
 </div>
