@@ -625,29 +625,59 @@ const GradeVinylDialog = ({
 
             {stage === "results" && (
               <motion.div
-                key="results"
+                key={results.some((r) => r.analysis?.status && r.analysis.status !== "ok")
+                  ? "results-failed"
+                  : "results"}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="flex flex-col gap-4 pb-2"
               >
-                <div className="rounded-xl bg-primary/10 p-5 text-center">
-                  <p className="font-body text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Suggested grade
-                  </p>
-                  <p className="font-display text-5xl font-black leading-none text-primary mt-1">
-                    {overall ?? "—"}
-                  </p>
-                  {overall && (
-                    <p className="font-display text-sm font-semibold text-foreground mt-2">
-                      {formatGrade(overall)}
+                {status && status !== "ok" ? (
+                  <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-5 text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/15 text-destructive mb-3">
+                      <AlertTriangle size={24} />
+                    </div>
+                    <p className="font-display text-lg font-semibold text-destructive">
+                      Could not analyse {sidesToRetake.length === 1 ? `Side ${sidesToRetake[0]}` : "both sides"}
                     </p>
-                  )}
-                  <p className="font-body text-[11px] text-muted-foreground mt-3">
-                    Based on visible surface marks only. Does not cover warps, edge damage, or how
-                    the record sounds. Please confirm before listing.
-                  </p>
-                </div>
+                    <p className="font-body text-xs text-destructive/80 mt-2">
+                      {alignmentMessage ||
+                        "The two photos of a side could not be matched to each other. Please photograph that side again."}
+                    </p>
+                    <div className="mt-4 flex flex-col gap-2">
+                      {sidesToRetake.map((side) => (
+                        <Button
+                          key={side}
+                          variant="outline"
+                          onClick={() => handleRetakeSide(side)}
+                          className="gap-2"
+                        >
+                          <Camera size={16} />
+                          Retake Side {side}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl bg-primary/10 p-5 text-center">
+                    <p className="font-body text-[10px] uppercase tracking-wide text-muted-foreground">
+                      Suggested grade
+                    </p>
+                    <p className="font-display text-5xl font-black leading-none text-primary mt-1">
+                      {overall ?? "—"}
+                    </p>
+                    {overall && (
+                      <p className="font-display text-sm font-semibold text-foreground mt-2">
+                        {formatGrade(overall)}
+                      </p>
+                    )}
+                    <p className="font-body text-[11px] text-muted-foreground mt-3">
+                      Based on visible surface marks only. Does not cover warps, edge damage, or how
+                      the record sounds. Please confirm before listing.
+                    </p>
+                  </div>
+                )}
 
                 {recordWarnings.map((w, i) => (
                   <div
@@ -668,12 +698,14 @@ const GradeVinylDialog = ({
                   />
                 ))}
 
-
-                <Button variant="outline" onClick={reset} className="mt-1">
-                  Grade Another Record
-                </Button>
+                {status === "ok" && (
+                  <Button variant="outline" onClick={reset} className="mt-1">
+                    Grade Another Record
+                  </Button>
+                )}
               </motion.div>
             )}
+
           </AnimatePresence>
         </div>
       </DialogContent>
