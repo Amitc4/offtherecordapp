@@ -13,7 +13,7 @@
 [![Spotify](https://img.shields.io/badge/Spotify_API-1ED760?style=for-the-badge&logo=spotify&logoColor=white)](https://developer.spotify.com/)
 
 <p align="center">
-  <img src="./assets/off-the-record-logo.png" alt="Off The Record Logo" width="180"/>
+  <img src="./public/pwa-icon-192.png" alt="Off The Record Logo" width="180"/>
 </p>
 
 *Buying second-hand vinyl online is a gamble when relying solely on subjective seller grading.  
