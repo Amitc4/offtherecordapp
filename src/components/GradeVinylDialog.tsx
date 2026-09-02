@@ -126,9 +126,13 @@ const GradeVinylDialog = ({
   const [analyzing, setAnalyzing] = useState(false);
   const [results, setResults] = useState<SideResult[]>([]);
   const [overall, setOverall] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>("ok");
+  const [sidesToRetake, setSidesToRetake] = useState<string[]>([]);
+  const [alignmentMessage, setAlignmentMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   /** Record-level warnings returned by the scanner (a 200 can still warn). */
   const [recordWarnings, setRecordWarnings] = useState<string[]>([]);
+
 
   const [overlayUrl, setOverlayUrl] = useState<string | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -152,11 +156,15 @@ const GradeVinylDialog = ({
     setSlots(Array(REQUIRED_PHOTOS).fill(null));
     setResults([]);
     setOverall(null);
+    setStatus("ok");
+    setSidesToRetake([]);
+    setAlignmentMessage(null);
     setError(null);
     setRecordWarnings([]);
     setAnalyzing(false);
     setInstructionsAck(false);
   };
+
 
 
   const handleOpenChange = (o: boolean) => {
@@ -419,6 +427,9 @@ const GradeVinylDialog = ({
 
     setError(null);
     setRecordWarnings([]);
+    setAlignmentMessage(null);
+    setSidesToRetake([]);
+    setStatus("ok");
     setAnalyzing(true);
 
     const files = slots.map((s) => s!.file) as [File, File, File, File];
@@ -427,6 +438,20 @@ const GradeVinylDialog = ({
 
     if (!result.ok) {
       setError(result.error || "Analysis failed. Please try again.");
+      return;
+    }
+
+    setStatus(result.status || "ok");
+    setAlignmentMessage(result.message || null);
+    setSidesToRetake(result.sides_to_retake || []);
+
+    // Alignment failure is a successful HTTP response that must not be treated as a clean record.
+    if (result.status && result.status !== "ok") {
+      setResults(result.photos);
+      setOverall(null);
+      setRecordWarnings(result.warnings ?? []);
+      setStage("results");
+      // Don't persist a failed grade or mark the record as perfect.
       return;
     }
 
@@ -442,6 +467,30 @@ const GradeVinylDialog = ({
 
     void persist(sideResults, overallGrade);
   };
+
+  /**
+   * Clears the two photos for a side that the scanner said could not be aligned,
+   * then returns the user to the capture stage so only those two photos are re-shot.
+   */
+  const handleRetakeSide = (side: string) => {
+    const indices = side === "A" ? [0, 1] : side === "B" ? [2, 3] : [];
+    if (indices.length === 0) return;
+    setSlots((prev) => {
+      const next = [...prev];
+      indices.forEach((i) => {
+        if (next[i]) URL.revokeObjectURL(next[i]!.previewUrl);
+        next[i] = null;
+      });
+      return next;
+    });
+    setStatus("ok");
+    setSidesToRetake([]);
+    setAlignmentMessage(null);
+    setError(null);
+    setResults([]);
+    setStage("capture");
+  };
+
 
 
   const activeSpec = SLOTS[activeSlot];
@@ -576,29 +625,59 @@ const GradeVinylDialog = ({
 
             {stage === "results" && (
               <motion.div
-                key="results"
+                key={results.some((r) => r.analysis?.status && r.analysis.status !== "ok")
+                  ? "results-failed"
+                  : "results"}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="flex flex-col gap-4 pb-2"
               >
-                <div className="rounded-xl bg-primary/10 p-5 text-center">
-                  <p className="font-body text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Suggested grade
-                  </p>
-                  <p className="font-display text-5xl font-black leading-none text-primary mt-1">
-                    {overall ?? "—"}
-                  </p>
-                  {overall && (
-                    <p className="font-display text-sm font-semibold text-foreground mt-2">
-                      {formatGrade(overall)}
+                {status && status !== "ok" ? (
+                  <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-5 text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/15 text-destructive mb-3">
+                      <AlertTriangle size={24} />
+                    </div>
+                    <p className="font-display text-lg font-semibold text-destructive">
+                      Could not analyse {sidesToRetake.length === 1 ? `Side ${sidesToRetake[0]}` : "both sides"}
                     </p>
-                  )}
-                  <p className="font-body text-[11px] text-muted-foreground mt-3">
-                    Based on visible surface marks only. Does not cover warps, edge damage, or how
-                    the record sounds. Please confirm before listing.
-                  </p>
-                </div>
+                    <p className="font-body text-xs text-destructive/80 mt-2">
+                      {alignmentMessage ||
+                        "The two photos of a side could not be matched to each other. Please photograph that side again."}
+                    </p>
+                    <div className="mt-4 flex flex-col gap-2">
+                      {sidesToRetake.map((side) => (
+                        <Button
+                          key={side}
+                          variant="outline"
+                          onClick={() => handleRetakeSide(side)}
+                          className="gap-2"
+                        >
+                          <Camera size={16} />
+                          Retake Side {side}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl bg-primary/10 p-5 text-center">
+                    <p className="font-body text-[10px] uppercase tracking-wide text-muted-foreground">
+                      Suggested grade
+                    </p>
+                    <p className="font-display text-5xl font-black leading-none text-primary mt-1">
+                      {overall ?? "—"}
+                    </p>
+                    {overall && (
+                      <p className="font-display text-sm font-semibold text-foreground mt-2">
+                        {formatGrade(overall)}
+                      </p>
+                    )}
+                    <p className="font-body text-[11px] text-muted-foreground mt-3">
+                      Based on visible surface marks only. Does not cover warps, edge damage, or how
+                      the record sounds. Please confirm before listing.
+                    </p>
+                  </div>
+                )}
 
                 {recordWarnings.map((w, i) => (
                   <div
@@ -619,12 +698,14 @@ const GradeVinylDialog = ({
                   />
                 ))}
 
-
-                <Button variant="outline" onClick={reset} className="mt-1">
-                  Grade Another Record
-                </Button>
+                {status === "ok" && (
+                  <Button variant="outline" onClick={reset} className="mt-1">
+                    Grade Another Record
+                  </Button>
+                )}
               </motion.div>
             )}
+
           </AnimatePresence>
         </div>
       </DialogContent>

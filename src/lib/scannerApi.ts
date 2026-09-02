@@ -35,6 +35,9 @@ export interface ScanPhoto {
 
 /** Per-side payload returned by the scanner. */
 export interface ScanSide {
+  status?: string;
+  needs_retake?: boolean;
+  message?: string;
   grade?: string;
   quality_score?: number;
   mark_count?: number;
@@ -45,9 +48,13 @@ export interface ScanSide {
   [key: string]: unknown;
 }
 
+
 /** Analysis payload shown in the UI for one photo (one card). */
 export interface ScanAnalysis {
   analysis_id?: string;
+  status?: string;
+  needs_retake?: boolean;
+  message?: string;
   grade?: string;
   quality_score?: number;
   mark_count?: number;
@@ -69,7 +76,14 @@ export interface SideResult {
 export interface RecordScanResult {
   ok: boolean;
   error?: string;
-  /** Record grade — already the worse of the two sides. */
+  /** Scanner status: "ok" for a successful analysis, or "alignment_failed" when a side could not be matched. */
+  status?: string;
+  /** Human-readable explanation when `status` is not "ok". */
+  message?: string;
+  needs_retake?: boolean;
+  /** Letters of the sides that must be re-photographed (e.g. ["A"]). */
+  sides_to_retake?: string[];
+  /** Record grade — already the worse of the two sides, only present when `status` is "ok". */
   grade?: string;
   quality_score?: number;
   graded_from_side?: string;
@@ -80,6 +94,10 @@ export interface RecordScanResult {
 
 /** Raw whole-record response shape. */
 interface RecordResponse {
+  status?: string;
+  needs_retake?: boolean;
+  sides_to_retake?: string[];
+  message?: string;
   grade?: string;
   quality_score?: number;
   graded_from_side?: string;
@@ -87,6 +105,7 @@ interface RecordResponse {
   sides?: { A?: ScanSide; B?: ScanSide };
   [key: string]: unknown;
 }
+
 
 /** Human-readable message for the scanner's documented error statuses. */
 const errorForStatus = (status: number): string => {
@@ -124,21 +143,35 @@ const photoWarnings = (side: ScanSide, photo: ScanPhoto): string[] => {
   return out;
 };
 
-/** Turns one side + one of its photos into the analysis shape the UI renders. */
-const toAnalysis = (side: ScanSide, photo: ScanPhoto): ScanAnalysis => ({
-  grade: side.grade,
-  quality_score: side.quality_score,
-  mark_count:
-    typeof side.mark_count === "number"
+/**
+ * Turns one side + one of its photos into the analysis shape the UI renders.
+ *
+ * When the side status is not "ok" (e.g. alignment_failed), we keep the overlay
+ * image (returned unmarked by the scanner) but suppress the grade, score and
+ * mark count so a failed side is never shown as a perfect record.
+ */
+const toAnalysis = (side: ScanSide, photo: ScanPhoto): ScanAnalysis => {
+  const failed = side.status && side.status !== "ok";
+  return {
+    status: side.status,
+    needs_retake: side.needs_retake,
+    message: side.message,
+    grade: failed ? undefined : side.grade,
+    quality_score: failed ? undefined : side.quality_score,
+    mark_count: failed ? 0 : typeof side.mark_count === "number"
       ? side.mark_count
       : Array.isArray(side.marks)
         ? side.marks.length
         : undefined,
-  marks: Array.isArray(side.marks) ? side.marks : [],
-  overlay_png: photo.overlay_png,
-  coverage: photo.coverage,
-  warnings: [...(Array.isArray(side.warnings) ? side.warnings : []), ...photoWarnings(side, photo)],
-});
+    marks: failed ? [] : Array.isArray(side.marks) ? side.marks : [],
+    overlay_png: photo.overlay_png,
+    coverage: photo.coverage,
+    warnings: failed
+      ? [side.message || `Side analysis failed (${side.status}).`, ...photoWarnings(side, photo)]
+      : [...(Array.isArray(side.warnings) ? side.warnings : []), ...photoWarnings(side, photo)],
+  };
+};
+
 
 /**
  * Analyse a whole record in one request. Never throws — failures come back as
@@ -196,11 +229,17 @@ export const analyzeRecord = async (
       return { ok: true, analysis: toAnalysis(side, photo) };
     });
 
+    const failed = data.status && data.status !== "ok";
+
     return {
       ok: true,
-      grade: data.grade,
-      quality_score: data.quality_score,
-      graded_from_side: data.graded_from_side,
+      status: data.status || "ok",
+      needs_retake: data.needs_retake,
+      sides_to_retake: data.sides_to_retake,
+      message: data.message,
+      grade: failed ? undefined : data.grade,
+      quality_score: failed ? undefined : data.quality_score,
+      graded_from_side: failed ? undefined : data.graded_from_side,
       warnings: Array.isArray(data.warnings) ? data.warnings : [],
       photos,
     };
@@ -208,6 +247,7 @@ export const analyzeRecord = async (
     return fail(e instanceof Error ? e.message : "Could not reach the analysis service.");
   }
 };
+
 
 /**
  * Analyse a single side (`POST /analyze`). `secondImage` is an optional extra

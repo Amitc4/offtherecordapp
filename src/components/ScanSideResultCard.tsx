@@ -35,6 +35,49 @@ const ScanSideResultCard = ({ side, result, onViewOverlay }: ScanSideResultCardP
   }
 
   const a = result.analysis;
+
+  // The scanner matched the two photos of this side but could not align them.
+  // The photo is returned unmarked; we must not show a grade or "0 marks" as a perfect result.
+  if (a.status && a.status !== "ok") {
+    return (
+      <div className="rounded-xl border border-amber-500/50 bg-amber-500/15 p-4">
+        <div className="flex items-start justify-between gap-2">
+          <p className="font-display text-sm font-bold text-amber-700 flex items-center gap-2">
+            <AlertTriangle size={16} />
+            Side {side} — photos didn't match
+          </p>
+          <span className="font-body text-[10px] uppercase tracking-wide text-amber-700/80">
+            Needs retake
+          </span>
+        </div>
+        <p className="font-body text-xs text-amber-700 mt-2">
+          {a.message || "The two photos of this side could not be matched to each other. Please photograph that side again."}
+        </p>
+        {a.overlay_png && (
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => onViewOverlay(a.overlay_png as string)}
+              className="block w-full overflow-hidden rounded-lg border border-border"
+              aria-label={`View unmarked photo of side ${side} full screen`}
+            >
+              <img
+                src={a.overlay_png}
+                alt={`Unmarked photo of side ${side}`}
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+            </button>
+            <p className="font-body text-[10px] text-muted-foreground mt-1 text-center">
+              Returned unmarked
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+
   const marks = Array.isArray(a.marks) ? a.marks : [];
   const markCount = typeof a.mark_count === "number" ? a.mark_count : marks.length;
   const judged = a.coverage?.judged_pct;
