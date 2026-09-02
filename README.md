@@ -60,7 +60,7 @@ src/
 │   └── NotFound.tsx          # 404 fallback
 ├── components/
 │   ├── screens/              # Full-screen tab content
-│   │   ├── CollectionScreen  # User's vinyl records (CRUD, photos, AI grading)
+│   │   ├── CollectionScreen  # User's vinyl records (CRUD, photos, Vinyl grading)
 │   │   ├── WishlistScreen    # Records the user wants to find
 │   │   ├── DiscoverScreen    # Browse other users' for-sale records
 │   │   ├── ChatsScreen       # Messaging + trade offers
