@@ -427,6 +427,9 @@ const GradeVinylDialog = ({
 
     setError(null);
     setRecordWarnings([]);
+    setAlignmentMessage(null);
+    setSidesToRetake([]);
+    setStatus("ok");
     setAnalyzing(true);
 
     const files = slots.map((s) => s!.file) as [File, File, File, File];
@@ -435,6 +438,20 @@ const GradeVinylDialog = ({
 
     if (!result.ok) {
       setError(result.error || "Analysis failed. Please try again.");
+      return;
+    }
+
+    setStatus(result.status || "ok");
+    setAlignmentMessage(result.message || null);
+    setSidesToRetake(result.sides_to_retake || []);
+
+    // Alignment failure is a successful HTTP response that must not be treated as a clean record.
+    if (result.status && result.status !== "ok") {
+      setResults(result.photos);
+      setOverall(null);
+      setRecordWarnings(result.warnings ?? []);
+      setStage("results");
+      // Don't persist a failed grade or mark the record as perfect.
       return;
     }
 
@@ -450,6 +467,30 @@ const GradeVinylDialog = ({
 
     void persist(sideResults, overallGrade);
   };
+
+  /**
+   * Clears the two photos for a side that the scanner said could not be aligned,
+   * then returns the user to the capture stage so only those two photos are re-shot.
+   */
+  const handleRetakeSide = (side: string) => {
+    const indices = side === "A" ? [0, 1] : side === "B" ? [2, 3] : [];
+    if (indices.length === 0) return;
+    setSlots((prev) => {
+      const next = [...prev];
+      indices.forEach((i) => {
+        if (next[i]) URL.revokeObjectURL(next[i]!.previewUrl);
+        next[i] = null;
+      });
+      return next;
+    });
+    setStatus("ok");
+    setSidesToRetake([]);
+    setAlignmentMessage(null);
+    setError(null);
+    setResults([]);
+    setStage("capture");
+  };
+
 
 
   const activeSpec = SLOTS[activeSlot];
