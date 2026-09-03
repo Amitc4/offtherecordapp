@@ -16,7 +16,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /** Max allowed front-to-back / left-to-right tilt, in degrees, to count as flat. */
-export const LEVEL_TOLERANCE_DEG = 5;
+export const LEVEL_TOLERANCE_DEG = 2;
 
 /** Low-pass smoothing factor for raw sensor readings (0..1, higher = snappier). */
 const SMOOTHING = 0.25;
