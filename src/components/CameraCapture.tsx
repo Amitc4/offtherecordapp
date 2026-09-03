@@ -180,16 +180,15 @@ const CameraCapture = ({ open, onOpenChange, mode, title, hint, onCapture }: Cam
 
           {/* ── MIDDLE ZONE: preview + circular guide only ────────────────── */}
           <div className="relative min-h-0 flex-1 basis-[50vh] overflow-hidden bg-black" style={{ maxHeight: "min(50vh, 420px)" }}>
-            {previewUrl ? (
+            <video
+              ref={videoRef}
+              playsInline
+              muted
+              autoPlay
+              className={`absolute inset-0 h-full w-full object-cover ${previewUrl ? "invisible" : "visible"}`}
+            />
+            {previewUrl && (
               <img src={previewUrl} alt="Preview" className="absolute inset-0 h-full w-full object-cover" />
-            ) : (
-              <video
-                ref={videoRef}
-                playsInline
-                muted
-                autoPlay
-                className="absolute inset-0 h-full w-full object-cover"
-              />
             )}
 
             {!previewUrl && (
