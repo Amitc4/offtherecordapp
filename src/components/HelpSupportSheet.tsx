@@ -27,7 +27,7 @@ const faqs = [
     a: "Go to the Collection tab and tap the '+' button. You can search Discogs by artist/title, scan a barcode, or add the details manually. Each record can hold up to 4 photos.",
   },
   {
-    q: "How does the AI vinyl grading work?",
+    q: "How does the vinyl grading work?",
     a: "Open a record and tap 'Grade Vinyl'. You'll take two photos of Side A from different angles and two photos of Side B from different angles. The scanner looks for scratches, scuffs, and wear, then gives each side a grade. The record's final grade is the worse of the two sides.",
   },
   {
