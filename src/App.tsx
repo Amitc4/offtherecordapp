@@ -27,7 +27,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { AccessibilityProvider } from "@/hooks/useAccessibility";
 import AccessibilityMenu from "@/components/AccessibilityMenu";
 import DismissOnScroll from "@/components/DismissOnScroll";
-import VersionMarker from "@/components/VersionMarker";
+
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import DiscogsCallback from "./pages/DiscogsCallback";
@@ -53,7 +53,6 @@ const App = () => (
           </BrowserRouter>
           <AccessibilityMenu />
           <DismissOnScroll />
-          <VersionMarker />
 
         </TooltipProvider>
       </AccessibilityProvider>
