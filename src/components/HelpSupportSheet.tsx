@@ -24,35 +24,47 @@ interface HelpSupportSheetProps {
 const faqs = [
   {
     q: "How do I add a record to my collection?",
-    a: "Go to the Collection tab and tap the '+' button. You can search by name, scan a barcode, or add manually.",
+    a: "Go to the Collection tab and tap the '+' button. You can search Discogs by artist/title, scan a barcode, or add the details manually. Each record can hold up to 4 photos.",
   },
   {
     q: "How does the AI vinyl grading work?",
-    a: "Take 8 high-quality photos (4 quarters of each side) of your vinyl. Our AI analyzes scratches, scuffs, warping, and chips and gives a precise condition score from 0.0 (damaged) to 10.0 (perfect).",
+    a: "Open a record and tap 'Grade Vinyl'. You'll take two photos of Side A from different angles and two photos of Side B from different angles. The scanner looks for scratches, scuffs, and wear, then gives each side a grade. The record's final grade is the worse of the two sides.",
+  },
+  {
+    q: "What do the condition grades mean?",
+    a: "Records are graded on the Goldmine scale, best to worst: NM (Near Mint), VG+ (Very Good Plus), VG (Very Good), G+ (Good Plus), G (Good), F (Fair), P (Poor). NM/VG+ are the grades collectors usually aim for; G and below mean visible wear or playback noise.",
   },
   {
     q: "How do I trade records with someone?",
-    a: "Find a record you want in the Discover tab, start a chat with the seller, then create a trade offer from the chat. Both parties must confirm to complete the trade.",
+    a: "Find a record you want in the Discover tab, start a chat with the seller, then create a trade offer from the chat. You can offer vinyl from your own collection plus cash. Both parties must confirm to complete the trade.",
   },
   {
-    q: "How do I connect my Discogs account?",
-    a: "Go to your Profile tab, scroll to the Discogs section, and tap 'Connect Discogs Account'. You'll be redirected to Discogs to authorize the connection.",
+    q: "How do I connect my Discogs or Spotify account?",
+    a: "Go to your Profile tab. Tap 'Connect Discogs Account' to import your collection, or 'Connect Spotify' to get record recommendations based on what you listen to.",
   },
   {
     q: "How do I list a record for sale?",
-    a: "In your Collection, tap on a record, then change its status to 'For Sale' and set a price. It will then appear in the Discover tab for other users.",
+    a: "In your Collection, tap a record, then change its status to 'For Sale' and set a price in ₪. It will appear in the Discover tab for other users. You can also mark it 'Open to trade' by leaving the price empty.",
   },
   {
     q: "What does the wishlist match notification mean?",
-    a: "When someone lists a record that matches one on your wishlist (by title/artist or Discogs ID), you'll get a notification so you can reach out to buy or trade.",
+    a: "When someone lists a record that matches one on your wishlist (by title, artist, or Discogs ID), you'll get a notification so you can reach out to buy or trade.",
   },
   {
     q: "How do I block or report a user?",
-    a: "Open a chat with the user, tap the menu icon in the top right, and select 'Report' or 'Block'. Blocked users cannot message you or see your collection.",
+    a: "Open a chat with the user, tap the menu icon at the top, and select 'Report' or 'Block'. Blocked users cannot message you or see your collection.",
   },
   {
-    q: "Can I undo a completed trade?",
-    a: "No. Once both parties confirm a trade, it's marked as completed. Make sure to review the offer carefully before confirming.",
+    q: "Can I undo a completed trade or sale?",
+    a: "No. Once both parties confirm a trade, it's marked as completed and the record status becomes 'Sold'. Make sure to review the offer carefully before confirming.",
+  },
+  {
+    q: "Why am I being asked to hold my phone steady while grading?",
+    a: "The scanner needs the phone to be roughly parallel to the record (within 2 degrees of level) so the photos are clear and consistent. Keep the disc flat under good, even light and avoid glare.",
+  },
+  {
+    q: "How do push notifications work?",
+    a: "You can enable push notifications in your Profile settings. You can choose which events you want: chat messages, trade offers, friend requests, and wishlist matches.",
   },
 ];
 
