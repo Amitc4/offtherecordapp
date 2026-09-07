@@ -134,7 +134,42 @@ const HelpSupportSheet = ({ open, onOpenChange }: HelpSupportSheetProps) => {
 
         <div className="mt-4 overflow-y-auto max-h-[60vh] pr-1">
           {tab === "faq" ? (
-            <div className="space-y-2">
+            <div className="space-y-3">
+              {/* Grade scale reference card */}
+              <div className="rounded-xl bg-card vinyl-shadow p-4">
+                <h3 className="font-display text-sm font-semibold text-foreground mb-2">
+                  Vinyl condition scale
+                </h3>
+                <div className="space-y-1.5">
+                  {[
+                    { code: "NM", label: "Near Mint", desc: "Excellent — aspire for this", tone: "bg-grade-light" },
+                    { code: "VG+", label: "Very Good Plus", desc: "Minor wear only", tone: "bg-grade-light" },
+                    { code: "VG", label: "Very Good", desc: "Light marks, still plays well", tone: "bg-grade-mid" },
+                    { code: "G+", label: "Good Plus", desc: "Noticeable wear", tone: "bg-grade-mid" },
+                    { code: "G", label: "Good", desc: "Visible groove wear", tone: "bg-grade-deep" },
+                    { code: "F", label: "Fair", desc: "Heavy wear / noise", tone: "bg-grade-deep" },
+                    { code: "P", label: "Poor", desc: "Damaged / hard to play", tone: "bg-grade-deep" },
+                  ].map((g) => (
+                    <div key={g.code} className="flex items-center gap-2">
+                      <span
+                        className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${g.tone} text-grade-badge-foreground`}
+                      >
+                        {g.code}
+                      </span>
+                      <span className="font-body text-sm text-foreground">
+                        {g.label}
+                      </span>
+                      <span className="ml-auto font-body text-xs text-muted-foreground">
+                        {g.desc}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 font-body text-xs text-muted-foreground">
+                  Grades run from best (top) to worst (bottom). NM and VG+ are the grades most collectors aim for.
+                </p>
+              </div>
+
               {faqs.map((faq, i) => (
                 <div key={i} className="rounded-xl bg-card vinyl-shadow overflow-hidden">
                   <button
